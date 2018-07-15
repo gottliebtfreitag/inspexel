@@ -129,16 +129,16 @@ template<typename T>
 std::string stringify(T const& t) {
 	if constexpr (detail::is_collection_v<T>) {
 		if (not t.empty()) {
-			return std::accumulate(std::next(t.begin()), t.end(), stringify(*t.begin()), [](std::string const& left, auto const& p) {
+			return "{" + std::accumulate(std::next(t.begin()), t.end(), stringify(*t.begin()), [](std::string const& left, auto const& p) {
 				return left + ", " + stringify(p);
-			});
+			}) + "}";
 		}
 		return "{}";
 	} else if constexpr (detail::is_optional_v<T>) {
 		if (t) {
 			return stringify(*t);
 		}
-		return "{}";
+		return "[]";
 	} else if constexpr (std::is_same_v<std::string, T>) {
 		return "\"" + t + "\"";
 	} else if constexpr (std::is_same_v<bool, T>) {
