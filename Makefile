@@ -13,8 +13,6 @@ SRC_FOLDERS = src/
 LIBS = c pthread seasocks yaml-cpp
 LIB_PATHS =
 INCLUDES = src/ \
-	src/include \
-	src/framework/include 
 
 MAP_FILE = $(TARGET).map
 
