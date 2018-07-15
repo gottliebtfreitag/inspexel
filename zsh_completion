@@ -1,5 +1,5 @@
 _mx_calib ()
 {  
-  compadd "$@" $(./mx_calib.elf ${words[@]:1} --bash_completion)
+  compadd "$@" -- $(./mx_calib.elf ${words[@]:1} --bash_completion)
 }
-compdef _mx_calib -P ./mx_calib.elf -N
+compdef _mx_calib -P *mx_calib.elf -N
