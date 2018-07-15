@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	parameter::parseArguments(argc-1, argv+1);
 
 	if (printHelp.isSpecified()) {
-		std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"}) << std::endl;
+		std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
 		return 0;
 	}
 	parameter::callCommands();
