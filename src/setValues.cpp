@@ -55,6 +55,11 @@ void runSetValue() {
 	if (error) {
 		exit(-1);
 	}
+	std::cout << "set register " << reg << " of motor " << id << " to";
+	for (uint8_t v : std::vector<uint8_t>(values)) {
+		std::cout << " " << int(v);
+	}
+	std::cout << "\n";
 	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, reg, values);
 }
 
