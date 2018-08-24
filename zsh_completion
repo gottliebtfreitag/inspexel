@@ -1,5 +1,16 @@
 _mx_calib ()
-{  
-  compadd "$@" -- $(./mx_calib.elf ${words[@]:1} --bash_completion)
+{
+	globalParams=$(./mx_calib.elf --bash_completion | tr ' ' '\n')
+	globalCommands=$(echo ${globalParams} | grep "^[a-zA-Z]" | tr '\n' ' ')
+	globalOptions=$(echo ${globalParams} | grep "^--" | tr '\n' ' ')
+
+	currentCommands=$(./mx_calib.elf ${words[@]:1} --bash_completion)
+
+	globalCommands=$(comm -12  <(echo ${currentCommands} | tr ' ' '\n' | sort ) <(echo ${globalCommands} | tr ' ' '\n' | sort) | tr '\n' ' ')
+	currentCommands=$(comm -23  <(echo ${currentCommands} | tr ' ' '\n' | sort ) <(echo ${globalParams} | tr ' ' '\n' | sort) | tr '\n' ' ')
+
+	compadd -J "G1" -X 'Commands' $(echo ${globalCommands})
+	compadd -J "G2" -X 'Global Options' $(echo ${globalOptions})
+	compadd -J "G3" -X 'Command Options' $(echo ${currentCommands})
 }
 compdef _mx_calib -P *mx_calib.elf -N
