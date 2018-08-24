@@ -37,7 +37,12 @@ struct USB2Dynamixel::Pimpl
 			}
 		}
 		if (not port.valid()) {
-			throw std::runtime_error("cannot open any port for usb2dynamixel");
+			std::stringstream ss;
+			ss << "Cannot open any port for usb2dynamixel. Tried: ";
+			for (auto const& dev : deviceNames) {
+				ss << dev << ", ";
+			}
+			throw std::runtime_error(ss.str());
 		}
 	}
 

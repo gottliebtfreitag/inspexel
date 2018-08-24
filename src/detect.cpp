@@ -10,7 +10,7 @@ auto id        = parameter::Parameter<int>(0, "id", "the target Id");
 auto baudrate  = parameter::Parameter<int>(1000000, "baudrate", "baudrate to use");
 
 void runDetect();
-parameter::Command detectCmd{"detect", "detect all dynamixel motors", runDetect};
+auto detectCmd = parameter::Command{"detect", "detect all dynamixel motors", runDetect};
 auto baudrates = detectCmd.Parameter<std::set<int>>({57142}, "other_baudrates", "more baudrates to test");
 auto timeout   = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
 auto readAll   = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
