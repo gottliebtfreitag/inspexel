@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <sstream>
 #include <iomanip>
 #include <type_traits>
@@ -67,10 +68,32 @@ T parseFromString(std::string str) {
 
 	// parse everything else
 	std::stringstream ss{str};
-	ss >> ret;
+	if (not (ss >> ret)) {
+		throw ParseError{};
+	}
+
+	// parse floats/doubles and convert if they are angles
+	if constexpr (std::is_floating_point_v<T>) {
+		if (not ss.eof()) {
+			std::string ending;
+			if (not (ss >> ending)) {
+				throw ParseError{};
+			}
+			if (ending == "rad") {
+			} else if (ending == "deg") {
+				ret = ret / 180. * M_PI;
+			} else if (ending == "tau") {
+				ret = ret * 2. * M_PI;
+			} else {
+				throw ParseError{};
+			}
+		}
+	}
+
 	if (not ss.eof()) {
 		throw ParseError{};
 	}
+
 	return ret;
 }
 
