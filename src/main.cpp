@@ -4,7 +4,7 @@
 
 namespace {
 
-parameter::Parameter<std::optional<std::string>> printHelp{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
+auto printHelp = parameter::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
 
 }
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cinttypes>
 #include <cstdint>
 #include <vector>
 
 namespace dynamixel {
+
 	using MotorID = uint8_t;
 
 	constexpr MotorID MotorIDInvalid = 0xFF;
