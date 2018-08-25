@@ -10,7 +10,7 @@ auto id        = parameter::Parameter<int>(0, "id", "the target Id");
 auto baudrate  = parameter::Parameter<int>(1000000, "baudrate", "baudrate to use");
 
 void runSetAngle();
-parameter::Command detectCmd{"set_angle", "set the angle of a motor", runSetAngle};
+auto detectCmd = parameter::Command{"set_angle", "set the angle of a motor", runSetAngle};
 auto angle     = detectCmd.Parameter<int>(0, "angle", "the goal angle (raw register value)");
 
 void runSetAngle() {
@@ -34,27 +34,15 @@ void runSetAngle() {
 
 
 void runSetValue();
-parameter::Command setAngleCmd{"set_register", "set registers of a motor", runSetValue};
-auto reg       = setAngleCmd.Parameter<int>(0, "register", "register to write to");
-auto values    = setAngleCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
+auto setAngleCmd = parameter::Command{"set_register", "set registers of a motor", runSetValue};
+auto reg         = setAngleCmd.Parameter<int>(0, "register", "register to write to");
+auto values      = setAngleCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
 
 void runSetValue() {
-	bool error = false;
-	if (not id.isSpecified()) {
-		std::cout << "need to specify the target id!" << std::endl;
-		error = true;
-	}
-	if (not reg.isSpecified()) {
-		std::cout << "target angle has to be specified!" << std::endl;
-		error = true;
-	}
-	if (not values.isSpecified()) {
-		std::cout << "values to be written to the registers have to be specified!" << std::endl;
-		error = true;
-	}
-	if (error) {
-		exit(-1);
-	}
+	if (not id.isSpecified()) throw std::runtime_error("need to specify the target id!");
+	if (not reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
+	if (not values.isSpecified()) throw std::runtime_error("values to be written to the register have to be specified!");
+
 	std::cout << "set register " << reg << " of motor " << id << " to";
 	for (uint8_t v : std::vector<uint8_t>(values)) {
 		std::cout << " " << int(v);
@@ -64,24 +52,14 @@ void runSetValue() {
 }
 
 void runGetValue();
-parameter::Command getRegisterCmd{"get_register", "get register(s) of a motor", runGetValue};
-auto read_reg = getRegisterCmd.Parameter<int>(0, "register", "register to read from");
-auto count    = getRegisterCmd.Parameter<int>(1, "count", "amount of registers to read");
-auto timeout   = getRegisterCmd.Parameter<int>(10000, "timeout", "timeout in us");
+auto getRegisterCmd = parameter::Command{"get_register", "get register(s) of a motor", runGetValue};
+auto read_reg       = getRegisterCmd.Parameter<int>(0, "register", "register to read from");
+auto count          = getRegisterCmd.Parameter<int>(1, "count", "amount of registers to read");
+auto timeout        = getRegisterCmd.Parameter<int>(10000, "timeout", "timeout in us");
 
 void runGetValue() {
-	bool error = false;
-	if (not id.isSpecified()) {
-		std::cout << "need to specify the target id!" << std::endl;
-		error = true;
-	}
-	if (not read_reg.isSpecified()) {
-		std::cout << "target register has to be specified!" << std::endl;
-		error = true;
-	}
-	if (error) {
-		exit(-1);
-	}
+	if (not id.isSpecified()) throw std::runtime_error("need to specify the target id!");
+	if (not read_reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
 
 	auto [timeoutFlag, valid, rxBuf] = dynamixel::USB2Dynamixel(baudrate, {device.get()}).read(id, read_reg, count, std::chrono::microseconds{timeout});
 	if (valid) {

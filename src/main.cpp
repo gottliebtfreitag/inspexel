@@ -8,6 +8,9 @@ parameter::Parameter<std::optional<std::string>> printHelp{{}, "help", "print th
 
 }
 
+#define TERM_RED                        "\033[31m"
+#define TERM_RESET                      "\033[0m"
+
 int main(int argc, char** argv)
 {
 	if (std::string(argv[argc-1]) == "--bash_completion") {
@@ -24,6 +27,10 @@ int main(int argc, char** argv)
 		std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
 		return 0;
 	}
-	parameter::callCommands();
+	try {
+		parameter::callCommands();
+	} catch (std::exception const& e) {
+		std::cerr << "exception: " << TERM_RED << e.what() << TERM_RESET "\n";
+	}
 	return 0;
 }
