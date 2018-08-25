@@ -11,9 +11,6 @@
 
 #include <simplyfile/SerialPort.h>
 
-#define TERM_RED                        "\033[31m"
-#define TERM_RESET                      "\033[0m"
-
 namespace dynamixel {
 
 struct USB2Dynamixel::Pimpl {
