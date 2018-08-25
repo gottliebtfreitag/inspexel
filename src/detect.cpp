@@ -18,17 +18,16 @@ auto readAll   = detectCmd.Flag("read_all", "read all registers from the detecte
 void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 
 	if (readAll) {
-		usb2dyn.read(motor, 0, 74, std::chrono::microseconds{timeout}, [](dynamixel::motorID motor, const uint8_t* receiveBuffer, uint8_t rxPayloadLen) {
-			if (rxPayloadLen) {
-				std::cout << "found motor " << static_cast<int>(motor) << "\n";
-				std::cout << "registers:\n";
-				for (int idx{0}; idx < rxPayloadLen; ++idx) {
-					std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
-							std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(receiveBuffer[idx]) << "\n";
-				}
-				std::cout << "\n";
+		auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 74, std::chrono::microseconds{timeout});
+		if (valid and not rxBuf.empty()) {
+			std::cout << "found motor " << static_cast<int>(motor) << "\n";
+			std::cout << "registers:\n";
+			for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
+				std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
+						std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf.at(idx)) << "\n";
 			}
-		});
+			std::cout << "\n";
+		}
 	} else {
 		if (usb2dyn.ping(motor, std::chrono::microseconds{timeout})) {
 			std::cout << "found motor " << static_cast<int>(motor) << "\n";

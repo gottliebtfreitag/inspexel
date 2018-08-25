@@ -26,7 +26,7 @@ void runSetAngle() {
 	if (error) {
 		exit(-1);
 	}
-	dynamixel::parameter params;
+	dynamixel::Parameter params;
 	params.push_back((angle >> 0) & 0xff);
 	params.push_back((angle >> 8) & 0xff);
 	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, static_cast<int>(dynamixel::v1::Register::GOAL_POSITION), params);
@@ -82,18 +82,17 @@ void runGetValue() {
 	if (error) {
 		exit(-1);
 	}
-	dynamixel::USB2Dynamixel(baudrate, {device.get()}).read(id, read_reg, count, std::chrono::microseconds{timeout},
-	[](dynamixel::motorID motor, const uint8_t* receiveBuffer, uint8_t rxPayloadLen) {
-		if (rxPayloadLen == count) {
-			std::cout << "motor " << static_cast<int>(motor) << "\n";
-			std::cout << "registers:\n";
-			for (int idx{0}; idx < rxPayloadLen; ++idx) {
-				std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
-						std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(receiveBuffer[idx]) << "\n";
-			}
-			std::cout << "\n";
+
+	auto [timeoutFlag, valid, rxBuf] = dynamixel::USB2Dynamixel(baudrate, {device.get()}).read(id, read_reg, count, std::chrono::microseconds{timeout});
+	if (valid) {
+		std::cout << "motor " << static_cast<int>(id) << "\n";
+		std::cout << "registers:\n";
+		for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
+			std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
+					std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf[idx]) << "\n";
 		}
-	});
+		std::cout << "\n";
+	}
 }
 
 }
