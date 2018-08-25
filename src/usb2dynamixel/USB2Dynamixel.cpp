@@ -1,13 +1,11 @@
 #include "USB2Dynamixel.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <iostream>
+#include <cstdio>
+#include <cstring>
 
-#include <thread>
 #include <condition_variable>
-#include <iomanip>
+#include <sstream>
+#include <thread>
 
 #include <simplyfile/SerialPort.h>
 
@@ -29,8 +27,7 @@ struct USB2Dynamixel::Pimpl {
 					mPort = std::move(p);
 					break;
 				}
-			} catch (std::runtime_error const& err) {
-				std::cerr << err.what() << std::endl;
+			} catch (...) {
 			}
 		}
 		if (not mPort.valid()) {
@@ -44,7 +41,7 @@ struct USB2Dynamixel::Pimpl {
 	}
 
 	void writePacket(Parameter const& packet) const {
-		uint bytesWritten = 0;
+		uint32_t bytesWritten = 0;
 		const size_t count = packet.size();
 //		std::cout << "write: " << std::hex << std::setfill('0');
 //		for (auto p : packet) {
@@ -104,8 +101,7 @@ struct USB2Dynamixel::Pimpl {
 					}
 				}
 			} else if (errno != EAGAIN) {
-				std::cout << "r: " << r << std::endl;
-				break;
+				throw std::runtime_error(std::string{"unexpected read error: "} + strerror(errno) + " (" + std::to_string(errno) + ")");
 			}
 			timeoutFlag = (timeout.count() != 0) and (now() - startTime >= timeout);
 		} while (bytesRead < incomingLength && not timeoutFlag);
@@ -121,7 +117,7 @@ struct USB2Dynamixel::Pimpl {
 		success &= 0xff != rxBuf[2];
 		success &= rxBuf.size() - 4 == rxBuf[3];
 		uint8_t checkSum = 0;
-		for (uint i(2); i < rxBuf.size(); ++i) {
+		for (size_t i(2); i < rxBuf.size(); ++i) {
 			checkSum += rxBuf[i];
 		}
 		success &= 0xff == checkSum;

@@ -2,10 +2,9 @@
 
 #include "dynamixel.h"
 
-#include <functional>
+#include <chrono>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <string>
 
 namespace dynamixel {
