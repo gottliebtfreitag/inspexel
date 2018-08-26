@@ -1,7 +1,10 @@
 #include "parameter/Parameter.h"
 #include "usb2dynamixel/USB2Dynamixel.h"
+#include "usb2dynamixel/MotorMetaInfo.h"
 
-#include <iomanip>
+#define TERM_RED                        "\033[31m"
+#define TERM_GREEN                      "\033[32m"
+#define TERM_RESET                      "\033[0m"
 
 namespace
 {
@@ -16,21 +19,59 @@ auto timeout   = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
 auto readAll   = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
 
 void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
+	// only read model information, when model is known read full motor
+	auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 2, std::chrono::microseconds{timeout});
+	if (timeoutFlag) {
+		return;
+	}
+	if (not valid) {
+		std::cout << "something answered when pinging " << motor << " but answer was not valid\n";
+	}
+	uint32_t modelNumber = uint32_t(rxBuf.at(0)) + (uint32_t(rxBuf.at(1)) << 8);
+	auto modelPtr = dynamixel::getMotorDataBase(modelNumber);
 
 	if (readAll) {
-		auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 74, std::chrono::microseconds{timeout});
-		if (valid and not rxBuf.empty()) {
+		if (modelPtr) {
+			auto length = modelPtr->registerData.rend()->second.baseRegister + modelPtr->registerData.rend()->second.length;
+			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, length, std::chrono::microseconds{timeout});
+			std::cout << "address (length): value (initial value) - RW - name - description\n";
+			std::string lastMem = "";
+			dynamixel::visitBuffer(rxBuf, std::nullopt, dynamixel::overloaded{
+				[&lastMem](dynamixel::RegisterData const& reg, auto&& x) {
+					std::string mem = reg.romArea?"ROM":"RAM";
+					if (mem != lastMem) {
+						lastMem = mem;
+						std::cout << mem << "\n";
+					}
+					std::string initValue = "-";
+					if (reg.initialValue) {
+						initValue = std::to_string(reg.initialValue.value()) + TERM_RESET;
+						if (reg.initialValue.value() != x) {
+							initValue = TERM_RED + initValue;
+						} else {
+							initValue = TERM_GREEN + initValue;
+						}
+					}
+					std::cout << std::setw(3) << reg.baseRegister << "(" << reg.length << ") : " << x << " (" << std::setw(5) << initValue << ") - " << to_string(reg.access) << " - " << reg.description << " - " << reg.dataName << "\n";
+				}
+			});
+		} else {
+			std::cout << " unknown model (" << modelNumber << ") going to read first 74 bytes\n";
+			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 74, std::chrono::microseconds{timeout});
 			std::cout << "found motor " << static_cast<int>(motor) << "\n";
+
 			std::cout << "registers:\n";
 			for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
 				std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
-						std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf.at(idx)) << "\n";
+					std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf.at(idx)) << "\n";
 			}
 			std::cout << "\n";
 		}
 	} else {
-		if (usb2dyn.ping(motor, std::chrono::microseconds{timeout})) {
-			std::cout << "found motor " << static_cast<int>(motor) << "\n";
+		if (modelPtr) {
+			std::cout << modelPtr->shortName << " (" << modelNumber << ")";
+		} else {
+			std::cout << " unknown model (" << modelNumber << ")\n";
 		}
 	}
 }
@@ -42,7 +83,7 @@ void runDetect() {
 		if (id != 0) {
 			detectMotor(id, usb2dyn);
 		} else {
-			for (int motor{0}; motor < 0xfe; ++motor) {
+			for (int motor{0}; motor < 0xFD; ++motor) {
 				detectMotor(motor, usb2dyn);
 			}
 		}

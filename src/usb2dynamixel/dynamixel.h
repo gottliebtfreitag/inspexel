@@ -30,8 +30,7 @@ namespace dynamixel {
 		BULK_WRITE = 0x93,
 	};
 
-	inline uint32_t baudIndexToBaudrate(uint8_t baudIdx)
-	{
+	inline uint32_t baudIndexToBaudrate(uint8_t baudIdx) {
 		if (baudIdx < 250) {
 			return (2000000 / (baudIdx + 1));
 		} else {
@@ -55,4 +54,7 @@ namespace dynamixel {
 	enum class Register : uint8_t {
 		GOAL_POSITION       = 0x1E,
 	};
+
+	template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+	template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 }

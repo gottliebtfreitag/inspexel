@@ -20,14 +20,15 @@ int main(int argc, char** argv)
 		}
 		return 0;
 	}
-	// pass everything except the name of the application
-	parameter::parseArguments(argc-1, argv+1);
-
-	if (printHelp.isSpecified()) {
-		std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
-		return 0;
-	}
 	try {
+		// pass everything except the name of the application
+		parameter::parseArguments(argc-1, argv+1);
+
+		if (printHelp.isSpecified()) {
+			std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
+			return 0;
+		}
+
 		parameter::callCommands();
 	} catch (std::exception const& e) {
 		std::cerr << "exception: " << TERM_RED << e.what() << TERM_RESET "\n";
