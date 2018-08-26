@@ -1,7 +1,6 @@
 #include "parameter/Parameter.h"
 #include "usb2dynamixel/USB2Dynamixel.h"
 
-#include <iomanip>
 
 namespace
 {
