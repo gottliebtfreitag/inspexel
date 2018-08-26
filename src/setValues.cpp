@@ -27,9 +27,10 @@ void runSetAngle() {
 		exit(-1);
 	}
 	dynamixel::Parameter params;
-	params.push_back((angle >> 0) & 0xff);
-	params.push_back((angle >> 8) & 0xff);
-	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, static_cast<int>(dynamixel::v1::Register::GOAL_POSITION), params);
+	params.push_back(std::byte{dynamixel::Register::GOAL_POSITION});
+	params.push_back(std::byte((angle >> 0) & 0xff));
+	params.push_back(std::byte((angle >> 8) & 0xff));
+	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, params);
 }
 
 
@@ -48,7 +49,11 @@ void runSetValue() {
 		std::cout << " " << int(v);
 	}
 	std::cout << "\n";
-	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, reg, values);
+	dynamixel::Parameter txBuf {std::byte(int(reg))};
+	for (auto x : values.get()) {
+		txBuf.push_back(std::byte{x});
+	}
+	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, txBuf);
 }
 
 void runGetValue();

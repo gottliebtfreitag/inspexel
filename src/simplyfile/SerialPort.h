@@ -16,4 +16,8 @@ struct SerialPort : FileDescriptor
 	void setBaudrate(int baudrate);
 };
 
+void write(SerialPort const& _port, std::vector<std::byte> const& txBuf);
+[[nodiscard]] auto read(SerialPort const& _port, size_t maxReadBytes) -> std::vector<std::byte>;
+size_t flushRead(SerialPort const& _port);
+
 }
