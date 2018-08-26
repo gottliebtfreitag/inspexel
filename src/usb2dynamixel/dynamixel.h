@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
+#include <stdexcept>
 #include <vector>
 
 namespace dynamixel {
@@ -10,7 +12,7 @@ namespace dynamixel {
 	constexpr MotorID MotorIDInvalid = 0xFF;
 	constexpr MotorID BroadcastID    = 0xFE;
 
-	using Parameter = std::vector<uint8_t>;
+	using Parameter = std::vector<std::byte>;
 
 	enum class Instruction : uint8_t
 	{
@@ -20,15 +22,14 @@ namespace dynamixel {
 		REG_WRITE  = 0x04,
 		ACTION     = 0x05,
 		RESET      = 0x06,
+		REBOOT     = 0x08,
+		STATUS     = 0x55,
+		SYNC_READ  = 0x82,
 		SYNC_WRITE = 0x83,
+		BULK_READ  = 0x92,
+		BULK_WRITE = 0x93,
 	};
 
-	namespace v1 {
-		enum class Register : uint8_t
-		{
-			GOAL_POSITION       = 0x1e,
-		};
-	}
 	inline uint32_t baudIndexToBaudrate(uint8_t baudIdx)
 	{
 		if (baudIdx < 250) {
@@ -48,6 +49,10 @@ namespace dynamixel {
 					break;
 			}
 		}
-		return 57600; // return factory default
+		throw std::runtime_error("no valid baud index given");
 	}
+
+	enum class Register : uint8_t {
+		GOAL_POSITION       = 0x1E,
+	};
 }
