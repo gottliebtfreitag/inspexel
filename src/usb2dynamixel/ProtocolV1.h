@@ -9,8 +9,6 @@
 #include <stdexcept>
 #include <simplyfile/SerialPort.h>
 
-
-
 namespace dynamixel {
 
 struct ProtocolV1 : public ProtocolBase {
@@ -25,7 +23,7 @@ struct ProtocolV1 : public ProtocolBase {
 		: mPort {std::move(_port)}
 	{}
 
-	void writePacket(MotorID motorID, Instruction instr, Parameter data) const {
+	void writePacket(MotorID motorID, Instruction instr, Parameter data) const override {
 		uint8_t length = 2 + data.size();
 
 		Parameter txBuf {
@@ -34,6 +32,7 @@ struct ProtocolV1 : public ProtocolBase {
 		txBuf.insert(txBuf.end(), data.begin(), data.end());
 
 		txBuf.push_back(calculateChecksum(txBuf));
+
 		write(mPort, txBuf);
 	}
 
@@ -46,7 +45,7 @@ struct ProtocolV1 : public ProtocolBase {
 	 *  valid       inidcates if parameters form a valid packet
 	 *  paremeters  is a vector with read bytes
 	 */
-	auto readPacket(uint8_t incomingLength, Timeout timeout) const -> std::tuple<bool, bool, Parameter> override {
+	auto readPacket(uint8_t incomingLength, Timeout timeout) const -> std::tuple<bool, MotorID, Parameter> override {
 		auto startTime = now();
 
 		Parameter rxBuf;
@@ -55,19 +54,22 @@ struct ProtocolV1 : public ProtocolBase {
 		bool timeoutFlag = false;
 		while (rxBuf.size() < incomingLength and not timeoutFlag) {
 			auto buffer = read(mPort, incomingLength - rxBuf.size());
+
 			rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
 			timeoutFlag = (timeout.count() != 0) and (now() - startTime >= timeout);
 		};
 		bool valid = rxBuf.size() == incomingLength and validatePacket(rxBuf);
 
+		auto motorID = MotorIDInvalid;
 		if (not valid) {
 			flushRead(mPort);
 			rxBuf = {};
 		} else {
+			motorID = MotorID(rxBuf[2]);
 			rxBuf = {std::next(begin(rxBuf), 5), std::next(begin(rxBuf), rxBuf.size()-1)};
 		}
 
-		return std::make_tuple(timeoutFlag, valid, std::move(rxBuf));
+		return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
 	}
 
 	bool validatePacket(Parameter const& rxBuf) const {

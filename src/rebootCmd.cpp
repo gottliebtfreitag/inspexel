@@ -9,7 +9,6 @@ auto baudrate  = parameter::Parameter<int>(1000000, "baudrate", "baudrate to use
 
 void runReboot();
 auto rebootCmd = parameter::Command{"reboot", "reboot device with specified id", runReboot};
-auto timeout   = rebootCmd.Parameter<int>(10000, "timeout", "timeout in us");
 
 void runReboot() {
 	if (not id.isSpecified()) {
