@@ -305,11 +305,9 @@ public:
 struct Section {
 private:
 	std::string _name;
-	Command& _command;
 public:
-	Section(std::string const& name, Command& command = getDefaultCommand())
+	Section(std::string const& name)
 	: _name(name + ".")
-	, _command(command)
 	{}
 
 	template<typename T, typename... Args>
@@ -387,7 +385,7 @@ public:
 		return ::parameter::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
 	}
 	template<typename T>
-	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, DescribeFunc const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}, Command& command=getDefaultCommand()) -> ::parameter::Parameter<T> {
+	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, DescribeFunc const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}) -> ::parameter::Parameter<T> {
 		return ::parameter::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
 	}
 
@@ -399,7 +397,7 @@ public:
 		return ::parameter::Choice<T>{defaultVal, argName, namedValues, description, cb, *this};
 	}
 	[[nodiscard]] auto Section(std::string const& name) -> Section {
-		return ::parameter::Section(name, *this);
+		return ::parameter::Section(name);
 	}
 };
 
