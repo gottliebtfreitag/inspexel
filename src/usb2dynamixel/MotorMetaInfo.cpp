@@ -101,8 +101,6 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 				{ 47, RegisterData{ 47, 1, false, A::RW,      0, "Lock", "Locking EEPROM"}},
 				{ 48, RegisterData{ 48, 2, false, A::RW,      0, "Punch", "Punch"}},
 				{ 68, RegisterData{ 68, 2, false, A::RW,      0, "Current", "Consuming Current"}},
-				{ 70, RegisterData{ 70, 1, false, A::RW,      0, "Torque Control Mode Enable", "Torque control mode on/off"}},
-				{ 71, RegisterData{ 71, 2, false, A::RW,      0, "Goal Torque", "goal torque value"}},
 				{ 73, RegisterData{ 73, 1, false, A::RW,      0, "Goal Acceleration", "Goal Acceleration"}},
 			}
 		}},
