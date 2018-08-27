@@ -101,14 +101,14 @@ void visitBuffer(std::vector<std::byte> const& _buffer, std::optional<std::tuple
 	auto data = getMotorDataBase(shortName);
 
 	auto iter = data.registerData.find(baseRegister);
-	int currentRegister = baseRegister;
-	while (currentRegister + iter->second.length <= _buffer.size()) {
-		auto value = readValueVariant(&_buffer.at(currentRegister), iter->second.length);
+	int offset = 0;
+	while (offset + iter->second.length <= _buffer.size()) {
+		auto value = readValueVariant(&_buffer.at(offset), iter->second.length);
 		std::visit([&](auto&& data) {
 			cb(iter->second, data);
 		}, value);
 		++iter;
-		currentRegister = iter->second.baseRegister - baseRegister;
+		offset = iter->second.baseRegister - baseRegister;
 	}
 }
 
