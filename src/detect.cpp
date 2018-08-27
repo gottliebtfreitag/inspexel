@@ -25,34 +25,45 @@ void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 		return;
 	}
 	if (not valid) {
-		std::cout << "something answered when pinging " << motor << " but answer was not valid\n";
+		std::cout << "something answered when pinging " << int(motor) << " but answer was not valid\n";
+		return;
 	}
 	uint32_t modelNumber = uint32_t(rxBuf.at(0)) + (uint32_t(rxBuf.at(1)) << 8);
 	auto modelPtr = dynamixel::getMotorDataBase(modelNumber);
 
 	if (readAll) {
 		if (modelPtr) {
-			auto length = modelPtr->registerData.rend()->second.baseRegister + modelPtr->registerData.rend()->second.length;
+			auto lastEntry = std::next(modelPtr->registerData.begin(), modelPtr->registerData.size() -1);
+			auto v1 = lastEntry->second.baseRegister;
+			auto v2 = lastEntry->second.length;
+
+			auto length = v1 + v2;
 			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, length, std::chrono::microseconds{timeout});
+			std::cout << "\n" << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ")\n";
+			if (not valid) {
+				std::cout << "couldn't read detailed infos\n";
+				return;
+			}
 			std::cout << "address (length): value (initial value) - RW - name - description\n";
-			std::string lastMem = "";
 			dynamixel::visitBuffer(rxBuf, std::nullopt, dynamixel::overloaded{
-				[&lastMem](dynamixel::RegisterData const& reg, auto&& x) {
+				[](dynamixel::RegisterData const& reg, auto&& x) {
 					std::string mem = reg.romArea?"ROM":"RAM";
-					if (mem != lastMem) {
-						lastMem = mem;
-						std::cout << mem << "\n";
-					}
 					std::string initValue = "-";
 					if (reg.initialValue) {
-						initValue = std::to_string(reg.initialValue.value()) + TERM_RESET;
+						initValue = std::to_string(reg.initialValue.value());
+					}
+					std::cout << mem << " " << std::setw(3) << reg.baseRegister << "(" << reg.length << ") : ";
+					if (reg.initialValue) {
 						if (reg.initialValue.value() != x) {
-							initValue = TERM_RED + initValue;
+							std::cout << TERM_RED;
 						} else {
-							initValue = TERM_GREEN + initValue;
+							std::cout << TERM_GREEN;
 						}
 					}
-					std::cout << std::setw(3) << reg.baseRegister << "(" << reg.length << ") : " << x << " (" << std::setw(5) << initValue << ") - " << to_string(reg.access) << " - " << reg.description << " - " << reg.dataName << "\n";
+					std::cout << std::setw(5) << int(x) << TERM_RESET;
+
+
+					std::cout << " (" << std::setw(5) << initValue << ") - " << std::setw(2) << to_string(reg.access) << " - " << reg.description << " - " << reg.dataName << "\n";
 				}
 			});
 		} else {
@@ -69,9 +80,9 @@ void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 		}
 	} else {
 		if (modelPtr) {
-			std::cout << modelPtr->shortName << " (" << modelNumber << ")";
+			std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ")\n";
 		} else {
-			std::cout << " unknown model (" << modelNumber << ")\n";
+			std::cout << int(motor) << " unknown model (" << modelNumber << ")\n";
 		}
 	}
 }
@@ -79,6 +90,7 @@ void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 void runDetect() {
 	baudrates.get().emplace(baudrate);
 	for (auto baudrate : baudrates.get()) {
+		std::cout << "trying baudrate: " << baudrate << "\n";
 		auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, {device.get()});
 		if (id != 0) {
 			detectMotor(id, usb2dyn);
