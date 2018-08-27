@@ -58,6 +58,12 @@ void USB2Dynamixel::reset(MotorID motor) {
 	m_pimpl->writePacket(motor, Instruction::RESET, {});
 }
 
+void USB2Dynamixel::reboot(MotorID motor) {
+	auto g = std::lock_guard(mMutex);
+	m_pimpl->writePacket(motor, Instruction::REBOOT, {});
+}
+
+
 void USB2Dynamixel::sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister) {
 	auto g = std::lock_guard(mMutex);
 

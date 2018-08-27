@@ -24,6 +24,7 @@ struct USB2Dynamixel {
 	void write(MotorID motor, Parameter const& txBuf);
 
 	void reset(MotorID motor);
+	void reboot(MotorID motor);
 
 	void sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister);
 
