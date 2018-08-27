@@ -107,8 +107,8 @@ void visitBuffer(std::vector<std::byte> const& _buffer, std::optional<std::tuple
 		std::visit([&](auto&& data) {
 			cb(iter->second, data);
 		}, value);
-		currentRegister += iter->second.length;
 		++iter;
+		currentRegister = iter->second.baseRegister - baseRegister;
 	}
 }
 
