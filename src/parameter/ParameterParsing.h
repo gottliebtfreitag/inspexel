@@ -25,6 +25,40 @@ struct ParseError : std::invalid_argument {
 	{}
 };
 
+template <uint64_t maxValue, typename T>
+auto parseSuffixHelper(std::string str, std::string_view suffix) -> T {
+	if (str != suffix) {
+		return 1;
+	}
+	if constexpr (maxValue >= uint64_t(std::numeric_limits<T>::max())) {
+		throw ParseError{"out of range"};
+	} else {
+		return maxValue;
+	}
+}
+
+template<typename T>
+auto parseSuffix(std::string_view suffix) -> std::optional<T> {
+	auto ret = 1
+		* parseSuffixHelper<1000, T>("k", suffix)
+		* parseSuffixHelper<1024, T>("kb", suffix)
+		* parseSuffixHelper<1000*1000, T>("m", suffix)
+		* parseSuffixHelper<1024*1024, T>("mb", suffix)
+		* parseSuffixHelper<1000*1000*1000, T>("g", suffix)
+		* parseSuffixHelper<1024*1024*1024, T>("gb", suffix)
+		* parseSuffixHelper<1000ull*1000*1000*1000, T>("t", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024, T>("tb", suffix)
+		* parseSuffixHelper<1000ull*1000*1000*1000*1000, T>("p", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024*1024, T>("pb", suffix)
+		* parseSuffixHelper<1000ull*1000*1000*1000*1000*1000, T>("e", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024*1024*1024, T>("eb", suffix)
+	;
+	if (ret == 1) {
+		return std::nullopt;
+	}
+	return {ret};
+}
+
 template<typename T>
 T parseFromString(std::string str) {
 	if constexpr (std::is_same_v<T, bool>) {
@@ -35,7 +69,7 @@ T parseFromString(std::string str) {
 		if (str == "false" or str == "0") {
 			return false;
 		}
-		throw ParseError{};
+		throw ParseError{"invalid boolean specifier"};
 	}
 
 	T ret;
@@ -57,11 +91,22 @@ T parseFromString(std::string str) {
 				ret = std::stoll(strBegin, &nextIdx, base);
 			}
 		} catch (std::invalid_argument const&) {
-			throw ParseError{};
+			throw ParseError{"not an integer"};
 		}
-		// if we didnt parse everything -> throw
+		// if we didnt parse everything check if it has some known suffix
 		if (int(nextIdx) != strEnd - strBegin) {
-			throw ParseError{};
+			if constexpr (not std::is_same_v<bool, T>) {
+				auto suffix = std::string_view{strBegin + nextIdx};
+				auto value = parseSuffix<T>(suffix);
+				if (not value) {
+					throw ParseError{"unknown suffix"};
+				}
+				if (__int128_t(ret) * value.value() > std::numeric_limits<T>::max()
+					or __int128_t(ret) * value.value() < std::numeric_limits<T>::min()) {
+						throw ParseError{"out of range"};
+				}
+				ret *= value.value();
+			}
 		}
 		return ret;
 	}
@@ -85,7 +130,7 @@ T parseFromString(std::string str) {
 			} else if (ending == "tau") {
 				ret = ret * 2. * M_PI;
 			} else {
-				throw ParseError{};
+				throw ParseError{"unknown suffix"};
 			}
 		}
 	}
