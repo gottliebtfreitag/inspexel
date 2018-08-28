@@ -1,9 +1,6 @@
 #include "Epoll.h"
 #include "Event.h"
 
-#include "utils/Finally.h"
-#include "utils/demangle.h"
-
 #include <map>
 #include <vector>
 #include <atomic>
@@ -15,6 +12,42 @@
 #include <mutex>
 #include <shared_mutex>
 #include <condition_variable>
+
+
+#include <cxxabi.h>
+#include <iostream>
+
+namespace
+{
+
+std::string demangle(std::type_info const& ti) {
+	int status;
+	char* name_ = abi::__cxa_demangle(ti.name(), 0, 0, &status);
+	if (status) {
+		throw std::runtime_error("cannot demangle a type!");
+	}
+	std::string demangledName{ name_ };
+	free(name_); // need to use free here :/
+	return demangledName;
+}
+
+
+template<typename Func>
+struct Finally final {
+	Finally(Func && f) : _f(f) {}
+	~Finally() {_f();}
+private:
+	Func _f;
+};
+
+template<typename Func>
+Finally<Func> makeFinally(Func && f) { return Finally<Func>(std::move(f)); }
+
+
+
+
+}
+
 
 namespace simplyfile
 {
