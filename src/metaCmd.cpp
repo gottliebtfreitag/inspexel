@@ -6,7 +6,26 @@ namespace {
 
 void runMeta();
 auto metaCmd   = parameter::Command{"meta", "list all motors known to this program", runMeta};
-auto optMotorName = metaCmd.Parameter<std::string>("", "motor", "motor to give detail specs");
+auto optMotorName = metaCmd.Parameter<std::string>("", "motor", "motor to give detail specs", {},
+	[](std::vector<std::string> const& _str) -> std::pair<bool, std::set<std::string>> {
+		auto const& db = dynamixel::getMotorDataBase();
+		std::set<std::string> resList;
+		if (_str.empty()) {
+			for (auto const& [id, data] : db) {
+				resList.insert(data.shortName);
+			}
+		} else {
+			for (auto const& [id, data] : db) {
+				if (data.shortName.size() < _str.size()) continue;
+				auto str = _str.back();
+				if (std::equal(begin(str), end(str), begin(data.shortName))) {
+					resList.insert(data.shortName);
+				}
+			}
+		}
+		return std::make_pair(true, std::move(resList));
+	});
+
 auto optJson      = metaCmd.Parameter(false, "json", "print list as json");
 
 using namespace dynamixel;
