@@ -39,11 +39,12 @@ void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 
 			auto length = v1 + v2;
 			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, length, std::chrono::microseconds{timeout});
-			std::cout << "\n" << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ")\n";
+			std::cout << "\n" << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ") Layout " << to_string(modelPtr->layout) << "\n";
 			if (not valid) {
 				std::cout << "couldn't read detailed infos\n";
 				return;
 			}
+
 			std::cout << "address (length): value (initial value) - RW - name - description\n";
 			dynamixel::visitBuffer(rxBuf, std::nullopt, dynamixel::overloaded{
 				[](dynamixel::RegisterData const& reg, auto&& x) {
@@ -80,7 +81,7 @@ void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
 		}
 	} else {
 		if (modelPtr) {
-			std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ")\n";
+			std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ") Layout " << to_string(modelPtr->layout) << "\n";
 		} else {
 			std::cout << int(motor) << " unknown model (" << modelNumber << ")\n";
 		}
