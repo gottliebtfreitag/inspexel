@@ -1,16 +1,19 @@
 _mx_calib ()
 {
 	globalParams=$(./mx_calib.elf --bash_completion | tr ' ' '\n')
-	globalCommands=$(echo ${globalParams} | grep "^[a-zA-Z]" | tr '\n' ' ')
-	globalOptions=$(echo ${globalParams} | grep "^--" | tr '\n' ' ')
+	globalCommands=$(echo ${globalParams} | grep "^[a-zA-Z]")
+	globalOptions=$(echo ${globalParams} | grep "^--")
 
-	localCommands=$(./mx_calib.elf ${words[@]:1} --bash_completion)
+	localParams=$(./mx_calib.elf ${words[@]:1} --bash_completion | tr ' ' '\n')
+	localCommands=$(echo ${localParams} | grep "^[a-zA-Z]")
+	localOptions=$(echo ${localParams} | grep "^--")
 
-	globalCommands=$(comm -12  <(echo ${localCommands} | tr ' ' '\n' | sort ) <(echo ${globalCommands} | tr ' ' '\n' | sort) | tr '\n' ' ')
-	localCommands=$(comm -23  <(echo ${localCommands} | tr ' ' '\n' | sort ) <(echo ${globalParams} | tr ' ' '\n' | sort) | tr '\n' ' ')
+	localCommands=$(comm -23  <(echo ${localCommands} |  sort ) <(echo ${globalCommands} | sort))
+	localOptions=$(comm -23  <(echo ${localOptions} |  sort ) <(echo ${globalOptions} | sort))
 
-	compadd -J "G1" -X 'Commands' -- $(echo ${globalCommands})
-	compadd -J "G2" -X 'Global Options' -- $(echo ${globalOptions})
-	compadd -J "G3" -X 'Local Options' -- $(echo ${localCommands})
+	compadd -J "G4" -X "%USuggestions%u" -- $(echo ${localCommands} | tr '\n' ' ')
+	compadd -J "G3" -X "%ULocal Options%u" -- $(echo ${localOptions} | tr '\n' ' ')
+	compadd -J "G1" -X "%UCommands%u" -- $(echo ${globalCommands} | tr '\n' ' ')
+	compadd -J "G2" -X "%UGlobal Options%u" -- $(echo ${globalOptions} | tr '\n' ' ')
 }
 compdef _mx_calib -P *mx_calib.elf -N
