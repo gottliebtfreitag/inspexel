@@ -46,9 +46,20 @@ void runBulkRead() {
 	}
 
 	auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, {device.get()});
+	auto start = std::chrono::high_resolution_clock::now();
+	int count = 0;
+	int failures = 0;
 	do {
+		++count;
+		auto now = std::chrono::high_resolution_clock::now();
+		auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+		std::cout << failures << "/" << count  << " - " << double(count) / diff.count() * 1000.<< " bulk_reads per second\n";
+
 		auto response = usb2dyn.bulk_read(request, std::chrono::microseconds{timeout});
 		std::cout << "address (length): value (initial value) - RW - name - description\n";
+		if (response.size() != request.size()) {
+			failures += 1;
+		}
 		for (auto const& [id, data] : response) {
 			auto const& [baseRegister, rxBuf] = data;
 			std::cout << "motor " << int(id) << "\n";;
