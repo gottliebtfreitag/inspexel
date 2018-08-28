@@ -20,7 +20,7 @@ struct USB2Dynamixel {
 	[[nodiscard]] bool ping(MotorID motor, Timeout timeout);
 
 	[[nodiscard]] auto read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, Parameter>;
-	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::map<MotorID, std::tuple<int, Parameter>>;
+	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, Parameter>>;
 
 	void write(MotorID motor, Parameter const& txBuf);
 	void sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister);
