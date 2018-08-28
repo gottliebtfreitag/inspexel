@@ -33,8 +33,8 @@ struct FileDescriptor {
 		close();
 	}
 
-	bool valid() {
-		return fd > 0;
+	bool valid() const {
+		return fd >= 0;
 	}
 
 	operator int() const {
