@@ -3,11 +3,16 @@
 #include "dynamixel.h"
 #include "ProtocolBase.h"
 
+#include <cassert>
 #include <chrono>
+#include <cstring>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+
+#include "Layout.h"
 
 namespace dynamixel {
 
@@ -18,7 +23,6 @@ struct USB2Dynamixel {
 	~USB2Dynamixel();
 
 	[[nodiscard]] bool ping(MotorID motor, Timeout timeout);
-
 	[[nodiscard]] auto read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, Parameter>;
 	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, Parameter>>;
 
@@ -31,7 +35,63 @@ struct USB2Dynamixel {
 private:
 	std::unique_ptr<ProtocolBase> m_pimpl;
 	std::mutex mMutex;
-
 };
+
+template <auto baseRegister, size_t length>
+[[nodiscard]] auto read(USB2Dynamixel& dyn, MotorID motor, USB2Dynamixel::Timeout timeout) -> std::tuple<bool, MotorID, Layout<baseRegister, size_t(length)>> {
+	auto [valid, motorID, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
+	using RType = Layout<baseRegister, size_t(length)>;
+	static_assert(length == sizeof(RType));
+	assert(rxBuf.size() == size_t(length));
+	if (not valid) {
+		return {false, motorID, {}};
+	}
+	RType layout;
+	memcpy(&layout, rxBuf.data(), length);
+	return {true, motorID, layout};
+}
+
+template <auto baseRegister, size_t length, typename ...Extras>
+[[nodiscard]] auto bulk_read(USB2Dynamixel& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, USB2Dynamixel::Timeout timeout) -> std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> {
+	std::vector<std::tuple<MotorID, int, uint8_t>> request;
+	for (auto data : motors) {
+		auto id = std::get<0>(data);
+		request.push_back(std::make_tuple(id, int(baseRegister), uint8_t(length)));
+	}
+	auto list = dyn.bulk_read(request, timeout);
+
+	std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> response;
+	auto iter = begin(motors);
+	for (auto const& [id, _reg, params] : list) {
+		response.push_back(std::tuple_cat(*iter, std::make_tuple(Layout<baseRegister, length>{})));
+		assert(params.size() == length);
+		static_assert(length == sizeof(Layout<baseRegister, length>));
+		memcpy(&std::get<1>(response.back()), params.data(), length);
+		++iter;
+	}
+	return response;
+}
+
+
+template <template<auto, size_t> class Layout, auto baseRegister, size_t Length>
+void sync_write(USB2Dynamixel& dyn, std::map<MotorID, Layout<baseRegister, Length>> const& params) {
+	std::map<MotorID, Parameter> motorParams;
+	for (auto const& [id, layout] : params) {
+		auto& buffer = motorParams[id];
+		buffer.resize(Length);
+		memcpy(buffer.data(), &layout, Length);
+	}
+	dyn.sync_write(motorParams, int(baseRegister));
+}
+
+template <typename Layout>
+void sync_sync_write(USB2Dynamixel& dyn, std::set<MotorID> const& motors, Layout const& layout) {
+	std::map<MotorID, Layout> motorParams;
+	for (auto m : motors) {
+		motorParams[m] = layout;
+	}
+	sync_write(dyn, motorParams);
+}
+
 
 }
