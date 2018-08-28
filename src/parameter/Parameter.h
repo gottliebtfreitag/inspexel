@@ -356,7 +356,7 @@ public:
 	void deregisterParameter(std::string const& name, ParameterBase* parameter) {
 		parameters.emplace(name, parameter);
 	}
-	auto getParameters() -> decltype(parameters) {
+	auto getParameters() const -> decltype(parameters) const& {
 		return parameters;
 	}
 
