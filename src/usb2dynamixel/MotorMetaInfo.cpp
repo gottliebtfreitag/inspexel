@@ -3,11 +3,13 @@
 namespace dynamixel {
 
 auto getMotorDataBase() -> std::map<int, MotorData> const& {
-	using A = RegisterData::Access;
+	using A      = RegisterData::Access;
+	using Layout = MotorData::Layout;
 	static std::map<int, MotorData> data {
 		{1020, MotorData {
 			"XM430-W350",
 			{"XM430-W350-T", "XM430-W350-R"},
+			Layout::V2,
 			{
 				{   0, RegisterData{  0, 2, true,  A:: R,  1020, "Model Number", "Model Number"}},
 				{   2, RegisterData{  2, 4, true,  A:: R,    {}, "Model Information", "Model Information"}},
@@ -66,6 +68,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{ 29, MotorData {
 			"MX28",
 			{"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"},
+			Layout::V1,
 			{
 				{  0, RegisterData{  0, 2,  true, A:: R,     29, "Model Number", "model number"}},
 				{  2, RegisterData{  2, 1,  true, A:: R,     {}, "Version of Firmware", "Information on the version of firmware"}},
@@ -107,6 +110,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{310, MotorData {
 			"MX64",
 			{"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"},
+			Layout::V1,
 			{
 				{  0, RegisterData{  0, 2,  true, A:: R,    310, "Model Number", "model number"}},
 				{  2, RegisterData{  2, 1,  true, A:: R,     {}, "Version of Firmware", "Information on the version of firmware"}},
@@ -150,6 +154,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{320, MotorData {
 			"MX106",
 			{"MX-106T", "MX-106R"},
+			Layout::V1,
 			{
 				{  0, RegisterData{  0, 2,  true, A:: R,    320, "Model Number", "model number"}},
 				{  2, RegisterData{  2, 1,  true, A:: R,     {}, "Version of Firmware", "Information on the version of firmware"}},
@@ -194,6 +199,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{30, MotorData {
 			"MX28-V2",
 			{"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"},
+			Layout::V2,
 			{
 				{   0, RegisterData{  0, 2, true,  A:: R,    30, "Model Number", "Model Number"}},
 				{   2, RegisterData{  2, 4, true,  A:: R,    {}, "Model Information", "Model Information"}},
@@ -251,6 +257,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{311, MotorData {
 			"MX64-V2",
 			{"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"},
+			Layout::V2,
 			{
 				{   0, RegisterData{  0, 2, true,  A:: R,   311, "Model Number", "Model Number"}},
 				{   2, RegisterData{  2, 4, true,  A:: R,    {}, "Model Information", "Model Information"}},
@@ -309,6 +316,7 @@ auto getMotorDataBase() -> std::map<int, MotorData> const& {
 		{321, MotorData {
 			"MX106-V2",
 			{"MX-106T-V2", "MX-106R-V2"},
+			Layout::V2,
 			{
 				{   0, RegisterData{  0, 2, true,  A:: R,   321, "Model Number", "Model Number"}},
 				{   2, RegisterData{  2, 4, true,  A:: R,    {}, "Model Information", "Model Information"}},

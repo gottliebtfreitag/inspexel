@@ -34,8 +34,20 @@ inline auto to_string(RegisterData::Access access) -> std::string {
 struct MotorData {
 	std::string                     shortName;
 	std::vector<std::string>        motorNames;
+
+	enum class Layout { V1, V2 };
+	Layout layout;
 	std::map<uint32_t, RegisterData> registerData;
 };
+
+inline auto to_string(MotorData::Layout layout) -> std::string {
+	switch(layout) {
+	case MotorData::Layout::V1: return "V1";
+	case MotorData::Layout::V2: return "V2";
+	}
+	throw std::runtime_error("unknown layout");
+}
+
 
 [[nodiscard]] auto getMotorDataBase() -> std::map<int, MotorData> const&;
 [[nodiscard]] inline auto getMotorDataBase(std::string const& _name) -> MotorData const& {
