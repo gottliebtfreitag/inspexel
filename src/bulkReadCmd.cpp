@@ -60,8 +60,7 @@ void runBulkRead() {
 		if (response.size() != request.size()) {
 			failures += 1;
 		}
-		for (auto const& [id, data] : response) {
-			auto const& [baseRegister, rxBuf] = data;
+		for (auto const& [id, baseRegister, rxBuf] : response) {
 			std::cout << "motor " << int(id) << "\n";;
 			std::optional<std::tuple<int, std::string>> modelType;
 			if (not mIDs.empty()) {

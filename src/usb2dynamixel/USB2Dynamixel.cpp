@@ -48,7 +48,7 @@ auto USB2Dynamixel::read(MotorID motor, int baseRegister, uint8_t length, Timeou
 	return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
 }
 
-auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::map<MotorID, std::tuple<int, Parameter>> {
+auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, Parameter>> {
 	auto g = std::lock_guard(mMutex);
 	std::vector<std::byte> txBuf;
 	txBuf.reserve(motors.size()*3+1);
@@ -61,14 +61,15 @@ auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> con
 
 	m_pimpl->writePacket(BroadcastID, Instruction::BULK_READ, txBuf);
 
-	std::map<MotorID, std::tuple<int, Parameter>> resMap;
+	std::vector<std::tuple<MotorID, int, Parameter>> resList;
 	for (auto const& [id, baseRegister, length] : motors) {
 		auto const& [timeoutFlag, motorID, rxBuf] = m_pimpl->readPacket(6 + length, timeout);
-		if (not timeoutFlag and motorID != MotorIDInvalid) {
-			resMap[motorID] = std::make_tuple(baseRegister, rxBuf);
+		if (timeoutFlag or motorID == MotorIDInvalid or motorID != id) {
+			break;
 		}
+		resList.push_back(std::make_tuple(id, baseRegister, rxBuf));
 	}
-	return resMap;
+	return resList;
 }
 
 void USB2Dynamixel::write(MotorID motor, Parameter const& txBuf) {
