@@ -62,7 +62,7 @@ void parseArguments(int argc, char const* const* argv) {
 				try {
 					t->second->parse(arguments);
 				} catch (parameter::parsing::detail::ParseError const& error) {
-					throw std::invalid_argument("cannot parse arguments for \"" + argName + "\"");
+					throw std::invalid_argument("cannot parse arguments for \"" + argName + "\" - " + error.what());
 				}
 			}
 		}
