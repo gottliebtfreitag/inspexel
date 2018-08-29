@@ -44,6 +44,9 @@ auto USB2Dynamixel::read(MotorID motor, int baseRegister, uint8_t length, Timeou
 	auto g = std::lock_guard(mMutex);
 	m_pimpl->writePacket(motor, Instruction::READ, {std::byte(baseRegister), std::byte{length}});
 	auto [timeoutFlag, motorID, rxBuf] = m_pimpl->readPacket(6+length, timeout);
+	if (timeoutFlag) {
+		motorID = MotorIDInvalid;
+	}
 
 	return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
 }

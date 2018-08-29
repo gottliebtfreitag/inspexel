@@ -14,6 +14,8 @@
 
 #include "Layout.h"
 
+#include <iostream>
+
 namespace dynamixel {
 
 struct USB2Dynamixel {
@@ -39,16 +41,14 @@ private:
 
 template <auto baseRegister, size_t length>
 [[nodiscard]] auto read(USB2Dynamixel& dyn, MotorID motor, USB2Dynamixel::Timeout timeout) -> std::tuple<bool, MotorID, Layout<baseRegister, size_t(length)>> {
-	auto [valid, motorID, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
-	using RType = Layout<baseRegister, size_t(length)>;
+	using RType = Layout<baseRegister, length>;
 	static_assert(length == sizeof(RType));
-	assert(rxBuf.size() == size_t(length));
-	if (not valid) {
-		return {false, motorID, {}};
+
+	auto [timeoutFlag, motorID, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
+	if (timeoutFlag) {
+		return std::make_tuple(true, MotorIDInvalid, RType{});
 	}
-	RType layout;
-	memcpy(&layout, rxBuf.data(), length);
-	return {true, motorID, layout};
+	return std::make_tuple(false, motorID, RType(rxBuf));
 }
 
 template <auto baseRegister, size_t length, typename ...Extras>
@@ -63,10 +63,7 @@ template <auto baseRegister, size_t length, typename ...Extras>
 	std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> response;
 	auto iter = begin(motors);
 	for (auto const& [id, _reg, params] : list) {
-		response.push_back(std::tuple_cat(*iter, std::make_tuple(Layout<baseRegister, length>{})));
-		assert(params.size() == length);
-		static_assert(length == sizeof(Layout<baseRegister, length>));
-		memcpy(&std::get<1>(response.back()), params.data(), length);
+		response.push_back(std::tuple_cat(*iter, std::make_tuple(Layout<baseRegister, length>{params})));
 		++iter;
 	}
 	return response;

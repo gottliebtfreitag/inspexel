@@ -63,10 +63,11 @@ struct ProtocolV1 : public ProtocolBase {
 		auto motorID = MotorIDInvalid;
 		if (not valid) {
 			flushRead(mPort);
-			rxBuf = {};
+			rxBuf.clear();
 		} else {
 			motorID = MotorID(rxBuf[2]);
-			rxBuf = {std::next(begin(rxBuf), 5), std::next(begin(rxBuf), rxBuf.size()-1)};
+			rxBuf.erase(rxBuf.begin(), std::next(rxBuf.begin(), 5));
+			rxBuf.pop_back();
 		}
 
 		return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
