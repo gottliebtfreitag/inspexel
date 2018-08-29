@@ -37,22 +37,33 @@ void runSetValue();
 auto setAngleCmd = parameter::Command{"set_register", "set registers of a motor", runSetValue};
 auto reg         = setAngleCmd.Parameter<int>(0, "register", "register to write to");
 auto values      = setAngleCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
+auto ids         = setAngleCmd.Parameter<std::vector<int>>({}, "ids", "use this if you want to set multiple devices at once");
 
 void runSetValue() {
-	if (not id.isSpecified()) throw std::runtime_error("need to specify the target id!");
+	if (not id.isSpecified() and not ids.isSpecified()) throw std::runtime_error("need to specify the target id!");
 	if (not reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
 	if (not values.isSpecified()) throw std::runtime_error("values to be written to the register have to be specified!");
 
-	std::cout << "set register " << reg << " of motor " << id << " to";
-	for (uint8_t v : std::vector<uint8_t>(values)) {
-		std::cout << " " << int(v);
+	auto f = [&](int id) {
+		std::cout << "set register " << reg << " of motor " << id << " to";
+		for (uint8_t v : std::vector<uint8_t>(values)) {
+			std::cout << " " << int(v);
+		}
+		std::cout << "\n";
+		dynamixel::Parameter txBuf {std::byte(int(reg))};
+		for (auto x : values.get()) {
+			txBuf.push_back(std::byte{x});
+		}
+		dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, txBuf);
+	};
+	if (id.isSpecified()) {
+		f(id);
 	}
-	std::cout << "\n";
-	dynamixel::Parameter txBuf {std::byte(int(reg))};
-	for (auto x : values.get()) {
-		txBuf.push_back(std::byte{x});
+	if (ids.isSpecified()) {
+		for (auto id : ids.get()) {
+			f(id);
+		}
 	}
-	dynamixel::USB2Dynamixel(baudrate, {device.get()}).write(id, txBuf);
 }
 
 void runGetValue();
