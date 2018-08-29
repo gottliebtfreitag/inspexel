@@ -83,7 +83,7 @@ void USB2Dynamixel::write(MotorID motor, Parameter const& txBuf) {
 void USB2Dynamixel::sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister) {
 	auto g = std::lock_guard(mMutex);
 
-	if (motorParams.empty() > 0) {
+	if (motorParams.empty()) {
 		throw std::runtime_error("sync_write: motorParams can't be empty");
 	}
 
