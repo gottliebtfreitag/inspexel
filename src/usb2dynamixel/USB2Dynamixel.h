@@ -53,6 +53,8 @@ template <auto baseRegister, size_t length>
 
 template <auto baseRegister, size_t length, typename ...Extras>
 [[nodiscard]] auto bulk_read(USB2Dynamixel& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, USB2Dynamixel::Timeout timeout) -> std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> {
+	if (motors.empty()) return {};
+
 	std::vector<std::tuple<MotorID, int, uint8_t>> request;
 	for (auto data : motors) {
 		auto id = std::get<0>(data);
@@ -69,9 +71,10 @@ template <auto baseRegister, size_t length, typename ...Extras>
 	return response;
 }
 
-
 template <template<auto, size_t> class Layout, auto baseRegister, size_t Length>
 void sync_write(USB2Dynamixel& dyn, std::map<MotorID, Layout<baseRegister, Length>> const& params) {
+	if (params.empty()) return;
+
 	std::map<MotorID, Parameter> motorParams;
 	for (auto const& [id, layout] : params) {
 		auto& buffer = motorParams[id];
@@ -81,11 +84,13 @@ void sync_write(USB2Dynamixel& dyn, std::map<MotorID, Layout<baseRegister, Lengt
 	dyn.sync_write(motorParams, int(baseRegister));
 }
 
-template <typename Layout>
-void sync_sync_write(USB2Dynamixel& dyn, std::set<MotorID> const& motors, Layout const& layout) {
+template <typename Layout, typename ...Extras>
+void sync_sync_write(USB2Dynamixel& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, Layout const& layout) {
+	if (motors.empty()) return;
+	
 	std::map<MotorID, Layout> motorParams;
 	for (auto m : motors) {
-		motorParams[m] = layout;
+		motorParams[std::get<0>(m)] = layout;
 	}
 	sync_write(dyn, motorParams);
 }
