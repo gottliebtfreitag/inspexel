@@ -71,6 +71,14 @@ template <auto baseRegister, size_t length, typename ...Extras>
 	return response;
 }
 
+template <auto baseRegister, size_t length>
+void write(USB2Dynamixel& dyn, MotorID motor, Layout<baseRegister, length> layout) {
+	std::vector<std::byte> txBuf(sizeof(layout));
+	memcpy(txBuf.data(), &layout, sizeof(layout));
+	dyn.write(motor, txBuf);
+}
+
+
 template <template<auto, size_t> class Layout, auto baseRegister, size_t Length>
 void sync_write(USB2Dynamixel& dyn, std::map<MotorID, Layout<baseRegister, Length>> const& params) {
 	if (params.empty()) return;

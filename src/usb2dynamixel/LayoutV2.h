@@ -171,7 +171,7 @@ struct Layout : LayoutPart<type> , Layout<type+sizeof(LayoutPart<type>), L-sizeo
 	}
 
 	template <typename ...Args>
-	explicit Layout(PartType head, Args...next)
+	Layout(PartType head, Args...next)
 		: LayoutPart<type>{head}
 		, SuperClass{next...}
 	{}
