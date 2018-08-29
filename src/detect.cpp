@@ -2,103 +2,212 @@
 #include "usb2dynamixel/USB2Dynamixel.h"
 #include "usb2dynamixel/MotorMetaInfo.h"
 
+#include <algorithm>
+#include <numeric>
+
 #define TERM_RED                        "\033[31m"
 #define TERM_GREEN                      "\033[32m"
 #define TERM_RESET                      "\033[0m"
 
-namespace
-{
+namespace {
 auto device    = parameter::Parameter<std::string>("/dev/ttyUSB0", "device", "the usb2dynamixel device");
 auto id        = parameter::Parameter<int>(0, "id", "the target Id");
 auto baudrate  = parameter::Parameter<int>(1000000, "baudrate", "baudrate to use");
 
 void runDetect();
-auto detectCmd = parameter::Command{"detect", "detect all dynamixel motors", runDetect};
-auto baudrates = detectCmd.Parameter<std::set<int>>({57142}, "other_baudrates", "more baudrates to test");
-auto timeout   = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
-auto readAll   = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
+auto detectCmd  = parameter::Command{"detect", "detect all dynamixel motors", runDetect};
+auto baudrates  = detectCmd.Parameter<std::set<int>>({}, "other_baudrates", "more baudrates to test");
+auto optTimeout = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
+auto readAll    = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
+auto ids        = detectCmd.Parameter<std::set<int>>({}, "ids", "the target Id");
+auto optCont    = detectCmd.Flag("continues", "runs bulk read repeatably after detecting motors");
 
-void detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn) {
+
+using namespace dynamixel;
+
+auto detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<int, uint16_t> {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 2, std::chrono::microseconds{timeout});
+	auto [timeoutFlag, motorID, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
 	if (timeoutFlag) {
-		return;
+		return std::make_tuple(-1, 0);
 	}
-	if (not valid) {
+	if (motorID == MotorIDInvalid) {
 		std::cout << "something answered when pinging " << int(motor) << " but answer was not valid\n";
-		return;
+		return std::make_tuple(-1, 0);
 	}
-	uint32_t modelNumber = uint32_t(rxBuf.at(0)) + (uint32_t(rxBuf.at(1)) << 8);
-	auto modelPtr = dynamixel::getMotorDataBase(modelNumber);
+	auto modelPtr = meta::getMotorInfo(layout.model_number);
+	if (modelPtr) {
+		std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << layout.model_number << ") Layout " << to_string(modelPtr->layout) << "\n";
+		if (modelPtr->layout == meta::LayoutType::V1) {
+			return std::make_tuple(1, layout.model_number);
+		} else {
+			return std::make_tuple(2, layout.model_number);
+		}
+	}
 
-	if (readAll) {
-		if (modelPtr) {
-			auto lastEntry = std::next(modelPtr->registerData.begin(), modelPtr->registerData.size() -1);
-			auto v1 = lastEntry->second.baseRegister;
-			auto v2 = lastEntry->second.length;
+	std::cout << int(motor) << " unknown model (" << layout.model_number << ")\n";
+	return std::make_tuple(0, layout.model_number);
+}
 
-			auto length = v1 + v2;
-			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, length, std::chrono::microseconds{timeout});
-			std::cout << "\n" << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ") Layout " << to_string(modelPtr->layout) << "\n";
-			if (not valid) {
-				std::cout << "couldn't read detailed infos\n";
-				return;
-			}
+auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple<MotorID, uint16_t>> const& motors, std::chrono::microseconds timeout, bool _print) -> std::tuple<int, int> {
+	int expectedTransactions = 1 + motors.size();
+	int successfullTransactions = 0;
 
-			std::cout << "address (length): value (initial value) - RW - name - description\n";
-			dynamixel::visitBuffer(rxBuf, std::nullopt, dynamixel::overloaded{
-				[](dynamixel::RegisterData const& reg, auto&& x) {
-					std::string mem = reg.romArea?"ROM":"RAM";
-					std::string initValue = "-";
-					if (reg.initialValue) {
-						initValue = std::to_string(reg.initialValue.value());
-					}
-					std::cout << mem << " " << std::setw(3) << reg.baseRegister << "(" << reg.length << ") : ";
-					if (reg.initialValue) {
-						if (reg.initialValue.value() != x) {
-							std::cout << TERM_RED;
+	std::vector<std::tuple<MotorID, int, uint8_t>> request;
+	for (auto const [id, modelNumber] : motors) {
+		request.push_back(std::make_tuple(id, int(v1::Register::MODEL_NUMBER), 74));
+	}
+	auto response = usb2dyn.bulk_read(request, timeout);
+
+	if (not response.empty()) {
+		successfullTransactions = 1 + response.size();
+	}
+	if (not _print) {
+		return {successfullTransactions, expectedTransactions};
+	}
+
+	if (response.size() != motors.size()) {
+		std::cout << "couldn't retrieve detailed information from all motors\n";
+	}
+	for (auto const& [motorID, baseRegister, rxBuf] : response) {
+		std::cout << "found motor " << static_cast<int>(motorID) << "\n";
+		std::cout << "registers:\n";
+		for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
+			std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
+				std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf.at(idx)) << std::dec << "\n";
+		}
+		std::cout << "\n";
+	}
+	std::cout << "-----------\n";
+
+	return {successfullTransactions, expectedTransactions};
+}
+
+template <meta::LayoutType LT, typename Layout>
+auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple<MotorID, uint16_t>> const& motors, std::chrono::microseconds timeout, bool _print) -> std::tuple<int, int> {
+	int expectedTransactions = 1 + motors.size();
+	int successfullTransactions = 0;
+
+	auto response = bulk_read<Layout::BaseRegister, Layout::Length>(usb2dyn, motors, timeout);
+	if (not response.empty()) {
+		successfullTransactions = 1 + response.size();
+	}
+	if (not _print) {
+		return {successfullTransactions, expectedTransactions};
+	}
+
+	if (response.size() != motors.size()) {
+		std::cout << "couldn't retrieve detailed information from all motors\n";
+	}
+
+	std::cout << "             ";
+	for (auto const& [id, modelNumber, layout] : response) {
+		auto motorInfoPtr = meta::getMotorInfo(modelNumber);
+		std::cout << std::setw(14) << motorInfoPtr->shortName;
+	}
+	std::cout << "\n";
+
+	auto infos = meta::getLayoutInfos<LT>();
+	for (auto const& [reg, info] : infos) {
+		std::cout << "0x" << std::hex << std::setfill('0') << std::setw(2) << int(reg) << std::setfill(' ');
+		std::cout << std::dec << " " << int(info.length);
+		std::cout << " " << std::setw(2) << to_string(info.access);
+		std::cout << " " << (info.romArea?"ROM":"RAM");
+
+		for (auto const& [id, modelNumber, layout] : response) {
+			visit([reg=reg, modelNumber=modelNumber](auto _reg, auto&& value) {
+				if (_reg != reg) return;
+				auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);
+				auto iter = defaults.find(reg);
+
+				std::stringstream ss;
+				int extra = 0;
+				if (iter == defaults.end()) {
+					ss << std::boolalpha;
+					ss << "-na-";
+				} else {
+					if (iter->second) {
+						extra = 9;
+						if (int(value) != int(iter->second.value())) {
+							ss << " " TERM_RED << int(value) << TERM_RESET "(";
 						} else {
-							std::cout << TERM_GREEN;
+							ss << " " << TERM_GREEN << int(value) << TERM_RESET "(";
 						}
+						ss << int(iter->second.value());
+					} else {
+						ss << " " << int(value) << "(";
+						ss << "-";
 					}
-					std::cout << std::setw(5) << int(x) << TERM_RESET;
-
-
-					std::cout << " (" << std::setw(5) << initValue << ") - " << std::setw(2) << to_string(reg.access) << " - " << reg.description << " - " << reg.dataName << "\n";
+					ss << ")";
 				}
-			});
-		} else {
-			std::cout << " unknown model (" << modelNumber << ") going to read first 74 bytes\n";
-			auto [timeoutFlag, valid, rxBuf] = usb2dyn.read(motor, 0, 74, std::chrono::microseconds{timeout});
-			std::cout << "found motor " << static_cast<int>(motor) << "\n";
-
-			std::cout << "registers:\n";
-			for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
-				std::cout << "  " << std::setw(3) << std::setfill(' ') << std::dec << idx << ": " <<
-					std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(rxBuf.at(idx)) << "\n";
-			}
-			std::cout << "\n";
+				std::cout << std::setw(14+extra) << ss.str();
+			}, layout);
 		}
-	} else {
-		if (modelPtr) {
-			std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << modelNumber << ") Layout " << to_string(modelPtr->layout) << "\n";
-		} else {
-			std::cout << int(motor) << " unknown model (" << modelNumber << ")\n";
-		}
+		std::cout << std::setw(30) << info.name << " - " << info.description << "\n";
 	}
+	std::cout << "-----------\n";
+	return {successfullTransactions, expectedTransactions};
 }
 
 void runDetect() {
 	baudrates.get().emplace(baudrate);
+	auto timeout = std::chrono::microseconds{optTimeout};
 	for (auto baudrate : baudrates.get()) {
 		std::cout << "trying baudrate: " << baudrate << "\n";
 		auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, {device.get()});
-		if (id != 0) {
-			detectMotor(id, usb2dyn);
-		} else {
-			for (int motor{0}; motor < 0xFD; ++motor) {
-				detectMotor(motor, usb2dyn);
+
+		// generate range to check
+		std::vector<int> range(0xFD);
+		std::iota(begin(range), end(range), 1);
+		if (id.isSpecified()) {
+			range = {MotorID(id)};
+		} else  if (ids.isSpecified()) {
+			range.clear();
+			for (auto x : ids.get()) {
+				range.push_back(x);
 			}
+		}
+
+		// ping all motors
+		std::map<int, std::vector<std::tuple<MotorID, uint16_t>>> motors;
+		for (auto motor : range) {
+			auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
+			motors[layout].push_back(std::make_tuple(motor, modelNumber));
+		}
+		std::cout << "-----------\n";
+		// read detailed infos if requested
+		if (readAll or optCont) {
+			static int count = 0;
+			static int successful = 0;
+			static int total = 0;
+			auto start = std::chrono::high_resolution_clock::now();
+			do {
+				count += 1;
+				bool print = (count % 100) == 0 or readAll;
+				if (not motors[1].empty()) {
+					auto [suc, tot] = readDetailedInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, motors[1], timeout, print);
+					successful += suc;
+					total += tot;
+				}
+				if (not motors[2].empty()) {
+					auto [suc, tot] = readDetailedInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, motors[2], timeout, print);
+					successful += suc;
+					total += tot;
+				}
+				if (not motors[0].empty()) {
+					auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[0], timeout, print);
+					successful += suc;
+					total += tot;
+				}
+				if (print) {
+					std::cout << successful << "/" << total << " successful/total transactions - ";
+					std::cout << count << " loops\n";
+					auto now = std::chrono::high_resolution_clock::now();
+					auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+					std::cout << double(successful) / diff.count() * 1000. << "/" << double(total) / diff.count() * 1000. << " trans per second -        ";
+					std::cout << double(count) / diff.count() * 1000. << " loop per second" << "\n";
+				}
+			} while (optCont);
 		}
 	}
 }
