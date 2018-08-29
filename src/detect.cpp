@@ -16,7 +16,7 @@ auto baudrate  = parameter::Parameter<int>(1000000, "baudrate", "baudrate to use
 
 void runDetect();
 auto detectCmd  = parameter::Command{"detect", "detect all dynamixel motors", runDetect};
-auto baudrates  = detectCmd.Parameter<std::set<int>>({}, "other_baudrates", "more baudrates to test");
+auto baudrates  = detectCmd.Parameter<std::set<int>>({57142}, "other_baudrates", "more baudrates to test");
 auto optTimeout = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
 auto readAll    = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
 auto ids        = detectCmd.Parameter<std::set<int>>({}, "ids", "the target Id");
@@ -174,9 +174,10 @@ void runDetect() {
 			auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
 			motors[layout].push_back(std::make_tuple(motor, modelNumber));
 		}
+		motors.erase(-1);
 		std::cout << "-----------\n";
 		// read detailed infos if requested
-		if (readAll or optCont) {
+		if ((readAll or optCont) and not motors.empty()) {
 			static int count = 0;
 			static int successful = 0;
 			static int total = 0;
