@@ -250,6 +250,8 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 		m30[v2::Register::VELOCITY_LIMIT] = 380;
 		m30[v2::Register::POSITION_D_GAIN] = 850;
 
+		data[1000] = data[1020]; // XH430
+		data[1000][v2::Register::MODEL_NUMBER] = 1000;
 	}
 	return data;
 };
@@ -263,6 +265,7 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{ 311, LayoutType::V2, "MX64-V2",    {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}},
 		{ 321, LayoutType::V2, "MX106-V2",   {"MX-106T-V2", "MX-106R-V2"}},
 		{1020, LayoutType::V2, "XM430-W350", {"XM430-W350-T", "XM430-W350-R"}},
+		{1000, LayoutType::V2, "XH430-W350", {"XH430-W350-T", "XH430-W350-R"}},
 	};
 	return data;
 }
