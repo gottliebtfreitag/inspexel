@@ -182,9 +182,12 @@ void runDetect() {
 			static int successful = 0;
 			static int total = 0;
 			auto start = std::chrono::high_resolution_clock::now();
+			auto lastPrint = start;
 			do {
 				count += 1;
-				bool print = (count % 100) == 0 or readAll;
+				auto now = std::chrono::high_resolution_clock::now();
+				auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPrint);
+				bool print = (diff.count() > 100) or readAll;
 				if (not motors[1].empty()) {
 					auto [suc, tot] = readDetailedInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, motors[1], timeout, print);
 					successful += suc;
@@ -201,6 +204,7 @@ void runDetect() {
 					total += tot;
 				}
 				if (print) {
+					lastPrint = now;
 					std::cout << successful << "/" << total << " successful/total transactions - ";
 					std::cout << count << " loops\n";
 					auto now = std::chrono::high_resolution_clock::now();
