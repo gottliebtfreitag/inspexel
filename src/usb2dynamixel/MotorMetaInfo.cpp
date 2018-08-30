@@ -229,29 +229,42 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 	if (firstRun) {
 		firstRun = false;
 
-		auto& m321 = data[321]; // mx106-v2
-		m321 = data.at(1020);
-		m321[v2::Register::MODEL_NUMBER] = 321;
-		m321[v2::Register::CURRENT_LIMIT] = 2047;
-		m321[v2::Register::VELOCITY_LIMIT] = 360;
-		m321[v2::Register::POSITION_P_GAIN] = 850;
+		{ // mx 106-v2
 
-		auto& m311 = data[311]; // mx64-v2
-		m311 = data.at(1020);
-		m311[v2::Register::MODEL_NUMBER] = 311;
-		m311[v2::Register::CURRENT_LIMIT] = 1941;
-		m311[v2::Register::VELOCITY_LIMIT] = 435;
-		m311[v2::Register::POSITION_P_GAIN] = 850;
+			auto& m = data[321];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 321;
+			m[v2::Register::CURRENT_LIMIT] = 2047;
+			m[v2::Register::VELOCITY_LIMIT] = 360;
+			m[v2::Register::POSITION_P_GAIN] = 850;
+		}
 
-		auto& m30 = data[30]; // mx28-v2
-		m30 = data.at(1020);
-		m30[v2::Register::MODEL_NUMBER] = 30;
-		m30.erase(v2::Register::CURRENT_LIMIT);
-		m30[v2::Register::VELOCITY_LIMIT] = 380;
-		m30[v2::Register::POSITION_D_GAIN] = 850;
+		{ // mx64-v2
+			auto& m = data[311];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 311;
+			m[v2::Register::CURRENT_LIMIT] = 1941;
+			m[v2::Register::VELOCITY_LIMIT] = 435;
+			m[v2::Register::POSITION_P_GAIN] = 850;
+		}
 
-		data[1000] = data[1020]; // XH430
-		data[1000][v2::Register::MODEL_NUMBER] = 1000;
+		{ // mx28-v2
+			auto& m = data[30];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 30;
+			m.erase(v2::Register::CURRENT_LIMIT);
+			m[v2::Register::VELOCITY_LIMIT] = 380;
+			m[v2::Register::POSITION_P_GAIN] = 850;
+		}
+
+		{ // xh430-w350
+			auto& m = data[1000];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1000;
+			m[v2::Register::CURRENT_LIMIT] = 648;
+			m[v2::Register::VELOCITY_LIMIT] = 280;
+			m[v2::Register::POSITION_P_GAIN] = 900;
+		}
 	}
 	return data;
 };
