@@ -73,8 +73,9 @@ template <auto baseRegister, size_t length, typename ...Extras>
 
 template <auto baseRegister, size_t length>
 void write(USB2Dynamixel& dyn, MotorID motor, Layout<baseRegister, length> layout) {
-	std::vector<std::byte> txBuf(sizeof(layout));
-	memcpy(txBuf.data(), &layout, sizeof(layout));
+	std::vector<std::byte> txBuf(sizeof(layout)+1);
+	txBuf[0] = std::byte(baseRegister);
+	memcpy(txBuf.data()+1, &layout, sizeof(layout));
 	dyn.write(motor, txBuf);
 }
 
