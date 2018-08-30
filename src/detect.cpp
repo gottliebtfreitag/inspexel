@@ -158,7 +158,7 @@ void runDetect() {
 
 		// generate range to check
 		std::vector<int> range(0xFD);
-		std::iota(begin(range), end(range), 1);
+		std::iota(begin(range), end(range), 0);
 		if (id.isSpecified()) {
 			range = {MotorID(id)};
 		} else  if (ids.isSpecified()) {
