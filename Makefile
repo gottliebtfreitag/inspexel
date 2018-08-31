@@ -10,7 +10,7 @@ GDB     ?= $(CROSS_COMPILE_PREFIX)gdb
 OBJ_CPY ?= $(CROSS_COMPILE_PREFIX)objcopy
 
 SRC_FOLDERS = src/
-LIBS = c pthread
+LIBS = c pthread stdc++fs
 LIB_PATHS =
 INCLUDES = src/ \
 

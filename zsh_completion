@@ -1,11 +1,11 @@
 _dynunmixer ()
 {
 	globalParams=$(./dynunmixer --bash_completion | tr ' ' '\n')
-	globalCommands=$(echo ${globalParams} | grep "^[a-zA-Z]")
+	globalCommands=$(echo ${globalParams} | grep "^[^-][^-]")
 	globalOptions=$(echo ${globalParams} | grep "^--")
 
 	localParams=$(./dynunmixer ${words[@]:1} --bash_completion | tr ' ' '\n')
-	localCommands=$(echo ${localParams} | grep "^[a-zA-Z]")
+	localCommands=$(echo ${localParams} | grep "^[^-][^-]")
 	localOptions=$(echo ${localParams} | grep "^--")
 
 	localCommands=$(comm -23  <(echo ${localCommands} |  sort ) <(echo ${globalCommands} | sort))

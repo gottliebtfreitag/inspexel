@@ -1,4 +1,3 @@
-#include "parameter/Parameter.h"
 #include "usb2dynamixel/USB2Dynamixel.h"
 #include "usb2dynamixel/MotorMetaInfo.h"
 #include "globalOptions.h"
