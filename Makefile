@@ -1,4 +1,4 @@
-TARGET = mx_calib
+TARGET = dynunmixer
 
 # compiler
 CROSS_COMPILE_PREFIX = 
@@ -80,16 +80,16 @@ endif
 
 .phony: all clean flash
 
-all: $(TARGET).elf
+all: $(TARGET)
 
 dbg: 
 	@ echo $(CPP_FILES)
 
 clean:
-	$(SILENT) rm -rf $(OBJ_DIR) $(TARGET).elf $(TARGET).map $(TARGET).bin
+	$(SILENT) rm -rf $(OBJ_DIR) $(TARGET) $(TARGET).map $(TARGET).bin
 
 
-$(TARGET).elf: $(CPP_OBJ_FILES) $(C_OBJ_FILES)
+$(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)
 	$(SILENT) $(CXX) -o $@ $^ $(LINKERFLAGS) $(LIB_PATH_CMD) $(LIB_CMD)
 	$(SILENT) $(SIZE) $@

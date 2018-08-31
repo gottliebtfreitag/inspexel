@@ -1,7 +1,7 @@
-_GetMXCalib ()
+_GetDynUnmixer ()
 {  
   HINTS=$(${COMP_LINE[0]} ${COMP_WORDS[@]:1} --bash_completion)
   COMPREPLY=( $( compgen -W '${HINTS}' -- "${COMP_WORDS[COMP_CWORD]}"))
   return 0
 }
-complete -F _GetMXCalib ./mx_calib.elf
+complete -F _GetDynUnmixer ./dynunmixer
