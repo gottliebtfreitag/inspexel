@@ -1,10 +1,10 @@
-_mx_calib ()
+_dynunmixer ()
 {
-	globalParams=$(./mx_calib.elf --bash_completion | tr ' ' '\n')
+	globalParams=$(./dynunmixer --bash_completion | tr ' ' '\n')
 	globalCommands=$(echo ${globalParams} | grep "^[a-zA-Z]")
 	globalOptions=$(echo ${globalParams} | grep "^--")
 
-	localParams=$(./mx_calib.elf ${words[@]:1} --bash_completion | tr ' ' '\n')
+	localParams=$(./dynunmixer ${words[@]:1} --bash_completion | tr ' ' '\n')
 	localCommands=$(echo ${localParams} | grep "^[a-zA-Z]")
 	localOptions=$(echo ${localParams} | grep "^--")
 
@@ -16,4 +16,4 @@ _mx_calib ()
 	compadd -J "G1" -X "%UCommands%u" -- $(echo ${globalCommands} | tr '\n' ' ')
 	compadd -J "G2" -X "%UGlobal Options%u" -- $(echo ${globalOptions} | tr '\n' ' ')
 }
-compdef _mx_calib -P *mx_calib.elf -N
+compdef _dynunmixer -P *dynunmixer -N
