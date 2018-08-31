@@ -3,8 +3,8 @@ TARGET = dynunmixer
 # compiler
 CROSS_COMPILE_PREFIX = 
 CC      ?= $(CROSS_COMPILE_PREFIX)gcc
-CXX     ?= $(CROSS_COMPILE_PREFIX)gcc++
-LD      ?= $(CROSS_COMPILE_PREFIX)gcc++
+CXX     ?= $(CROSS_COMPILE_PREFIX)g++
+LD      ?= $(CROSS_COMPILE_PREFIX)g++
 SIZE    ?= $(CROSS_COMPILE_PREFIX)size
 GDB     ?= $(CROSS_COMPILE_PREFIX)gdb
 OBJ_CPY ?= $(CROSS_COMPILE_PREFIX)objcopy
