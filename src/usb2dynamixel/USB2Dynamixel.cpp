@@ -36,22 +36,22 @@ bool USB2Dynamixel::ping(MotorID motor, Timeout timeout)
 {
 	auto g = std::lock_guard(mMutex);
 	m_pimpl->writePacket(motor, Instruction::PING, {});
-	auto [timeoutFlag, motorID, rxBuf] = m_pimpl->readPacket(6, timeout);
+	auto [timeoutFlag, motorID, errorCode, rxBuf] = m_pimpl->readPacket(6, timeout);
 	return not timeoutFlag and motorID != MotorIDInvalid;
 }
 
-auto USB2Dynamixel::read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, Parameter> {
+auto USB2Dynamixel::read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
 	auto g = std::lock_guard(mMutex);
 	m_pimpl->writePacket(motor, Instruction::READ, {std::byte(baseRegister), std::byte{length}});
-	auto [timeoutFlag, motorID, rxBuf] = m_pimpl->readPacket(6+length, timeout);
+	auto [timeoutFlag, motorID, errorCode, rxBuf] = m_pimpl->readPacket(6+length, timeout);
 	if (timeoutFlag) {
 		motorID = MotorIDInvalid;
 	}
 
-	return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
+	return std::make_tuple(timeoutFlag, motorID, errorCode, std::move(rxBuf));
 }
 
-auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, Parameter>> {
+auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>> {
 	auto g = std::lock_guard(mMutex);
 	std::vector<std::byte> txBuf;
 	txBuf.reserve(motors.size()*3+1);
@@ -64,13 +64,13 @@ auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> con
 
 	m_pimpl->writePacket(BroadcastID, Instruction::BULK_READ, txBuf);
 
-	std::vector<std::tuple<MotorID, int, Parameter>> resList;
+	std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>> resList;
 	for (auto const& [id, baseRegister, length] : motors) {
-		auto const& [timeoutFlag, motorID, rxBuf] = m_pimpl->readPacket(6 + length, timeout);
+		auto const& [timeoutFlag, motorID, errorCode, rxBuf] = m_pimpl->readPacket(6 + length, timeout);
 		if (timeoutFlag or motorID == MotorIDInvalid or motorID != id) {
 			break;
 		}
-		resList.push_back(std::make_tuple(id, baseRegister, rxBuf));
+		resList.push_back(std::make_tuple(id, baseRegister, errorCode, rxBuf));
 	}
 	return resList;
 }

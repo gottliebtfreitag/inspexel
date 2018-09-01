@@ -73,7 +73,7 @@ void runGetValue() {
 	if (not id.isSpecified()) throw std::runtime_error("need to specify the target id!");
 	if (not read_reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
 
-	auto [timeoutFlag, valid, rxBuf] = dynamixel::USB2Dynamixel(baudrate, {device.get()}).read(id, read_reg, count, std::chrono::microseconds{timeout});
+	auto [timeoutFlag, valid, errorCode, rxBuf] = dynamixel::USB2Dynamixel(baudrate, {device.get()}).read(id, read_reg, count, std::chrono::microseconds{timeout});
 	if (valid) {
 		std::cout << "motor " << static_cast<int>(id) << "\n";
 		std::cout << "registers:\n";

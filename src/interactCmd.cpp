@@ -23,7 +23,7 @@ using namespace dynamixel;
 
 auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> int {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
 	if (timeoutFlag or motorID == MotorIDInvalid) {
 		throw std::runtime_error("failed checking model number");
 	}
@@ -42,7 +42,7 @@ auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2d
 
 template <meta::LayoutType LT, typename Layout>
 auto readMotorInfos(dynamixel::USB2Dynamixel& usb2dyn, MotorID motor, std::chrono::microseconds timeout) {
-	auto [timeoutFlag, motorID, layout] = read<Layout::BaseRegister, Layout::Length>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = read<Layout::BaseRegister, Layout::Length>(usb2dyn, motor, timeout);
 
 	if (timeoutFlag or motorID == MotorIDInvalid) {
 		throw std::runtime_error("trouble reading the motor");

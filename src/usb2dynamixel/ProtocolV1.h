@@ -39,17 +39,19 @@ struct ProtocolV1 : public ProtocolBase {
 	/** tries to read up to incomingLength bytes from filedescriptor
 	 *
 	 * return value
-	 *  [timeoutFlag, valid, parameters] = readPacket(...);
+	 *  [timeoutFlag, valid, errorCode, parameters] = readPacket(...);
 	 *
 	 *  timeoutFlag indicates if a timeout has occurred
 	 *  valid       inidcates if parameters form a valid packet
+	 *  errorCode   errorCode flags from the return message
 	 *  paremeters  is a vector with read bytes
 	 */
-	auto readPacket(uint8_t incomingLength, Timeout timeout) const -> std::tuple<bool, MotorID, Parameter> override {
+	auto readPacket(uint8_t incomingLength, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> override {
 		auto startTime = now();
 
 		Parameter rxBuf;
 		rxBuf.reserve(incomingLength);
+		ErrorCode errorCode;
 
 		bool timeoutFlag = false;
 		while (rxBuf.size() < incomingLength and not timeoutFlag) {
@@ -66,12 +68,14 @@ struct ProtocolV1 : public ProtocolBase {
 			rxBuf.clear();
 		} else {
 			motorID = MotorID(rxBuf[2]);
+			errorCode = ErrorCode(rxBuf[4]);
 			rxBuf.erase(rxBuf.begin(), std::next(rxBuf.begin(), 5));
 			rxBuf.pop_back();
 		}
 
-		return std::make_tuple(timeoutFlag, motorID, std::move(rxBuf));
+		return std::make_tuple(timeoutFlag, motorID, errorCode, std::move(rxBuf));
 	}
+
 
 	bool validatePacket(Parameter const& rxBuf) const {
 		bool success = 0xff == uint8_t(rxBuf[0]);

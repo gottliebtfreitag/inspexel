@@ -24,7 +24,7 @@ using namespace dynamixel;
 
 auto detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<int, uint16_t> {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
 	if (timeoutFlag) {
 		return std::make_tuple(-1, 0);
 	}
@@ -66,7 +66,7 @@ auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector
 	if (response.size() != motors.size()) {
 		std::cout << "couldn't retrieve detailed information from all motors\n";
 	}
-	for (auto const& [motorID, baseRegister, rxBuf] : response) {
+	for (auto const& [motorID, baseRegister, errorCode, rxBuf] : response) {
 		std::cout << "found motor " << static_cast<int>(motorID) << "\n";
 		std::cout << "registers:\n";
 		for (size_t idx{0}; idx < rxBuf.size(); ++idx) {
@@ -98,7 +98,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 	}
 
 	std::cout << "             ";
-	for (auto const& [id, modelNumber, layout] : response) {
+	for (auto const& [id, modelNumber, errorCode, layout] : response) {
 		auto motorInfoPtr = meta::getMotorInfo(modelNumber);
 		std::cout << std::setw(14) << motorInfoPtr->shortName;
 	}
@@ -111,7 +111,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 		std::cout << " " << std::setw(2) << to_string(info.access);
 		std::cout << " " << (info.romArea?"ROM":"RAM");
 
-		for (auto const& [id, modelNumber, layout] : response) {
+		for (auto const& [id, modelNumber, errorCode, layout] : response) {
 			visit([reg=reg, modelNumber=modelNumber](auto _reg, auto&& value) {
 				if (_reg != reg) return;
 				auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);

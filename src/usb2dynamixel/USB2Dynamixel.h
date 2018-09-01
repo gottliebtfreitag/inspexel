@@ -25,8 +25,8 @@ struct USB2Dynamixel {
 	~USB2Dynamixel();
 
 	[[nodiscard]] bool ping(MotorID motor, Timeout timeout);
-	[[nodiscard]] auto read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, Parameter>;
-	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, Parameter>>;
+	[[nodiscard]] auto read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) -> std::tuple<bool, MotorID, ErrorCode, Parameter>;
+	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>>;
 
 	void write(MotorID motor, Parameter const& txBuf);
 	void sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister);
@@ -40,19 +40,20 @@ private:
 };
 
 template <auto baseRegister, size_t length>
-[[nodiscard]] auto read(USB2Dynamixel& dyn, MotorID motor, USB2Dynamixel::Timeout timeout) -> std::tuple<bool, MotorID, Layout<baseRegister, size_t(length)>> {
+[[nodiscard]] auto read(USB2Dynamixel& dyn, MotorID motor, USB2Dynamixel::Timeout timeout) -> std::tuple<bool, MotorID, ErrorCode, Layout<baseRegister, size_t(length)>> {
 	using RType = Layout<baseRegister, length>;
 	static_assert(length == sizeof(RType));
 
-	auto [timeoutFlag, motorID, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
+	auto [timeoutFlag, motorID, errorCode, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
 	if (timeoutFlag) {
-		return std::make_tuple(true, MotorIDInvalid, RType{});
+		return std::make_tuple(true, MotorIDInvalid, errorCode, RType{});
 	}
-	return std::make_tuple(false, motorID, RType(rxBuf));
+	return std::make_tuple(false, motorID, errorCode, RType(rxBuf));
 }
 
+
 template <auto baseRegister, size_t length, typename ...Extras>
-[[nodiscard]] auto bulk_read(USB2Dynamixel& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, USB2Dynamixel::Timeout timeout) -> std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> {
+[[nodiscard]] auto bulk_read(USB2Dynamixel& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, USB2Dynamixel::Timeout timeout) -> std::vector<std::tuple<MotorID, Extras..., ErrorCode, Layout<baseRegister, length>>> {
 	if (motors.empty()) return {};
 
 	std::vector<std::tuple<MotorID, int, uint8_t>> request;
@@ -62,10 +63,10 @@ template <auto baseRegister, size_t length, typename ...Extras>
 	}
 	auto list = dyn.bulk_read(request, timeout);
 
-	std::vector<std::tuple<MotorID, Extras..., Layout<baseRegister, length>>> response;
+	std::vector<std::tuple<MotorID, Extras..., ErrorCode, Layout<baseRegister, length>>> response;
 	auto iter = begin(motors);
-	for (auto const& [id, _reg, params] : list) {
-		response.push_back(std::tuple_cat(*iter, std::make_tuple(Layout<baseRegister, length>{params})));
+	for (auto const& [id, _reg, errorCode, params] : list) {
+		response.push_back(std::tuple_cat(*iter, std::make_tuple(errorCode, Layout<baseRegister, length>{params})));
 		++iter;
 	}
 	return response;
