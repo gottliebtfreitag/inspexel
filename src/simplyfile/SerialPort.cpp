@@ -1,18 +1,19 @@
 #include "SerialPort.h"
 
-#include <cerrno>
-#include <cstring>
 #include <fcntl.h>
-#include <inttypes.h>
-#include <iostream>
-#include <linux/serial.h>
-#include <linux/types.h>
-#include <stdexcept>
-#include <sys/ioctl.h>
+#include <string.h>        // String function definitions
+#include <unistd.h>        // UNIX standard function definitions
+#include <errno.h>         // Error number definitions
 #include <termios.h>
-#include <unistd.h>
+#include <sys/ioctl.h>
+#include <inttypes.h>
+#include <linux/types.h>
+#include <linux/serial.h>
+#include <iostream>
+#include <stdexcept>
 
-namespace simplyfile {
+namespace simplyfile
+{
 
 namespace {
 
