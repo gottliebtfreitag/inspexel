@@ -47,6 +47,8 @@ template <auto baseRegister, size_t length>
 	auto [timeoutFlag, motorID, errorCode, rxBuf] = dyn.read(motor, int(baseRegister), length, timeout);
 	if (timeoutFlag) {
 		return std::make_tuple(true, MotorIDInvalid, errorCode, RType{});
+	} else if (motorID == MotorIDInvalid) {
+		return std::make_tuple(false, MotorIDInvalid, errorCode, RType{});
 	}
 	return std::make_tuple(false, motorID, errorCode, RType(rxBuf));
 }
