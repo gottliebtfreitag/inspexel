@@ -3,8 +3,9 @@
 #include "../FileDescriptor.h"
 #include "Host.h"
 
-namespace simplyfile
-{
+#include <string_view>
+
+namespace simplyfile {
 
 struct ClientSocket : FileDescriptor {
 	using FileDescriptor::FileDescriptor;
@@ -17,24 +18,10 @@ struct ClientSocket : FileDescriptor {
 	Host const& getHost() const {
 		return host;
 	}
-	int getBytesAvailable() const;
+
+	void send(std::string_view) const;
+
 protected:
 	Host host;
 };
-
-struct ServerSocket : FileDescriptor {
-	ServerSocket(Host const& host, bool reusePort=true);
-	ServerSocket(ServerSocket&&)= default;
-	ServerSocket& operator=(ServerSocket&&)= default;
-
-	virtual ~ServerSocket();
-
-	ClientSocket accept();
-	void listen();
-protected:
-	Host host;
-};
-
 }
-
-

@@ -37,6 +37,14 @@ auto read(FileDescriptor const& _port, size_t maxReadBytes, bool singleRead) -> 
 	return rxBuf;
 }
 
+auto getAvailableBytes(FileDescriptor const& _fd) -> size_t {
+	int bytesAvailable;
+	if (ioctl(_fd, FIONREAD, &bytesAvailable)) {
+		throw std::runtime_error("cannot determine how many bytes are available in filedescriptor");
+	}
+	return bytesAvailable;
+}
+
 size_t flushRead(FileDescriptor const& _port) {
 	size_t bytesRead {0};
 	uint8_t dummy;

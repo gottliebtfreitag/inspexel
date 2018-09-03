@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <functional>
 #include <map>
+#include <sys/ioctl.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <vector>
 
@@ -65,6 +67,7 @@ private:
 
 void write(FileDescriptor const& _port, std::vector<std::byte> const& txBuf);
 [[nodiscard]] auto read(FileDescriptor const& _port, size_t maxReadBytes, bool singleRead=false) -> std::vector<std::byte>;
+[[nodiscard]] auto getAvailableBytes(FileDescriptor const& _fd) -> size_t;
 
 template <typename T>
 [[nodiscard]] T read(FileDescriptor const& _port) {
