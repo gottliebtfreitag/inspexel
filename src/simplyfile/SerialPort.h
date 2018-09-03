@@ -2,7 +2,8 @@
 
 #include "FileDescriptor.h"
 
-namespace simplyfile {
+namespace simplyfile
+{
 
 struct SerialPort : FileDescriptor
 {
@@ -14,5 +15,6 @@ struct SerialPort : FileDescriptor
 
 	void setBaudrate(int baudrate);
 };
+
 
 }

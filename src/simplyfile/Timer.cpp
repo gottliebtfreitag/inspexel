@@ -1,10 +1,10 @@
 #include "Timer.h"
 
+#include <cstring>
 #include <time.h>
 
 
-namespace simplyfile
-{
+namespace simplyfile {
 
 namespace {
 void normalize(struct timespec& time) {
@@ -17,12 +17,29 @@ void normalize(struct timespec& time) {
 		time.tv_sec -= 1;
 	}
 }
-
 }
+
 
 Timer::Timer(std::chrono::nanoseconds duration, bool oneShot, int flags)
 	: FileDescriptor(::timerfd_create(CLOCK_REALTIME, flags))
 {
+	reset(duration, oneShot);
+}
+int Timer::getElapsed() const {
+	uint64_t elapsed {0};
+	::read(*this, &elapsed, sizeof(elapsed));
+	return elapsed;
+}
+
+void Timer::cancel() {
+	struct itimerspec new_value{};
+	if (timerfd_settime(*this, TFD_TIMER_ABSTIME, &new_value, NULL) == -1) {
+		throw std::runtime_error("cannot cancel timer " + std::string(strerror(errno)));
+	}
+}
+
+void Timer::reset(std::chrono::nanoseconds duration, bool oneShot) {
+	cancel();
 	struct itimerspec new_value {};
 	struct timespec now;
 	if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
@@ -43,13 +60,10 @@ Timer::Timer(std::chrono::nanoseconds duration, bool oneShot, int flags)
 	}
 
 	if (timerfd_settime(*this, TFD_TIMER_ABSTIME, &new_value, NULL) == -1) {
-		throw std::runtime_error("cannot set timeout for timerfd");
+		throw std::runtime_error("cannot set timeout for timerfd " + std::string(strerror(errno)));
 	}
 }
 
-int Timer::getElapsed() {
-	return read<uint64_t>(*this);
-}
 
 }
 
