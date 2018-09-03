@@ -39,10 +39,10 @@ struct ProtocolV1 : public ProtocolBase {
 	/** tries to read up to incomingLength bytes from filedescriptor
 	 *
 	 * return value
-	 *  [timeoutFlag, valid, errorCode, parameters] = readPacket(...);
+	 *  [timeoutFlag, motorID, errorCode, parameters] = readPacket(...);
 	 *
 	 *  timeoutFlag indicates if a timeout has occurred
-	 *  valid       inidcates if parameters form a valid packet
+	 *  motorID     inidcates if parameters form a valid packet, withc MotorIDInvalid
 	 *  errorCode   errorCode flags from the return message
 	 *  paremeters  is a vector with read bytes
 	 */
@@ -78,6 +78,9 @@ struct ProtocolV1 : public ProtocolBase {
 
 
 	bool validatePacket(Parameter const& rxBuf) const {
+		if (rxBuf.size() < 4) {
+			return false;
+		}
 		bool success = 0xff == uint8_t(rxBuf[0]);
 		success &= 0xff == uint8_t(rxBuf[1]);
 		success &= 0xff != uint8_t(rxBuf[2]);
