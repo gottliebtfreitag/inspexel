@@ -1,35 +1,12 @@
-#include <sys/ioctl.h>
+#include "ServerSocket.h"
+
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
-#include "Socket.h"
-#include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/un.h>
+#include <unistd.h>
 
-namespace simplyfile
-{
-ClientSocket::ClientSocket(int _fd, Host const& _host)
-	: FileDescriptor(_fd)
-	, host(_host)
-{}
-
-ClientSocket::ClientSocket(Host const& _host)
-	: FileDescriptor(::socket(_host.family, _host.socktype, _host.protocol))
-	, host(_host)
-{}
-
-void ClientSocket::connect() {
-	if (::connect(*this, reinterpret_cast<struct sockaddr const*>(&host.sockaddr), host.sockaddrLen) != 0) {
-		throw std::runtime_error("cannot connect to host: " + host.getName() + " errno: " + std::string(strerror(errno)));
-	}
-}
-
-int ClientSocket::getBytesAvailable() const {
-	int bytesAvailable;
-	if (ioctl(*this, FIONREAD, &bytesAvailable)) {
-		throw std::runtime_error("cannot determine how many bytes are available in socket");
-	}
-	return bytesAvailable;
-}
+namespace simplyfile {
 
 ServerSocket::ServerSocket(Host const& _host, bool reusePort)
 	: host(_host)
@@ -46,7 +23,7 @@ ServerSocket::ServerSocket(Host const& _host, bool reusePort)
 		::unlink(address.sun_path);
 	}
 	if (::bind(sock, reinterpret_cast<struct sockaddr const*>(&host.sockaddr), host.sockaddrLen)) {
-		throw std::runtime_error("cannot bind socket to: " + host.getName());
+		throw std::runtime_error("cannot bind socket to: " + host.getName() + " reason: " + std::string(strerror(errno)));
 	}
 	FileDescriptor::operator =(std::move(sock));
 }
@@ -61,17 +38,17 @@ ServerSocket::~ServerSocket() {
 	}
 }
 
-ClientSocket ServerSocket::accept() {
+ClientSocket ServerSocket::accept() const {
 	Host h = host;
 	int _fd = ::accept(*this, reinterpret_cast<struct sockaddr*>(&h.sockaddr), &h.sockaddrLen);
 	ClientSocket socket{_fd, h};
 	if (not socket.valid()) {
-		throw std::runtime_error("cannot accept incomming socket");
+		throw std::runtime_error("cannot accept incoming socket " + std::string(strerror(errno)));
 	}
 	return socket;
 }
 
-void ServerSocket::listen() {
+void ServerSocket::listen() const {
 	if (::listen(*this, 0)) {
 		throw std::runtime_error("cannot listen on socket " + std::string(strerror(errno)));
 	}

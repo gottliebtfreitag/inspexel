@@ -1,4 +1,4 @@
-#include "simplyfile/socket/Socket.h"
+#include "simplyfile/socket/ServerSocket.h"
 #include "simplyfile/Timer.h"
 #include "simplyfile/Epoll.h"
 
@@ -41,7 +41,7 @@ void ioStuff(simplyfile::Epoll& epoll) {
 					}
 					if (clientEvents & EPOLLIN) {
 						std::vector<uint8_t> incomming;
-						incomming.resize(c.getBytesAvailable());
+						incomming.resize(getAvailableBytes(c));
 						int received = ::recv(c, incomming.data(), incomming.size(), MSG_NOSIGNAL);
 						int sent = ::send(c, incomming.data(), incomming.size(), MSG_NOSIGNAL);
 						std::cout << "received: " << received << " sent: " << sent << std::endl;
