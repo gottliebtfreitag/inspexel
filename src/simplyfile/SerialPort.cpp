@@ -1,19 +1,18 @@
 #include "SerialPort.h"
 
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
-#include <string.h>        // String function definitions
-#include <unistd.h>        // UNIX standard function definitions
-#include <errno.h>         // Error number definitions
-#include <termios.h>
-#include <sys/ioctl.h>
 #include <inttypes.h>
-#include <linux/types.h>
-#include <linux/serial.h>
 #include <iostream>
+#include <linux/serial.h>
+#include <linux/types.h>
 #include <stdexcept>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
 
-namespace simplyfile
-{
+namespace simplyfile {
 
 namespace {
 
@@ -118,48 +117,4 @@ void SerialPort::setBaudrate(int baudrate) {
 	ioctl(*this, TCSETS2, &options);
 }
 
-void write(SerialPort const& _port, std::vector<std::byte> const& txBuf) {
-	uint32_t bytesWritten = 0;
-	const size_t count = txBuf.size();
-	do {
-		ssize_t w = ::write(_port, txBuf.data() + bytesWritten, count - bytesWritten);
-
-		if (w == -1) {
-			throw std::runtime_error(std::string{"write to the dyanmixel bus failed: "} + strerror(errno) + " (" + std::to_string(errno) + ")");
-		}
-		bytesWritten += w;
-	} while (bytesWritten < count);
 }
-
-auto read(SerialPort const& _port, size_t maxReadBytes) -> std::vector<std::byte> {
-	std::vector<std::byte> rxBuf(maxReadBytes);
-
-	size_t bytesRead = 0;
-
-	do {
-		ssize_t r = ::read(_port, rxBuf.data() + bytesRead, rxBuf.size() - bytesRead);
-		if (r == -1) {
-			if (errno == EAGAIN) {
-				break;
-			}
-			throw std::runtime_error(std::string{"unexpected read error: "} + strerror(errno) + " (" + std::to_string(errno) + ")");
-		}
-		bytesRead += r;
-	} while (bytesRead < maxReadBytes);
-	rxBuf.resize(bytesRead);
-	return rxBuf;
-}
-
-size_t flushRead(SerialPort const& _port) {
-	size_t bytesRead {0};
-	uint8_t dummy;
-	ssize_t r {0};
-	while (r != -1) {
-		bytesRead += r;
-		r = ::read(_port, &dummy, sizeof(dummy)); // read flush
-	}
-	return bytesRead;
-}
-
-}
-

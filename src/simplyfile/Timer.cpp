@@ -48,9 +48,7 @@ Timer::Timer(std::chrono::nanoseconds duration, bool oneShot, int flags)
 }
 
 int Timer::getElapsed() {
-	uint64_t elapsed {0};
-	read(*this, &elapsed, sizeof(elapsed));
-	return elapsed;
+	return read<uint64_t>(*this);
 }
 
 }
