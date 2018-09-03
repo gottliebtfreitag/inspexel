@@ -1,10 +1,11 @@
 #pragma once
 
-#include <unistd.h>
-#include <functional>
-#include <vector>
-#include <map>
+#include <cstring>
 #include <fcntl.h>
+#include <functional>
+#include <map>
+#include <unistd.h>
+#include <vector>
 
 namespace simplyfile
 {
@@ -61,4 +62,20 @@ struct FileDescriptor {
 private:
 	int fd;
 };
+
+void write(FileDescriptor const& _port, std::vector<std::byte> const& txBuf);
+[[nodiscard]] auto read(FileDescriptor const& _port, size_t maxReadBytes, bool singleRead=false) -> std::vector<std::byte>;
+
+template <typename T>
+[[nodiscard]] T read(FileDescriptor const& _port) {
+	auto data = read(_port, sizeof(T));
+	if (data.size() != sizeof(T)) {
+		throw std::runtime_error("some reading error, who knows :/");
+	}
+	T ret;
+	memcpy(&ret, data.data(), sizeof(T));
+	return ret;
+}
+size_t flushRead(FileDescriptor const& _port);
+
 }
