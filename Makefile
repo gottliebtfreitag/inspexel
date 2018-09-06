@@ -9,6 +9,10 @@ SIZE    ?= $(CROSS_COMPILE_PREFIX)size
 GDB     ?= $(CROSS_COMPILE_PREFIX)gdb
 OBJ_CPY ?= $(CROSS_COMPILE_PREFIX)objcopy
 
+INSTALL_BIN_DIR     ?= /usr/bin
+BASH_COMPLETION_DIR ?= /usr/share/bash-completion/completions/
+ZSH_COMPLETION_DIR  ?= /usr/share/zsh-completion/completions/
+
 SRC_FOLDERS = src/
 LIBS = c pthread stdc++fs
 LIB_PATHS =
@@ -88,6 +92,10 @@ dbg:
 clean:
 	$(SILENT) rm -rf $(OBJ_DIR) $(TARGET) $(TARGET).map $(TARGET).bin
 
+install: $(TARGET)
+	$(SILENT) cp $< $(INSTALL_BIN_DIR)
+	$(SILENT) cp bash_completion $(BASH_COMPLETION_DIR)/$<
+#	$(SILENT) cp zsh_completion $(zsh_COMPLETION_DIR)/$<
 
 $(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)
