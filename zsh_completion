@@ -1,10 +1,10 @@
-_dynunmixer ()
+_inspexel ()
 {
-	globalParams=$(./dynunmixer --bash_completion | tr ' ' '\n')
+	globalParams=$(inspexel --bash_completion | tr ' ' '\n')
 	globalCommands=$(echo ${globalParams} | grep "^[^-][^-]")
 	globalOptions=$(echo ${globalParams} | grep "^--")
 
-	localParams=$(./dynunmixer ${words[@]:1} --bash_completion | tr ' ' '\n')
+	localParams=$(inspexel ${words[@]:1} --bash_completion | tr ' ' '\n')
 	localCommands=$(echo ${localParams} | grep "^[^-][^-]")
 	localOptions=$(echo ${localParams} | grep "^--")
 
@@ -16,4 +16,4 @@ _dynunmixer ()
 	compadd -J "G1" -X "%UCommands%u" -- $(echo ${globalCommands} | tr '\n' ' ')
 	compadd -J "G2" -X "%UGlobal Options%u" -- $(echo ${globalOptions} | tr '\n' ' ')
 }
-compdef _dynunmixer -P *dynunmixer -N
+compdef _inspexel -P inspexel -N
