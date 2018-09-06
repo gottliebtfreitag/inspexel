@@ -1,4 +1,4 @@
-TARGET = dynunmixer
+TARGET = inspexel
 
 # compiler
 CROSS_COMPILE_PREFIX = 

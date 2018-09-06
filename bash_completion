@@ -1,7 +1,8 @@
-_GetDynUnmixer ()
+_GetInspexel ()
 {  
   HINTS=$(${COMP_LINE[0]} ${COMP_WORDS[@]:1} --bash_completion)
   COMPREPLY=( $( compgen -W '${HINTS}' -- "${COMP_WORDS[COMP_CWORD]}"))
   return 0
 }
-complete -F _GetDynUnmixer ./dynunmixer
+complete -F _GetInspexel ./inspexel
+complete -F _GetInspexel inspexel
