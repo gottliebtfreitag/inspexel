@@ -42,10 +42,9 @@ void tokenize(int argc, char const* const* argv, CommandCallback&& commandCB, Pa
 void parseArguments(int argc, char const* const* argv) {
 	auto const& commands = Command::Registry::getInstance().getCommands();
 	std::vector<Command*> argProviders;
-	for (auto const& command : commands) {
-		if (command.first == "") {
-			argProviders.emplace_back(command.second);
-		}
+	auto range = commands.equal_range("");
+	for (auto command = range.first; command != range.second; ++command) {
+		argProviders.emplace_back(command->second);
 	}
 	tokenize(argc, argv, [&](std::string const& commandName){
 		auto target = detail::CommandRegistry::getInstance().getCommands().equal_range(commandName);

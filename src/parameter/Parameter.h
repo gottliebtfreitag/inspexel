@@ -35,7 +35,14 @@ public:
 		_commands.emplace(name, command);
 	}
 	void deregisterCommand(std::string const& name, Command* command) {
-		_commands.emplace(name, command);
+		auto range = _commands.equal_range(name);
+		for (auto it=range.first; it != range.second;) {
+			if (it->second == command) {
+				it = _commands.erase(it);
+			} else {
+				++it;
+			}
+		}
 	}
 
 	auto getCommands() const -> decltype(_commands) const& {
