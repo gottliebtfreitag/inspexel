@@ -9,9 +9,10 @@ SIZE    ?= $(CROSS_COMPILE_PREFIX)size
 GDB     ?= $(CROSS_COMPILE_PREFIX)gdb
 OBJ_CPY ?= $(CROSS_COMPILE_PREFIX)objcopy
 
-INSTALL_BIN_DIR     ?= /usr/bin
-BASH_COMPLETION_DIR ?= /usr/share/bash-completion/completions/
-ZSH_COMPLETION_DIR  ?= /usr/share/zsh-completion/completions/
+PREFIX              ?=
+INSTALL_BIN_DIR     ?= $(PREFIX)/usr/bin
+BASH_COMPLETION_DIR ?= $(PREFIX)/usr/share/bash-completion/completions/
+ZSH_COMPLETION_DIR  ?= $(PREFIX)/usr/share/zsh-completion/completions/
 
 SRC_FOLDERS = src/
 LIBS = c pthread stdc++fs
@@ -93,9 +94,12 @@ clean:
 	$(SILENT) rm -rf $(OBJ_DIR) $(TARGET) $(TARGET).map $(TARGET).bin
 
 install: $(TARGET)
+	$(SILENT) mkdir -p $(INSTALL_BIN_DIR)
 	$(SILENT) cp $< $(INSTALL_BIN_DIR)
+	$(SILENT) mkdir -p $(BASH_COMPLETION_DIR)
 	$(SILENT) cp scripts/bash_completion $(BASH_COMPLETION_DIR)/$<
-#	$(SILENT) cp scripts/zsh_completion $(zsh_COMPLETION_DIR)/$<
+	$(SILENT) mkdir -p $(ZSH_COMPLETION_DIR)
+#	$(SILENT) cp scripts/zsh_completion $(ZSH_COMPLETION_DIR)/$<
 
 $(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)
