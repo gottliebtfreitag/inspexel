@@ -9,6 +9,8 @@
 #include <vector>
 #include <functional>
 #include <numeric>
+#include <initializer_list>
+
 
 namespace parameter
 {
@@ -332,18 +334,24 @@ struct Command {
 	using ValueHintFunc = ParameterBase::ValueHintFunc;
 
 private:
-	std::string _name;
+	std::vector<std::string> _names;
 	std::string _description;
 	Callback    _cb;
 	bool        _isActive {false};
 	std::multimap<std::string, ParameterBase*> parameters;
 public:
 
-	Command(std::string const& name, std::string const& description, Callback const& cb=Callback{}) : _name(name), _description(description), _cb(cb) {
-		Registry::getInstance().registerCommand(_name, this);
+	Command(std::string const& name, std::string const& description, Callback const& cb=Callback{}) :
+		Command({name}, description, cb) {}
+	Command(std::initializer_list<std::string> const& names, std::string const& description, Callback const& cb=Callback{}) : _names(names), _description(description), _cb(cb) {
+		for (auto const& _name : _names) {
+			Registry::getInstance().registerCommand(_name, this);
+		}
 	}
 	~Command() {
-		Registry::getInstance().deregisterCommand(_name, this);
+		for (auto const& _name : _names) {
+			Registry::getInstance().deregisterCommand(_name, this);
+		}
 	}
 
 	auto getDescription() const -> decltype(_description) const& {

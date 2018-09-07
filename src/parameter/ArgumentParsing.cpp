@@ -40,7 +40,13 @@ void tokenize(int argc, char const* const* argv, CommandCallback&& commandCB, Pa
 }
 
 void parseArguments(int argc, char const* const* argv) {
-	std::vector<Command*> argProviders = {&Command::getDefaultCommand()};
+	auto const& commands = Command::Registry::getInstance().getCommands();
+	std::vector<Command*> argProviders;
+	for (auto const& command : commands) {
+		if (command.first == "") {
+			argProviders.emplace_back(command.second);
+		}
+	}
 	tokenize(argc, argv, [&](std::string const& commandName){
 		auto target = detail::CommandRegistry::getInstance().getCommands().equal_range(commandName);
 		if (target.first == target.second) {
@@ -70,6 +76,16 @@ void parseArguments(int argc, char const* const* argv) {
 			throw std::invalid_argument("argument " + argName + " is not implemented");
 		}
 	});
+
+	// if no commands are active activate all default commands
+	bool anyCommandActive = std::find_if(commands.begin(), commands.end(), [](std::pair<std::string, Command*> const& c) {return *c.second;}) != commands.end();
+	if (not anyCommandActive) {
+		std::for_each(commands.begin(), commands.end(), [](std::pair<std::string, Command*> const& c) {
+			if (c.first == "") {
+				c.second->setActive(true);
+			}
+		});
+	}
 }
 
 void parseArguments(int argc, char const* const* argv, std::set<ParameterBase*> const& targetParameters) {
