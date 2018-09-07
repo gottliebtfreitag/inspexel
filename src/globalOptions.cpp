@@ -6,33 +6,34 @@
 
 namespace fs = std::filesystem;
 
-namespace {
-
-bool isPrefix(std::string const& _str, std::string const& _prefix) {
-	if (_prefix.size() > _str.size()) return false;
-	auto res = std::mismatch(_prefix.begin(), _prefix.end(), _str.begin());
-	return res.first == _prefix.end();
-}
-
-}
-
 auto listDeviceFiles(std::vector<std::string> const& _str) -> std::pair<bool, std::set<std::string>> {
-	(void)_str;
 	std::set<std::string> res;
-
-	for (auto p : fs::directory_iterator("/dev")) {
-		auto fn = p.path().string();
-		if (isPrefix(fn, "/dev/ttyUSB")) {
-			res.insert(p.path().string());
-		}
+	std::vector<fs::path> passedPaths;
+	for (auto const& s : _str) {
+		try {
+			passedPaths.emplace_back(fs::canonical(fs::path(s)));
+		} catch (...) {} // ignore invalid paths
 	}
-
 	if (fs::is_directory("/dev/serial/by-id/")) {
 		for (auto p : fs::directory_iterator("/dev/serial/by-id/")) {
-			res.insert(p.path().string());
+			// if p resolves to anything specifies by _str remove it
+			auto canonical = fs::canonical(p);
+			if (std::find(passedPaths.begin(), passedPaths.end(), p) == passedPaths.end() and
+				std::find(passedPaths.begin(), passedPaths.end(), canonical) == passedPaths.end()) {
+				res.insert(p.path().string());
+				res.insert(canonical.string());
+			}
 		}
 	}
 
-	return {_str.size() > 0, res};
+	return {not _str.empty(), res};
+}
+
+auto getDefaultSerialPort() -> std::string {
+	auto devices = listDeviceFiles({}).second;
+	if (devices.empty()) {
+		return "";
+	}
+	return *devices.begin();
 }
 
