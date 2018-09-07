@@ -99,7 +99,7 @@ install: $(TARGET)
 	$(SILENT) mkdir -p $(BASH_COMPLETION_DIR)
 	$(SILENT) cp scripts/bash_completion $(BASH_COMPLETION_DIR)/$<
 	$(SILENT) mkdir -p $(ZSH_COMPLETION_DIR)
-#	$(SILENT) cp scripts/zsh_completion $(ZSH_COMPLETION_DIR)/$<
+	$(SILENT) cp scripts/zsh_completion $(ZSH_COMPLETION_DIR)/$<
 
 $(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)
