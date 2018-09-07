@@ -86,7 +86,7 @@ endif
 
 all: $(TARGET)
 
-dbg: 
+dbg:
 	@ echo $(CPP_FILES)
 
 clean:
@@ -94,8 +94,8 @@ clean:
 
 install: $(TARGET)
 	$(SILENT) cp $< $(INSTALL_BIN_DIR)
-	$(SILENT) cp bash_completion $(BASH_COMPLETION_DIR)/$<
-#	$(SILENT) cp zsh_completion $(zsh_COMPLETION_DIR)/$<
+	$(SILENT) cp scripts/bash_completion $(BASH_COMPLETION_DIR)/$<
+#	$(SILENT) cp scripts/zsh_completion $(zsh_COMPLETION_DIR)/$<
 
 $(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)
@@ -110,10 +110,10 @@ $(OBJ_DIR)%$(C_SUFFIX)$(OBJ_SUFFIX): %$(C_SUFFIX)
 	@ mv -f $(OBJ_DIR)$<.d $(OBJ_DIR)$<.d.tmp
 	@ sed -e 's|.*:|$@:|' < $(OBJ_DIR)$<.d.tmp > $(OBJ_DIR)$<.d
 	@ rm -f $(OBJ_DIR)$<.d.tmp
-	
+
 	$(SILENT) $(CC) $(CFLAGS) $(INCLUDE_CMD) -o $@ -c $<
-	
-	
+
+
 $(OBJ_DIR)%$(CPP_SUFFIX)$(OBJ_SUFFIX): %$(CPP_SUFFIX)
 	@echo building $<
 	@ mkdir -p $(dir $@)
@@ -121,7 +121,7 @@ $(OBJ_DIR)%$(CPP_SUFFIX)$(OBJ_SUFFIX): %$(CPP_SUFFIX)
 	@ mv -f $(OBJ_DIR)$<.d $(OBJ_DIR)$<.d.tmp
 	@ sed -e 's|.*:|$@:|' < $(OBJ_DIR)$<.d.tmp > $(OBJ_DIR)$<.d
 	@ rm -f $(OBJ_DIR)$<.d.tmp
-	
+
 	$(SILENT) $(CXX) $(CPPFLAGS) $(INCLUDE_CMD) -o $@ -c $<
 
 -include $(DEP_FILES)
