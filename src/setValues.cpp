@@ -6,8 +6,8 @@
 namespace {
 
 void runSetAngle();
-auto detectCmd = parameter::Command{"set_angle", "set the angle of a motor", runSetAngle};
-auto angle     = detectCmd.Parameter<int>(0, "angle", "the goal angle (raw register value)");
+auto setAngleCmd = parameter::Command{"set_angle", "set the angle of a motor", runSetAngle};
+auto angle       = setAngleCmd.Parameter<int>(0, "angle", "the goal angle (raw register value)");
 
 void runSetAngle() {
 	bool error = false;
@@ -30,13 +30,13 @@ void runSetAngle() {
 }
 
 
-void runSetValue();
-auto setAngleCmd = parameter::Command{"set_register", "set registers of a motor", runSetValue};
-auto reg         = setAngleCmd.Parameter<int>(0, "register", "register to write to");
-auto values      = setAngleCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
-auto ids         = setAngleCmd.Parameter<std::vector<int>>({}, "ids", "use this if you want to set multiple devices at once");
+void runSetRegister();
+auto setRegisterCmd = parameter::Command{"set_register", "set registers of a motor", runSetRegister};
+auto reg            = setRegisterCmd.Parameter<int>(0, "register", "register to write to");
+auto values         = setRegisterCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
+auto ids            = setRegisterCmd.Parameter<std::vector<int>>({}, "ids", "use this if you want to set multiple devices at once");
 
-void runSetValue() {
+void runSetRegister() {
 	if (not id.isSpecified() and not ids.isSpecified()) throw std::runtime_error("need to specify the target id!");
 	if (not reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
 	if (not values.isSpecified()) throw std::runtime_error("values to be written to the register have to be specified!");
