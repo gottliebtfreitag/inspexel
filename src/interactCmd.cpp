@@ -16,8 +16,8 @@
 namespace {
 
 void runInteract();
-auto detectCmd  = parameter::Command{"interact", "interact with dynamixel", runInteract};
-auto optTimeout = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
+auto interactCmd  = parameter::Command{"interact", "interact with dynamixel", runInteract};
+auto optTimeout   = interactCmd.Parameter<int>(10000, "timeout", "timeout in us");
 
 using namespace dynamixel;
 
