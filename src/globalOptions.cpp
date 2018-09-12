@@ -28,6 +28,23 @@ auto listDeviceFiles(std::vector<std::string> const& _str) -> std::pair<bool, st
 
 	return {not _str.empty(), res};
 }
+auto listTypicalBaudrates(std::vector<std::string> const& _str) -> std::pair<bool, std::set<std::string>> {
+	std::set<std::string> res;
+	res.emplace("9600");
+	res.emplace("11520");
+	res.emplace("57142");
+	res.emplace("1m");
+	res.emplace("2m");
+	res.emplace("3m");
+	for (auto const& s : _str) {
+		if (res.count(s) > 0) {
+			res.erase(s);
+		}
+	}
+
+	return {true, res};
+}
+
 
 auto getDefaultSerialPort() -> std::string {
 	auto devices = listDeviceFiles({}).second;
