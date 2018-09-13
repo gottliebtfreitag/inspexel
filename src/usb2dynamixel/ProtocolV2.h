@@ -1,5 +1,7 @@
 #pragma once
 
+//!TODO this is not protocol 2!!!!!, still needs to be implemented
+
 #include "ProtocolBase.h"
 
 #include <chrono>
@@ -11,7 +13,7 @@
 
 namespace dynamixel {
 
-struct ProtocolV1 : public ProtocolBase {
+struct ProtocolV2 : public ProtocolBase {
 
 	simplyfile::SerialPort mPort;
 
@@ -19,14 +21,11 @@ struct ProtocolV1 : public ProtocolBase {
 		return std::chrono::high_resolution_clock::now();
 	}
 
-	ProtocolV1(simplyfile::SerialPort _port)
+	ProtocolV2(simplyfile::SerialPort _port)
 		: mPort {std::move(_port)}
 	{}
 
 	void writePacket(MotorID motorID, Instruction instr, Parameter data) const override {
-		if (data.size() > 253) {
-			throw std::runtime_error("packet is longer than 255 bytes, not supported in protocol v1");
-		}
 		uint8_t length = 2 + data.size();
 
 		Parameter txBuf {
