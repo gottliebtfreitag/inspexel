@@ -25,7 +25,11 @@ struct ProtocolBase {
 
 	virtual void writePacket(MotorID motorID, Instruction instr, Parameter data) const = 0;
 
-	[[nodiscard]] virtual auto readPacket(uint8_t incomingLength, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
+	[[nodiscard]] virtual auto readPacket(size_t incomingLength, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
+
+	virtual auto convertLength(size_t len) const -> Parameter = 0;
+	virtual auto convertAddress(int addr) const -> Parameter = 0;
+
 };
 
 }

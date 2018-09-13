@@ -18,15 +18,20 @@
 
 namespace dynamixel {
 
+enum class Protocol {
+	V1,
+	V2
+};
+
 struct USB2Dynamixel {
 	using Timeout = std::chrono::microseconds;
 
-	USB2Dynamixel(int baudrate, std::vector<std::string> const& deviceNames);
+	USB2Dynamixel(int baudrate, std::vector<std::string> const& deviceNames, Protocol protocol = Protocol::V1);
 	~USB2Dynamixel();
 
 	[[nodiscard]] bool ping(MotorID motor, Timeout timeout) const;
-	[[nodiscard]] auto read(MotorID motor, int baseRegister, uint8_t length, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter>;
-	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, uint8_t>> const& motors, Timeout timeout) const -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>>;
+	[[nodiscard]] auto read(MotorID motor, int baseRegister, size_t length, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter>;
+	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, size_t>> const& motors, Timeout timeout) const -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>>;
 
 	void write(MotorID motor, Parameter const& txBuf) const;
 	void sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister) const;
@@ -58,10 +63,10 @@ template <auto baseRegister, size_t length, typename ...Extras>
 [[nodiscard]] auto bulk_read(USB2Dynamixel const& dyn, std::vector<std::tuple<MotorID, Extras...>> const& motors, USB2Dynamixel::Timeout timeout) -> std::vector<std::tuple<MotorID, Extras..., ErrorCode, Layout<baseRegister, length>>> {
 	if (motors.empty()) return {};
 
-	std::vector<std::tuple<MotorID, int, uint8_t>> request;
+	std::vector<std::tuple<MotorID, int, size_t>> request;
 	for (auto data : motors) {
 		auto id = std::get<0>(data);
-		request.push_back(std::make_tuple(id, int(baseRegister), uint8_t(length)));
+		request.push_back(std::make_tuple(id, int(baseRegister), size_t(length)));
 	}
 	auto list = dyn.bulk_read(request, timeout);
 
