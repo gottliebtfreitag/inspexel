@@ -23,7 +23,7 @@ using namespace dynamixel;
 
 auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> int {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, errorCode, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<v1::Register::MODEL_NUMBER, 2>(motor, timeout);
 	if (timeoutFlag or motorID == MotorIDInvalid) {
 		throw std::runtime_error("failed checking model number");
 	}
@@ -42,7 +42,7 @@ auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2d
 
 template <meta::LayoutType LT, typename Layout>
 auto readMotorInfos(dynamixel::USB2Dynamixel& usb2dyn, MotorID motor, std::chrono::microseconds timeout) {
-	auto [timeoutFlag, motorID, errorCode, layout] = read<Layout::BaseRegister, Layout::Length>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<Layout::BaseRegister, Layout::Length>(motor, timeout);
 
 	if (timeoutFlag or motorID == MotorIDInvalid) {
 		throw std::runtime_error("trouble reading the motor");
@@ -69,60 +69,60 @@ void runInteract() {
 		}
 	});
 	try {
-	auto timeout = std::chrono::microseconds{optTimeout};
+		auto timeout = std::chrono::microseconds{optTimeout};
 
-	auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, {device.get()});
+		auto usb2dyn = dynamixel::USB2Dynamixel(g_baudrate, g_device.get(), dynamixel::Protocol(g_protocolVersion.get()));
 
-	int layoutVersion = checkMotorVersion(id, usb2dyn, timeout);
+		int layoutVersion = checkMotorVersion(g_id, usb2dyn, timeout);
 
-	while(true) {
-		auto printVals = [&](int minV, int maxV, int val) {
-			if (not minValue) std::cout << TERM_GREEN;
-			std::cout << "min: " << minV << "\n";
-			if (not minValue) std::cout << TERM_RESET;
+		while(true) {
+			auto printVals = [&](int minV, int maxV, int val) {
+				if (not minValue) std::cout << TERM_GREEN;
+				std::cout << "min: " << minV << "\n";
+				if (not minValue) std::cout << TERM_RESET;
 
-			if (minValue) std::cout << TERM_GREEN;
-			std::cout << "max: " << maxV << "\n";
-			if (minValue) std::cout << TERM_RESET;
-			std::cout << "cur: " << val << "\n";
-			std::cout << "-------\n";
-		};
-		try {
-			if (layoutVersion == 1) {
-				auto layout = readMotorInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, id, timeout);
-				printVals(layout.cw_angle_limit, layout.ccw_angle_limit, layout.present_position);
-				if (detectInput) {
-					auto g = std::lock_guard(mInputMutex);
-					detectInput = false;
-					if (minValue) {
-						write<v1::Register::CW_ANGLE_LIMIT, 2>(usb2dyn, id, {layout.present_position});
-					} else {
-						write<v1::Register::CCW_ANGLE_LIMIT, 2>(usb2dyn, id, {layout.present_position});
+				if (minValue) std::cout << TERM_GREEN;
+				std::cout << "max: " << maxV << "\n";
+				if (minValue) std::cout << TERM_RESET;
+				std::cout << "cur: " << val << "\n";
+				std::cout << "-------\n";
+			};
+			try {
+				if (layoutVersion == 1) {
+					auto layout = readMotorInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, g_id, timeout);
+					printVals(layout.cw_angle_limit, layout.ccw_angle_limit, layout.present_position);
+					if (detectInput) {
+						auto g = std::lock_guard(mInputMutex);
+						detectInput = false;
+						if (minValue) {
+							usb2dyn.write<v1::Register::CW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
+						} else {
+							usb2dyn.write<v1::Register::CCW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
+						}
+						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
+						usleep(100000);
 					}
-					std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
-					usleep(100000);
-				}
-			} else if (layoutVersion == 2) {
-				auto layout = readMotorInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, id, timeout);
-				printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
+				} else if (layoutVersion == 2) {
+					auto layout = readMotorInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, g_id, timeout);
+					printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
 
-				if (detectInput) {
-					auto g = std::lock_guard(mInputMutex);
-					detectInput = false;
-					if (minValue) {
-						write<v2::Register::MIN_POSITION_LIMIT, 4>(usb2dyn, id, {layout.present_position});
-					} else {
-						write<v2::Register::MAX_POSITION_LIMIT, 4>(usb2dyn, id, {layout.present_position});
+					if (detectInput) {
+						auto g = std::lock_guard(mInputMutex);
+						detectInput = false;
+						if (minValue) {
+							usb2dyn.write<v2::Register::MIN_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+						} else {
+							usb2dyn.write<v2::Register::MAX_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+						}
+						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
+						usleep(100000);
 					}
-					std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
-					usleep(100000);
 				}
+			} catch (std::exception const& e) {
+				std::cout << TERM_RED << "exception: " << e.what() << TERM_RESET << "\n";
+				usleep(1000000);
 			}
-		} catch (std::exception const& e) {
-			std::cout << TERM_RED << "exception: " << e.what() << TERM_RESET << "\n"; 
-			usleep(1000000);
 		}
-	}
 	} catch (std::exception const& e) {
 		std::cout << TERM_RED << "exception: " << e.what() << "\n";
 	}

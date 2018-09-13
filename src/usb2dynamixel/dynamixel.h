@@ -14,7 +14,7 @@ namespace dynamixel {
 
 	using Parameter = std::vector<std::byte>;
 
-	enum class Instruction : uint8_t
+	enum class Instruction : std::underlying_type_t<std::byte>
 	{
 		PING       = 0x01,
 		READ       = 0x02,
@@ -50,10 +50,6 @@ namespace dynamixel {
 		}
 		throw std::runtime_error("no valid baud index given");
 	}
-
-	enum class Register : uint8_t {
-		GOAL_POSITION       = 0x1E,
-	};
 
 	template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 	template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;

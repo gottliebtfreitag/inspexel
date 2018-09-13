@@ -14,7 +14,6 @@ namespace {
 void runDetect();
 auto detectCmd  = parameter::Command{{"", "detect"}, "detect all dynamixel motors", runDetect};
 auto baudrates  = detectCmd.Parameter<std::set<int>>({57142}, "other_baudrates", "more baudrates to test", {}, &listTypicalBaudrates);
-auto optTimeout = detectCmd.Parameter<int>(10000, "timeout", "timeout in us");
 auto readAll    = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
 auto ids        = detectCmd.Parameter<std::set<int>>({}, "ids", "the target Id");
 auto optCont    = detectCmd.Flag("continues", "runs bulk read repeatably after detecting motors");
@@ -24,7 +23,7 @@ using namespace dynamixel;
 
 auto detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<int, uint16_t> {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, errorCode, layout] = read<v1::Register::MODEL_NUMBER, 2>(usb2dyn, motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<v1::Register::MODEL_NUMBER, 2>(motor, timeout);
 	if (timeoutFlag) {
 		return std::make_tuple(-1, 0);
 	}
@@ -51,8 +50,8 @@ auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector
 	int successfullTransactions = 0;
 
 	std::vector<std::tuple<MotorID, int, size_t>> request;
-	for (auto const [id, modelNumber] : motors) {
-		request.push_back(std::make_tuple(id, int(v1::Register::MODEL_NUMBER), 74));
+	for (auto const [g_id, modelNumber] : motors) {
+		request.push_back(std::make_tuple(g_id, int(v1::Register::MODEL_NUMBER), 74));
 	}
 	auto response = usb2dyn.bulk_read(request, timeout);
 
@@ -85,7 +84,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 	int expectedTransactions = 1 + motors.size();
 	int successfullTransactions = 0;
 
-	auto response = bulk_read<Layout::BaseRegister, Layout::Length>(usb2dyn, motors, timeout);
+	auto response = usb2dyn.bulk_read<Layout::BaseRegister, Layout::Length>(motors, timeout);
 	if (not response.empty()) {
 		successfullTransactions = 1 + response.size();
 	}
@@ -98,7 +97,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 	}
 
 	std::cout << "             ";
-	for (auto const& [id, modelNumber, errorCode, layout] : response) {
+	for (auto const& [g_id, modelNumber, errorCode, layout] : response) {
 		auto motorInfoPtr = meta::getMotorInfo(modelNumber);
 		std::cout << std::setw(14) << motorInfoPtr->shortName;
 	}
@@ -111,7 +110,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 		std::cout << " " << std::setw(2) << to_string(info.access);
 		std::cout << " " << (info.romArea?"ROM":"RAM");
 
-		for (auto const& [id, modelNumber, errorCode, layout] : response) {
+		for (auto const& [g_id, modelNumber, errorCode, layout] : response) {
 			visit([reg=reg, modelNumber=modelNumber](auto _reg, auto&& value) {
 				if (_reg != reg) return;
 				auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);
@@ -147,17 +146,17 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 }
 
 void runDetect() {
-	baudrates.get().emplace(baudrate);
-	auto timeout = std::chrono::microseconds{optTimeout};
+	baudrates.get().emplace(g_baudrate);
+	auto timeout = std::chrono::microseconds{g_timeout};
 	for (auto baudrate : baudrates.get()) {
 		std::cout << "trying baudrate: " << baudrate << "\n";
-		auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, {device.get()});
+		auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, g_device.get(), dynamixel::Protocol(g_protocolVersion.get()));
 
 		// generate range to check
 		std::vector<int> range(0xFD);
 		std::iota(begin(range), end(range), 0);
-		if (id.isSpecified()) {
-			range = {MotorID(id)};
+		if (g_id.isSpecified()) {
+			range = {MotorID(g_id)};
 		} else  if (ids.isSpecified()) {
 			range.clear();
 			for (auto x : ids.get()) {
