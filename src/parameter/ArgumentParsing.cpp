@@ -221,10 +221,15 @@ std::set<std::string> getNextArgHint(int argc, char const* const* argv) {
 
 void callCommands() {
 	auto const& commands = detail::CommandRegistry::getInstance().getCommands();
+	// collect all nondefault commands that can be run
+	std::set<Command*> runnableCommands;
 	for (auto& command : commands) {
 		if (*command.second) {
-			command.second->callCB();
+			runnableCommands.emplace(command.second);
 		}
+	}
+	for (auto cmd : runnableCommands) {
+		cmd->callCB();
 	}
 }
 
