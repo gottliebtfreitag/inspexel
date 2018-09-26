@@ -44,6 +44,8 @@ struct ProtocolBase {
 
 	virtual auto convertLength(size_t len) const -> Parameter = 0;
 	virtual auto convertAddress(int addr) const -> Parameter = 0;
+
+	virtual auto buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> = 0;
 };
 
 }

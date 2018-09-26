@@ -107,12 +107,10 @@ struct USB2Dynamixel {
 	}
 
 private:
-	std::unique_ptr<ProtocolBase> m_pimpl;
+	std::unique_ptr<ProtocolBase> mProtocol;
 	mutable std::mutex mMutex;
 
 	simplyfile::SerialPort mPort;
-
-	Protocol protocolVersion;
 };
 
 
