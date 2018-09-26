@@ -12,6 +12,7 @@ struct ProtocolV1 : public ProtocolBase {
 	auto convertLength(size_t len) const -> Parameter override;
 	auto convertAddress(int addr)  const -> Parameter override;
 
+	auto buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> override;
 };
 
 }

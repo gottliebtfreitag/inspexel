@@ -10,7 +10,9 @@ struct ProtocolV2 : public ProtocolBase {
 	[[nodiscard]] auto validateRawPacket(Parameter const& raw_packet) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> override;
 
 	auto convertLength(size_t len) const -> Parameter override;
-	auto convertAddress(int addr) const -> Parameter override;
+	auto convertAddress(int addr)  const -> Parameter override;
+
+	auto buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> override;
 };
 
 }

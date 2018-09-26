@@ -190,4 +190,22 @@ auto ProtocolV2::convertAddress(int addr) const -> Parameter {
 	return {std::byte(addr&0xff), std::byte((addr >> 8) & 0xff)};
 }
 
+auto ProtocolV2::buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> {
+	std::vector<std::byte> txBuf;
+
+	txBuf.reserve(motors.size()*5);
+	for (auto const& [id, baseRegister, length] : motors) {
+		txBuf.push_back(std::byte{id});
+		for (auto b : convertAddress(baseRegister)) {
+			txBuf.push_back(b);
+		}
+		for (auto b : convertLength(length)) {
+			txBuf.push_back(b);
+		}
+	}
+
+	return txBuf;
+}
+
+
 }
