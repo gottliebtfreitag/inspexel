@@ -199,14 +199,14 @@ void runDetect() {
 					successful += suc;
 					total += tot;
 				}
-				if (print) {
+				if (print and optCont) {
 					lastPrint = now;
 					std::cout << successful << "/" << total << " successful/total transactions - ";
 					std::cout << count << " loops\n";
 					auto now = std::chrono::high_resolution_clock::now();
 					auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
 					std::cout << double(successful) / diff.count() * 1000. << "/" << double(total) / diff.count() * 1000. << " trans per second -        ";
-					std::cout << double(count) / diff.count() * 1000. << " loop per second" << "\n";
+					std::cout << double(count) / diff.count() * 1000. << " loops per second" << "\n";
 				}
 			} while (optCont);
 		}
