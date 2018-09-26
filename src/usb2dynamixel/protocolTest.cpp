@@ -23,7 +23,7 @@ void runTest() {
 	}
 
 	auto outPacket = protocol.createPacket(dynamixel::MotorID{1}, dynamixel::Instruction::READ, sendParams);
-	auto [valid, MotorID, ErrorCode, payload] = protocol.validateRawPacket(outPacket);
+	auto [MotorID, ErrorCode, payload] = protocol.validateRawPacket(outPacket);
 
 	for (auto byte : outPacket) {
 		std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";

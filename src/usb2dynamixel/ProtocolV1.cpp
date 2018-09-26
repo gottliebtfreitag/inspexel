@@ -18,9 +18,13 @@ std::byte calculateChecksum(Parameter const& packet) {
 
 
 bool validatePacket(Parameter const& rxBuf) {
+	if (rxBuf.size() > 255) {
+		return false;
+	}
 	if (rxBuf.size() < 4) {
 		return false;
 	}
+
 	bool success = 0xff == uint8_t(rxBuf[0]);
 	success &= 0xff == uint8_t(rxBuf[1]);
 	success &= 0xff != uint8_t(rxBuf[2]);
@@ -51,27 +55,7 @@ auto ProtocolV1::createPacket(MotorID motorID, Instruction instr, Parameter data
 	return txBuf;
 }
 
-auto ProtocolV1::validateRawPacket(Parameter const& raw_packet) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
-	if (raw_packet.size() > 255) {
-		throw std::runtime_error("packet is longer than 255 bytes, not supported in protocol v1");
-	}
-	ErrorCode errorCode;
-
-	bool valid = validatePacket(raw_packet);
-
-	Parameter payload;
-	auto motorID = MotorIDInvalid;
-	if (valid) {
-		motorID = MotorID(raw_packet[2]);
-		errorCode = ErrorCode(raw_packet[4]);
-		int len = static_cast<int>(raw_packet[3]);
-		payload.insert(payload.end(), std::next(raw_packet.begin(), 5), std::next(raw_packet.begin(), 5+len-2));
-	}
-
-	return std::make_tuple(valid, motorID, errorCode, std::move(payload));
-}
-
-auto ProtocolV1::readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> Parameter {
+auto ProtocolV1::readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
 	std::size_t incomingLength = numParameters + 6;
 	bool timeoutFlag = false;
 	Parameter rxBuf;
@@ -84,8 +68,24 @@ auto ProtocolV1::readPacket(std::chrono::high_resolution_clock::duration timeout
 	if (timeoutFlag) {
 		rxBuf.clear();
 		flushRead(port);
+		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
-	return rxBuf;
+	auto  [motorID, errorCode, payload] = validateRawPacket(rxBuf);
+	return std::make_tuple(false, motorID, errorCode, payload);
+}
+
+auto ProtocolV1::validateRawPacket(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> {
+	if (not validatePacket(raw_packet)) {
+		return std::make_tuple(MotorIDInvalid, ErrorCode{}, Parameter{});
+	}
+
+	auto motorID = MotorID(raw_packet[2]);
+	auto errorCode = ErrorCode(raw_packet[4]);
+	int len = static_cast<int>(raw_packet[3]);
+	Parameter payload;
+	payload.insert(payload.end(), std::next(raw_packet.begin(), 5), std::next(raw_packet.begin(), 5+len-2));
+
+	return std::make_tuple(motorID, errorCode, std::move(payload));
 }
 
 auto ProtocolV1::convertLength(size_t len) const -> Parameter {

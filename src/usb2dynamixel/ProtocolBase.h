@@ -22,12 +22,12 @@ enum class ErrorCode : uint8_t {
 struct ProtocolBase {
 	virtual ~ProtocolBase() {}
 
-	virtual auto createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter = 0;
+	[[nodiscard]] virtual auto createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter = 0;
 	/**
 	 * receive a packet that contains numParameters bytes of payload
 	 * return the whole raw packet or an empty vector if a timeout happened or and invalid packet was received
 	 */
-	virtual auto readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> Parameter = 0;
+	[[nodiscard]] virtual auto readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
 
 
 	/** process a received packet by validating it and stripping it to the payload
@@ -40,12 +40,12 @@ struct ProtocolBase {
 	 *  errorCode   errorCode flags from the return message
 	 *  paremeters  is a vector with the actual payload
 	 */
-	[[nodiscard]] virtual auto validateRawPacket(Parameter const& raw_packet) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
+//	[[nodiscard]] virtual auto validateRawPacket(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> = 0;
 
-	virtual auto convertLength(size_t len) const -> Parameter = 0;
-	virtual auto convertAddress(int addr) const -> Parameter = 0;
+	[[nodiscard]] virtual auto convertLength(size_t len) const -> Parameter = 0;
+	[[nodiscard]] virtual auto convertAddress(int addr) const -> Parameter = 0;
 
-	virtual auto buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> = 0;
+	[[nodiscard]] virtual auto buildBulkReadPackage(std::vector<std::tuple<MotorID, int, size_t>> const& motors) const -> std::vector<std::byte> = 0;
 };
 
 }
