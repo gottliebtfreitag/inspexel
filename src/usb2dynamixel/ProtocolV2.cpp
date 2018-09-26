@@ -94,9 +94,13 @@ auto removeEscapes(Parameter::const_iterator start, Parameter::const_iterator en
 }
 
 bool validatePacket(Parameter const& rxBuf) {
+	if (rxBuf.size() > ((2<<16)-1)) {
+		return false;
+	}
 	if (rxBuf.size() < 10) {
 		return false;
 	}
+
 	bool success = true;
 	success &= std::byte(0xff) == rxBuf[0];
 	success &= std::byte(0xff) == rxBuf[1];
@@ -113,7 +117,6 @@ bool validatePacket(Parameter const& rxBuf) {
 }
 
 }
-
 
 auto ProtocolV2::createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter {
 	auto escaped = addEscapes(data.begin(), data.end());
@@ -133,28 +136,7 @@ auto ProtocolV2::createPacket(MotorID motorID, Instruction instr, Parameter data
 	return txBuf;
 }
 
-auto ProtocolV2::validateRawPacket(Parameter const& raw_packet) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
-	if (raw_packet.size() > ((2<<16)-1)) {
-		throw std::runtime_error("packet is longer than 255 bytes, not supported in protocol v1");
-	}
-	ErrorCode errorCode{};
-
-	bool valid = validatePacket(raw_packet);
-
-	Parameter payload;
-	auto motorID = MotorIDInvalid;
-	if (valid) {
-		motorID = MotorID(raw_packet[4]);
-		errorCode = ErrorCode(raw_packet[8]);
-		std::size_t len = static_cast<int>(raw_packet[5]) + (static_cast<int>(raw_packet[6]) << 8);
-		payload = Parameter(std::next(raw_packet.begin(), 9), std::next(raw_packet.begin(), 9+len-4));
-		payload = removeEscapes(payload.begin(), payload.end());
-	}
-
-	return std::make_tuple(valid, motorID, errorCode, std::move(payload));
-}
-
-auto ProtocolV2::readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t, simplyfile::SerialPort const& port) const -> Parameter {
+auto ProtocolV2::readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
 	bool timeoutFlag = false;
 	Parameter rxBuf;
 	auto startTime = std::chrono::high_resolution_clock::now();
@@ -166,7 +148,7 @@ auto ProtocolV2::readPacket(std::chrono::high_resolution_clock::duration timeout
 	if (timeoutFlag) {
 		rxBuf.clear();
 		flushRead(port);
-		return rxBuf;
+		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
 
 	std::size_t incomingLength = static_cast<int>(rxBuf[5]) + (static_cast<int>(rxBuf[6]) << 8) + rxBuf.size();
@@ -178,8 +160,26 @@ auto ProtocolV2::readPacket(std::chrono::high_resolution_clock::duration timeout
 	if (timeoutFlag) {
 		rxBuf.clear();
 		flushRead(port);
+		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
-	return rxBuf;
+
+	auto  [motorID, errorCode, payload] = validateRawPacket(rxBuf);
+	return std::make_tuple(false, motorID, errorCode, payload);
+}
+
+auto ProtocolV2::validateRawPacket(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> {
+	if (not validatePacket(raw_packet)) {
+		return std::make_tuple(MotorIDInvalid, ErrorCode{}, Parameter{});
+	}
+
+	auto motorID    = MotorID(raw_packet[4]);
+	auto errorCode  = ErrorCode(raw_packet[8]);
+	std::size_t len = static_cast<int>(raw_packet[5]) + (static_cast<int>(raw_packet[6]) << 8);
+	Parameter payload;
+	payload = Parameter(std::next(raw_packet.begin(), 9), std::next(raw_packet.begin(), 9+len-4));
+	payload = removeEscapes(payload.begin(), payload.end());
+
+	return std::make_tuple(motorID, errorCode, std::move(payload));
 }
 
 auto ProtocolV2::convertLength(size_t len) const -> Parameter {

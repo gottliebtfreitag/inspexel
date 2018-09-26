@@ -5,9 +5,9 @@
 namespace dynamixel {
 
 struct ProtocolV1 : public ProtocolBase {
-	auto createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter override;
-	[[nodiscard]] auto readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> Parameter override;
-	[[nodiscard]] auto validateRawPacket(Parameter const& raw_packet) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> override;
+	[[nodiscard]] auto createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter override;
+	[[nodiscard]] auto readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> override;
+	[[nodiscard]] auto validateRawPacket(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter>;
 
 	auto convertLength(size_t len) const -> Parameter override;
 	auto convertAddress(int addr)  const -> Parameter override;
