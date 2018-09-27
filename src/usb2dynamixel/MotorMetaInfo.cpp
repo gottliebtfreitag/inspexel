@@ -1,5 +1,8 @@
 #include "MotorMetaInfo.h"
 
+#include <cmath>
+
+
 namespace dynamixel::meta {
 
 auto getLayoutV1Infos() -> std::map<v1::Register, LayoutField> const& {
@@ -399,20 +402,39 @@ auto getLayoutProDefaults() -> std::map<uint32_t, std::map<pro::Register, std::o
 	return data;
 };
 
+template<int ANGULAR_RESOLUTION, int CENTER_VAL>
+static int toMotorValueHelper(double val) {
+	return std::round(val / (2. * M_PI) * ANGULAR_RESOLUTION + CENTER_VAL);
+}
+template<int ANGULAR_RESOLUTION, int CENTER_VAL>
+static double fromMotorValueHelper(int val) {
+	return (static_cast<double>(val) - CENTER_VAL) * 2. * M_PI / static_cast<double>(ANGULAR_RESOLUTION);
+}
+
+
+ConverterFunctions buildConverters(double angularResolution, int centerVal, double speedResolution) {
+	return ConverterFunctions{
+		[=](double val) { return std::round(val / (2. * M_PI) * angularResolution + centerVal); },
+		[=](int val) { return (static_cast<double>(val) - centerVal) * 2. * M_PI / static_cast<double>(angularResolution); },
+
+		[=](double speed) { return std::round(speed / (2. * M_PI) * 60. / speedResolution); },
+		[=](int speed) { return static_cast<double>(speed) * (2. * M_PI) / 60. * speedResolution; }
+	};
+}
 
 auto getMotorInfos() -> std::vector<MotorInfo> const& {
 	static std::vector<MotorInfo> data {
-		{    29, LayoutType::V1,  "MX28",          {"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"}},
-		{   310, LayoutType::V1,  "MX64",          {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"}},
-		{   320, LayoutType::V1,  "MX106",         {"MX-106T", "MX-106R"}},
-		{    30, LayoutType::V2,  "MX28-V2",       {"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"}},
-		{   311, LayoutType::V2,  "MX64-V2",       {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}},
-		{   321, LayoutType::V2,  "MX106-V2",      {"MX-106T-V2", "MX-106R-V2"}},
-		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}},
-		{ 1'000, LayoutType::V2,  "XH430-W350",    {"XH430-W350-T", "XH430-W350-R"}},
-		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"}},
-		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"}},
-		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"}},
+		{    29, LayoutType::V1,  "MX28",          {"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"}, buildConverters(4096, 2048, .114)},
+		{   310, LayoutType::V1,  "MX64",          {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"}, buildConverters(4096, 2048, .114)},
+		{   320, LayoutType::V1,  "MX106",         {"MX-106T", "MX-106R"}, buildConverters(4096, 2048, .114)},
+		{    30, LayoutType::V2,  "MX28-V2",       {"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"}, buildConverters(4096, 2048, .229)},
+		{   311, LayoutType::V2,  "MX64-V2",       {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}, buildConverters(4096, 2048, .229)},
+		{   321, LayoutType::V2,  "MX106-V2",      {"MX-106T-V2", "MX-106R-V2"}, buildConverters(4096, 2048, .229)},
+		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'000, LayoutType::V2,  "XH430-W350",    {"XH430-W350-T", "XH430-W350-R"}, buildConverters(4096, 2048, .229)},
+		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"}, buildConverters(251417, 0, 0.00397746)},
+		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"}, buildConverters(251417, 0, 0.00397746)},
+		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"}, buildConverters(263187, 0, 0.00389076)},
 	};
 	return data;
 }
