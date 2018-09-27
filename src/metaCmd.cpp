@@ -78,8 +78,8 @@ void printDetailInfoJson(meta::MotorInfo const& data) {
 }
 
 void printDetailInfoTable(meta::MotorInfo const& data) {
-	std::cout << " addr | l | Ac | mem | init |                          name | description \n";
-	std::cout << "------+---+----+-----+------+-------------------------------+-------------------------------\n";
+	std::cout << " addr | l | Ac | mem |  init  |                          name | description \n";
+	std::cout << "------+---+----+-----+--------+-------------------------------+-------------------------------\n";
 
 	auto printEntries = [](auto const& layout, auto const& defaults) {
 		for (auto [id, info] : layout) {
@@ -95,10 +95,10 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 			std::cout << (info.romArea?" ROM":" RAM") << " |";
 
 			if (iter->second) {
-				std::cout.width(5);
+				std::cout.width(7);
 				std::cout << int(iter->second.value()) << " |";
 			} else {
-				std::cout << "    - |";
+				std::cout << "      - |";
 			}
 			std::cout.width(30);
 			std::cout << info.name << " |";
@@ -112,10 +112,16 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V1>();
 		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V1>().at(data.modelNumber);
 		printEntries(layout, defaults);
-	} else {
+	} else if (data.layout == meta::LayoutType::V2) {
 		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V2>();
 		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V2>().at(data.modelNumber);
 		printEntries(layout, defaults);
+	} else if (data.layout == meta::LayoutType::Pro) {
+		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::Pro>();
+		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::Pro>().at(data.modelNumber);
+		printEntries(layout, defaults);
+	} else {
+		throw std::runtime_error("unknown layout type");
 	}
 }
 

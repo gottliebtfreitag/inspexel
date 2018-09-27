@@ -20,12 +20,13 @@ struct LayoutField {
 	std::string description;
 };
 
-enum class LayoutType { V1, V2 };
+enum class LayoutType { V1, V2, Pro };
 
 inline auto to_string(LayoutType layout) -> std::string {
 	switch(layout) {
-	case LayoutType::V1: return "V1";
-	case LayoutType::V2: return "V2";
+	case LayoutType::V1:  return "V1";
+	case LayoutType::V2:  return "V2";
+	case LayoutType::Pro: return "Pro";
 	}
 	throw std::runtime_error("unknown layout");
 }
@@ -45,30 +46,34 @@ inline auto to_string(LayoutField::Access access) -> std::string {
 	throw std::runtime_error("unknown access value");
 }
 
-auto getLayoutV1Infos() -> Layout<v1::Register> const&;
-auto getLayoutV2Infos() -> Layout<v2::Register> const&;
+auto getLayoutV1Infos()  -> Layout<v1::Register> const&;
+auto getLayoutV2Infos()  -> Layout<v2::Register> const&;
+auto getLayoutProInfos() -> Layout<pro::Register> const&;
 
 template <LayoutType type>
 auto getLayoutInfos() {
 	if constexpr(type == LayoutType::V1) {
 		return getLayoutV1Infos();
-	} else {
+	} else if constexpr(type == LayoutType::V2) {
 		return getLayoutV2Infos();
+	} else {
+		return getLayoutProInfos();
 	}
 }
 auto getLayoutV1Defaults() -> std::map<uint32_t, DefaultLayout<v1::Register>> const&;
 auto getLayoutV2Defaults() -> std::map<uint32_t, DefaultLayout<v2::Register>> const&;
+auto getLayoutProDefaults() -> std::map<uint32_t, DefaultLayout<pro::Register>> const&;
 
 template <LayoutType type>
 auto const& getLayoutDefaults() {
 	if constexpr(type == LayoutType::V1) {
 		return getLayoutV1Defaults();
-	} else {
+	} else if constexpr(type == LayoutType::V2) {
 		return getLayoutV2Defaults();
+	} else {
+		return getLayoutProDefaults();
 	}
 }
-
-
 
 struct MotorInfo {
 	uint16_t                        modelNumber;

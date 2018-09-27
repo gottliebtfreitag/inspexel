@@ -38,9 +38,12 @@ void runSetAngle() {
 	}
 	if (modelPtr->layout == dynamixel::meta::LayoutType::V1) {
 		usb2dyn.write<dynamixel::v1::Register::GOAL_POSITION, 2>(g_id, {int16_t(angle)});
-	} else if (modelPtr->layout == dynamixel::meta::LayoutType::V1) {
+	} else if (modelPtr->layout == dynamixel::meta::LayoutType::V2) {
 		usb2dyn.write<dynamixel::v2::Register::GOAL_POSITION, 4>(g_id, {int32_t(angle)});
+	} else if (modelPtr->layout == dynamixel::meta::LayoutType::Pro) {
+		usb2dyn.write<dynamixel::pro::Register::GOAL_POSITION, 4>(g_id, {int32_t(angle)});
 	}
+
 }
 
 
