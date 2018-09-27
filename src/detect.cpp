@@ -150,7 +150,11 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 void runDetect() {
 	baudrates.get().emplace(g_baudrate);
 	auto timeout = std::chrono::microseconds{g_timeout};
-	for (auto protocolVersion : {dynamixel::Protocol::V1, dynamixel::Protocol::V2}) {
+	auto protocols = std::vector<dynamixel::Protocol>{dynamixel::Protocol::V1, dynamixel::Protocol::V2};
+	if (g_protocolVersion.isSpecified()) {
+		protocols = {dynamixel::Protocol{int(g_protocolVersion)}};
+	}
+	for (auto protocolVersion : protocols) {
 		std::cout << "# trying protocol version " << int(protocolVersion) << "\n";
 		for (auto baudrate : baudrates.get()) {
 			std::cout << "## trying baudrate: " << baudrate << "\n";
