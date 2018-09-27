@@ -36,8 +36,10 @@ auto detectMotor(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, st
 		std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << layout.model_number << ") Layout " << to_string(modelPtr->layout) << "\n";
 		if (modelPtr->layout == meta::LayoutType::V1) {
 			return std::make_tuple(1, layout.model_number);
-		} else {
+		} else if (modelPtr->layout == meta::LayoutType::V2) {
 			return std::make_tuple(2, layout.model_number);
+		} else if (modelPtr->layout == meta::LayoutType::Pro) {
+			return std::make_tuple(3, layout.model_number);
 		}
 	}
 
@@ -195,6 +197,12 @@ void runDetect() {
 						successful += suc;
 						total += tot;
 					}
+					if (not motors[3].empty()) { // dynamixel pro
+						auto [suc, tot] = readDetailedInfos<meta::LayoutType::Pro, pro::FullLayout>(usb2dyn, motors[3], timeout, print);
+						successful += suc;
+						total += tot;
+					}
+
 					if (not motors[0].empty()) {
 						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[0], timeout, print);
 						successful += suc;

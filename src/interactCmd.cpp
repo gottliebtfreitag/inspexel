@@ -33,8 +33,10 @@ auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2d
 		std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << layout.model_number << ") Layout " << to_string(modelPtr->layout) << "\n";
 		if (modelPtr->layout == meta::LayoutType::V1) {
 			return 1;
-		} else {
+		} else if (modelPtr->layout == meta::LayoutType::V2) {
 			return 2;
+		} else if (modelPtr->layout == meta::LayoutType::Pro) {
+			return 3;
 		}
 	}
 	throw std::runtime_error("failed, unknown model (" + std::to_string(layout.model_number) + ")\n");
@@ -48,11 +50,7 @@ auto readMotorInfos(dynamixel::USB2Dynamixel& usb2dyn, MotorID motor, std::chron
 		throw std::runtime_error("trouble reading the motor");
 	}
 
-	if constexpr(LT == meta::LayoutType::V1) {
-		return layout;
-	} else if constexpr(LT == meta::LayoutType::V2) {
-		return layout;
-	}
+	return layout;
 }
 
 void runInteract() {
@@ -117,7 +115,23 @@ void runInteract() {
 						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
 						usleep(100000);
 					}
+				} else if (layoutVersion == 3) { //layout pro
+					auto layout = readMotorInfos<meta::LayoutType::Pro, pro::FullLayout>(usb2dyn, g_id, timeout);
+					printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
+
+					if (detectInput) {
+						auto g = std::lock_guard(mInputMutex);
+						detectInput = false;
+						if (minValue) {
+							usb2dyn.write<pro::Register::MIN_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+						} else {
+							usb2dyn.write<pro::Register::MAX_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+						}
+						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
+						usleep(100000);
+					}
 				}
+
 			} catch (std::exception const& e) {
 				std::cout << TERM_RED << "exception: " << e.what() << TERM_RESET << "\n";
 				usleep(1000000);
