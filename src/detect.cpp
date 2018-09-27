@@ -148,67 +148,69 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 void runDetect() {
 	baudrates.get().emplace(g_baudrate);
 	auto timeout = std::chrono::microseconds{g_timeout};
-	for (auto baudrate : baudrates.get()) {
-		std::cout << "trying baudrate: " << baudrate << "\n";
-		auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, g_device.get(), dynamixel::Protocol(g_protocolVersion.get()));
+	for (auto protocolVersion : {dynamixel::Protocol::V1, dynamixel::Protocol::V2}) {
+		std::cout << "# trying protocol version " << int(protocolVersion) << "\n";
+		for (auto baudrate : baudrates.get()) {
+			std::cout << "## trying baudrate: " << baudrate << "\n";
+			auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, g_device.get(), protocolVersion);
 
-		// generate range to check
-		std::vector<int> range(0xFD);
-		std::iota(begin(range), end(range), 0);
-		if (g_id.isSpecified()) {
-			range = {MotorID(g_id)};
-		} else  if (ids.isSpecified()) {
-			range.clear();
-			for (auto x : ids.get()) {
-				range.push_back(x);
+			// generate range to check
+			std::vector<int> range(0xFD);
+			std::iota(begin(range), end(range), 0);
+			if (g_id.isSpecified()) {
+				range = {MotorID(g_id)};
+			} else  if (ids.isSpecified()) {
+				range.clear();
+				for (auto x : ids.get()) {
+					range.push_back(x);
+				}
 			}
-		}
 
-		// ping all motors
-		std::map<int, std::vector<std::tuple<MotorID, uint16_t>>> motors;
-		for (auto motor : range) {
-			auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
-			motors[layout].push_back(std::make_tuple(motor, modelNumber));
-		}
-		motors.erase(-1);
-		std::cout << "-----------\n";
-		// read detailed infos if requested
-		if ((readAll or optCont) and not motors.empty()) {
-			static int count = 0;
-			static int successful = 0;
-			static int total = 0;
-			auto start = std::chrono::high_resolution_clock::now();
-			auto lastPrint = start;
-			do {
-				count += 1;
-				auto now = std::chrono::high_resolution_clock::now();
-				auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPrint);
-				bool print = (diff.count() > 100) or readAll;
-				if (not motors[1].empty()) {
-					auto [suc, tot] = readDetailedInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, motors[1], timeout, print);
-					successful += suc;
-					total += tot;
-				}
-				if (not motors[2].empty()) {
-					auto [suc, tot] = readDetailedInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, motors[2], timeout, print);
-					successful += suc;
-					total += tot;
-				}
-				if (not motors[0].empty()) {
-					auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[0], timeout, print);
-					successful += suc;
-					total += tot;
-				}
-				if (print and optCont) {
-					lastPrint = now;
-					std::cout << successful << "/" << total << " successful/total transactions - ";
-					std::cout << count << " loops\n";
+			// ping all motors
+			std::map<int, std::vector<std::tuple<MotorID, uint16_t>>> motors;
+			for (auto motor : range) {
+				auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
+				motors[layout].push_back(std::make_tuple(motor, modelNumber));
+			}
+			motors.erase(-1);
+			// read detailed infos if requested
+			if ((readAll or optCont) and not motors.empty()) {
+				static int count = 0;
+				static int successful = 0;
+				static int total = 0;
+				auto start = std::chrono::high_resolution_clock::now();
+				auto lastPrint = start;
+				do {
+					count += 1;
 					auto now = std::chrono::high_resolution_clock::now();
-					auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-					std::cout << double(successful) / diff.count() * 1000. << "/" << double(total) / diff.count() * 1000. << " trans per second -        ";
-					std::cout << double(count) / diff.count() * 1000. << " loops per second" << "\n";
-				}
-			} while (optCont);
+					auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPrint);
+					bool print = (diff.count() > 100) or readAll;
+					if (not motors[1].empty()) {
+						auto [suc, tot] = readDetailedInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, motors[1], timeout, print);
+						successful += suc;
+						total += tot;
+					}
+					if (not motors[2].empty()) {
+						auto [suc, tot] = readDetailedInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, motors[2], timeout, print);
+						successful += suc;
+						total += tot;
+					}
+					if (not motors[0].empty()) {
+						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[0], timeout, print);
+						successful += suc;
+						total += tot;
+					}
+					if (print and optCont) {
+						lastPrint = now;
+						std::cout << successful << "/" << total << " successful/total transactions - ";
+						std::cout << count << " loops\n";
+						auto now = std::chrono::high_resolution_clock::now();
+						auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+						std::cout << double(successful) / diff.count() * 1000. << "/" << double(total) / diff.count() * 1000. << " trans per second -        ";
+						std::cout << double(count) / diff.count() * 1000. << " loops per second" << "\n";
+					}
+				} while (optCont);
+			}
 		}
 	}
 }

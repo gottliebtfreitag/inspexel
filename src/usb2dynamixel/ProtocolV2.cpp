@@ -8,6 +8,7 @@ namespace dynamixel {
 
 namespace {
 
+[[nodiscard]]
 auto calculateChecksum(Parameter::const_iterator begin, Parameter::const_iterator end) -> Parameter {
 	static const std::array<uint16_t, 256> crc_table = {
 		0x0000, 0x8005, 0x800F, 0x000A, 0x801B, 0x001E, 0x0014, 0x8011,
@@ -53,6 +54,7 @@ auto calculateChecksum(Parameter::const_iterator begin, Parameter::const_iterato
 	return {std::byte(checkSum & 0xff), std::byte((checkSum >> 8) & 0xff)};
 }
 
+[[nodiscard]]
 auto addEscapes(Parameter::const_iterator start, Parameter::const_iterator end) -> Parameter {
 	Parameter escaped;
 	int state{0};
@@ -72,6 +74,7 @@ auto addEscapes(Parameter::const_iterator start, Parameter::const_iterator end) 
 	return escaped;
 }
 
+[[nodiscard]]
 auto removeEscapes(Parameter::const_iterator start, Parameter::const_iterator end) -> Parameter {
 	Parameter unescaped;
 	int state{0};
@@ -93,6 +96,7 @@ auto removeEscapes(Parameter::const_iterator start, Parameter::const_iterator en
 	return unescaped;
 }
 
+[[nodiscard]]
 bool validatePacket(Parameter const& rxBuf) {
 	if (rxBuf.size() > ((2<<16)-1)) {
 		return false;

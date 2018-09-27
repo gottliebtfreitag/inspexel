@@ -16,7 +16,7 @@ std::byte calculateChecksum(Parameter const& packet) {
 	return std::byte(~checkSum);
 }
 
-
+[[nodiscard]]
 bool validatePacket(Parameter const& rxBuf) {
 	if (rxBuf.size() > 255) {
 		return false;
