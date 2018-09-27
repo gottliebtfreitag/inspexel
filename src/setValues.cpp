@@ -52,7 +52,7 @@ auto ids            = setRegisterCmd.Parameter<std::vector<int>>({}, "ids", "use
 
 void runSetRegister() {
 	if (not g_id.isSpecified() and not ids.isSpecified()) throw std::runtime_error("need to specify the target g_id!");
-	if (not reg.isSpecified()) throw std::runtime_error("target angle has to be specified!");
+	if (not reg.isSpecified()) throw std::runtime_error("target register has to be specified!");
 	if (not values.isSpecified()) throw std::runtime_error("values to be written to the register have to be specified!");
 
 	auto f = [&](int id) {
