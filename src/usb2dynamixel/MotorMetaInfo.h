@@ -7,6 +7,7 @@
 #include <string_view>
 #include <variant>
 #include <vector>
+#include <functional>
 #include "Layout.h"
 
 namespace dynamixel::meta {
@@ -75,6 +76,13 @@ auto const& getLayoutDefaults() {
 	}
 }
 
+struct ConverterFunctions {
+	std::function<int(double)>      toMotorPosition;
+	std::function<double(int)>      fromMotorPosition;
+	std::function<int(double)>      toMotorSpeed;
+	std::function<double(int)>      fromMotorSpeed;
+};
+
 struct MotorInfo {
 	uint16_t                        modelNumber;
 	LayoutType layout;
@@ -82,6 +90,7 @@ struct MotorInfo {
 	std::string                     shortName;
 	std::vector<std::string>        motorNames;
 
+	ConverterFunctions              converterFunctions;
 };
 
 auto getMotorInfos() -> std::vector<MotorInfo> const&;
