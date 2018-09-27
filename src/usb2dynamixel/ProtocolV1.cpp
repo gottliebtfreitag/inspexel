@@ -70,11 +70,11 @@ auto ProtocolV1::readPacket(std::chrono::high_resolution_clock::duration timeout
 		flushRead(port);
 		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
-	auto  [motorID, errorCode, payload] = validateRawPacket(rxBuf);
+	auto  [motorID, errorCode, payload] = extractPayload(rxBuf);
 	return std::make_tuple(false, motorID, errorCode, payload);
 }
 
-auto ProtocolV1::validateRawPacket(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> {
+auto ProtocolV1::extractPayload(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> {
 	if (not validatePacket(raw_packet)) {
 		return std::make_tuple(MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
