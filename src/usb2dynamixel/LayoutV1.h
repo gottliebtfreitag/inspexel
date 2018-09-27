@@ -64,13 +64,13 @@ struct LayoutPart {
 	auto operator=(LayoutPart const& _other) -> LayoutPart& = default;
 
 	LayoutPart(uint8_t value)
-		: _oneByte {std::move(value)}
+		: _oneByte {value}
 	{}
 
 	PartType _oneByte {};
 	template <typename L> void visit(L l) const { l(type, _oneByte); }
 	template <typename L> void visit(L l) { l(type, _oneByte); }
-	bool reserved() const { return true; }
+	[[nodiscard]] bool reserved() const { return true; }
 };
 
 #define LayoutPart(enum, type, name) \
