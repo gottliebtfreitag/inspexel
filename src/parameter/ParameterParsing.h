@@ -41,17 +41,17 @@ template<typename T>
 auto parseSuffix(std::string_view suffix) -> std::optional<T> {
 	auto ret = 1
 		* parseSuffixHelper<1000, T>("k", suffix)
-		* parseSuffixHelper<1024, T>("kb", suffix)
+		* parseSuffixHelper<1024, T>("ki", suffix)
 		* parseSuffixHelper<1000*1000, T>("m", suffix)
-		* parseSuffixHelper<1024*1024, T>("mb", suffix)
+		* parseSuffixHelper<1024*1024, T>("mi", suffix)
 		* parseSuffixHelper<1000*1000*1000, T>("g", suffix)
-		* parseSuffixHelper<1024*1024*1024, T>("gb", suffix)
+		* parseSuffixHelper<1024*1024*1024, T>("gi", suffix)
 		* parseSuffixHelper<1000ull*1000*1000*1000, T>("t", suffix)
-		* parseSuffixHelper<1024ull*1024*1024*1024, T>("tb", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024, T>("ti", suffix)
 		* parseSuffixHelper<1000ull*1000*1000*1000*1000, T>("p", suffix)
-		* parseSuffixHelper<1024ull*1024*1024*1024*1024, T>("pb", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024*1024, T>("pi", suffix)
 		* parseSuffixHelper<1000ull*1000*1000*1000*1000*1000, T>("e", suffix)
-		* parseSuffixHelper<1024ull*1024*1024*1024*1024*1024, T>("eb", suffix)
+		* parseSuffixHelper<1024ull*1024*1024*1024*1024*1024, T>("ei", suffix)
 	;
 	if (ret == 1) {
 		return std::nullopt;
