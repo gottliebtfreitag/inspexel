@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 		parameter::parseArguments(argc-1, argv+1);
 
 		if (printHelp.isSpecified()) {
+			std::cout << "inspexel version 1.1.0\n";
 			std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
 			return 0;
 		}
