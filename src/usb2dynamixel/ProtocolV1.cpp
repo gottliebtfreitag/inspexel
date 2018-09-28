@@ -102,26 +102,32 @@ Parameter ProtocolV1::synchronizeOnHeader(Timeout timeout, MotorID expectedMotor
 auto ProtocolV1::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
 	bool timeoutFlag = false;
 	auto startTime = std::chrono::high_resolution_clock::now();
-	// read a header (headers consist of 5 bytes)
-	Parameter preambleBuffer;
-	auto testTimeout = [&]{ return (timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout);};
-	Parameter rxBuf = synchronizeOnHeader(timeout, expectedMotorID, numParameters, port);
-	if (rxBuf.size() < 5) { // if we could not synchronize on a header bail out
-		timeoutFlag = true;
+
+	while (not timeoutFlag) {
+		// read a header (headers consist of 5 bytes)
+		Parameter preambleBuffer;
+		auto testTimeout = [&]{ return (timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout);};
+		Parameter rxBuf = synchronizeOnHeader(timeout, expectedMotorID, numParameters, port);
+		if (rxBuf.size() < 5) { // if we could not synchronize on a header bail out
+			break;
+		}
+		std::size_t incomingLength = numParameters + 6;
+		while (rxBuf.size() < incomingLength and not timeoutFlag) {
+			auto buffer = read(port, incomingLength - rxBuf.size());
+			rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
+			timeoutFlag = testTimeout();
+		};
+		if (timeoutFlag) {
+			break;
+		}
+		auto  [motorID, errorCode, payload] = extractPayload(rxBuf);
+		if (payload.size() != numParameters or motorID != expectedMotorID) {
+			continue;
+		}
+		return std::make_tuple(false, motorID, errorCode, payload);
 	}
-	std::size_t incomingLength = numParameters + 6;
-	while (rxBuf.size() < incomingLength and not timeoutFlag) {
-		auto buffer = read(port, incomingLength - rxBuf.size());
-		rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
-		timeoutFlag = testTimeout();
-	};
-	if (timeoutFlag) {
-		rxBuf.clear();
-		flushRead(port);
-		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
-	}
-	auto  [motorID, errorCode, payload] = extractPayload(rxBuf);
-	return std::make_tuple(false, motorID, errorCode, payload);
+	flushRead(port);
+	return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 }
 
 auto ProtocolV1::extractPayload(Parameter const& raw_packet) const -> std::tuple<MotorID, ErrorCode, Parameter> {
