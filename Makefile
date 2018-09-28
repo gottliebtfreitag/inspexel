@@ -13,6 +13,7 @@ PREFIX              ?=
 INSTALL_BIN_DIR     ?= $(PREFIX)/usr/bin
 BASH_COMPLETION_DIR ?= $(PREFIX)/usr/share/bash-completion/completions/
 ZSH_COMPLETION_DIR  ?= $(PREFIX)/usr/share/zsh-completion/completions/
+MAN_DIR             ?= $(PREFIX)/usr/share/man/man1/
 
 SRC_FOLDERS = src/
 LIBS = c pthread stdc++fs
@@ -100,6 +101,8 @@ install: $(TARGET)
 	$(SILENT) cp scripts/bash_completion $(BASH_COMPLETION_DIR)/$<
 	$(SILENT) mkdir -p $(ZSH_COMPLETION_DIR)
 	$(SILENT) cp scripts/zsh_completion $(ZSH_COMPLETION_DIR)/$<
+	$(SILENT) mkdir -p $(MAN_DIR)
+	$(SILENT) scripts/generateMan.sh | gzip > $(MAN_DIR)/$<.1.gz
 
 $(TARGET): $(CPP_OBJ_FILES) $(C_OBJ_FILES)
 	@echo linking $(TARGET)

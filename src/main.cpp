@@ -4,9 +4,12 @@
 
 namespace {
 
-auto printHelp = parameter::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
+auto printHelp  = parameter::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
 
 }
+
+#define VERSION "1.1.0"
+#define DATE    "28 September 2018"
 
 #define TERM_RED                        "\033[31m"
 #define TERM_RESET                      "\033[0m"
@@ -20,16 +23,21 @@ int main(int argc, char** argv)
 		}
 		return 0;
 	}
+	if (argc == 2 and std::string(argv[1]) == "--groff") {
+		std::cout << ".TH man 1 \"" << DATE << "\" \"" << VERSION << "\" inspexel man page\"\n";
+		std::cout << parameter::generateGroffString();
+		return 0;
+	}
+
 	try {
 		// pass everything except the name of the application
 		parameter::parseArguments(argc-1, argv+1);
 
 		if (printHelp.isSpecified()) {
-			std::cout << "inspexel version 1.1.0\n";
+			std::cout << "inspexel version " << VERSION << " - " << DATE << "\n";
 			std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
 			return 0;
 		}
-
 		parameter::callCommands();
 	} catch (std::exception const& e) {
 		std::cerr << "exception: " << TERM_RED << e.what() << TERM_RESET "\n";
