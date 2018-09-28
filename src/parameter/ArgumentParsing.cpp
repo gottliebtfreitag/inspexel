@@ -163,6 +163,51 @@ std::string generateHelpString(std::regex const& filter) {
 	return helpString;
 }
 
+std::string generateGroffString() {
+	std::string helpString;
+
+	auto const & commands = detail::CommandRegistry::getInstance().getCommands();
+
+	if (commands.size() != 1) { // if there is more than just the default command
+
+		helpString += ".SH COMMANDS\n";
+
+		for (auto it = commands.begin(); it != commands.end(); it = commands.upper_bound(it->first)) {
+			if (it->second != &Command::getDefaultCommand()) {
+				helpString += ".TP\n\\fB" + it->first + "\\fR\n" + it->second->getDescription() + "\n";
+			}
+		}
+		helpString += "\n";
+	}
+	bool lastLocal{false};
+	for (auto it = commands.begin(); it != commands.end();) {
+		bool globalOptions = it->second == &Command::getDefaultCommand();
+		if (globalOptions) {
+			helpString += ".SH GLOBAL OPTIONS\n";
+		}
+		if (not lastLocal and not globalOptions) {
+			lastLocal = true;
+			helpString += ".SH SPECIFIC OPTIONS\n";
+		}
+
+		auto end = commands.upper_bound(it->first);
+		for (auto command = it; command != end; ++command) {
+			if (not globalOptions) {
+				helpString += ".SS\n\\fB" + it->first + "\\fR\n";
+			}
+
+			auto const& params = command->second->getParameters();
+			for (auto paramIt = params.begin(); paramIt != params.end(); paramIt = params.upper_bound(paramIt->first)) {
+				helpString += ".TP\n";
+				helpString += std::string{"\\fB--"} + paramIt->second->getArgName() + "\\fR\n";
+				helpString += paramIt->second->describe() + "\n";
+			}
+		}
+		it = end;
+	}
+	return helpString;
+}
+
 std::set<std::string> getNextArgHint(int argc, char const* const* argv) {
 	std::vector<Command*> argProviders = {&Command::getDefaultCommand()};
 	std::string lastArgName;

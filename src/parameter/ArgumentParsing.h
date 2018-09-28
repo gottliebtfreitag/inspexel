@@ -19,6 +19,7 @@ void parseArguments(int argc, char const* const* argv);
 void parseArguments(int argc, char const* const* argv, std::set<ParameterBase*> const& targetParameters);
 
 std::string generateHelpString(std::regex const& filter=std::regex{".*"});
+std::string generateGroffString();
 
 std::set<std::string> getNextArgHint(int argc, char const* const* argv);
 
