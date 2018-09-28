@@ -35,6 +35,8 @@ struct USB2Dynamixel {
 	[[nodiscard]] auto bulk_read(std::vector<std::tuple<MotorID, int, size_t>> const& motors, Timeout timeout) const -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>>;
 
 	void write(MotorID motor, int baseRegister, Parameter const& txBuf) const;
+	auto writeRead(MotorID motor, int baseRegister, Parameter const& txBuf, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter>;
+
 	void sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister) const;
 
 	void reset(MotorID motor) const;
@@ -75,11 +77,19 @@ struct USB2Dynamixel {
 	}
 
 	template <auto baseRegister, size_t length>
-	void write(MotorID motor, Layout<baseRegister, length> layout) {
+	void write(MotorID motor, Layout<baseRegister, length> layout) const {
 		std::vector<std::byte> txBuf(sizeof(layout));
 		memcpy(txBuf.data(), &layout, sizeof(layout));
 		write(motor, int(baseRegister), txBuf);
 	}
+
+	template <auto baseRegister, size_t length>
+	auto writeRead(MotorID motor, Layout<baseRegister, length> layout, Timeout timeout) const {
+		std::vector<std::byte> txBuf(sizeof(layout));
+		memcpy(txBuf.data(), &layout, sizeof(layout));
+		return writeRead(motor, int(baseRegister), txBuf, timeout);
+	}
+
 
 
 	template <template<auto, size_t> class Layout, auto baseRegister, size_t Length>

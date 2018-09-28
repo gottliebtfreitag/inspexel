@@ -20,6 +20,7 @@ enum class ErrorCode : uint8_t {
 
 
 struct ProtocolBase {
+	using Timeout = std::chrono::high_resolution_clock::duration;
 	virtual ~ProtocolBase() {}
 
 	[[nodiscard]] virtual auto createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter = 0;
@@ -27,7 +28,7 @@ struct ProtocolBase {
 	 * receive a packet that contains numParameters bytes of payload
 	 * return the whole raw packet or an empty vector if a timeout happened or and invalid packet was received
 	 */
-	[[nodiscard]] virtual auto readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
+	[[nodiscard]] virtual auto readPacket(Timeout timeout, uint8_t expectedMotorID, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> = 0;
 
 
 	/** process a received packet by validating it and stripping it to the payload

@@ -30,7 +30,7 @@ USB2Dynamixel::~USB2Dynamixel() {
 bool USB2Dynamixel::ping(MotorID motor, Timeout timeout) const {
 	auto g = std::lock_guard(mMutex);
 	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::PING, {}));
-	auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, 0, mPort);
+	auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, motor, 0, mPort);
 	return motorID != MotorIDInvalid;
 }
 
@@ -45,9 +45,7 @@ auto USB2Dynamixel::read(MotorID motor, int baseRegister, size_t length, Timeout
 
 	auto g = std::lock_guard(mMutex);
 	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::READ, txBuf));
-	auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, length, mPort);
-
-	return std::make_tuple(timeoutFlag, motorID, errorCode, std::move(rxBuf));
+	return mProtocol->readPacket(timeout, motor, length, mPort);
 }
 
 auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, size_t>> const& motors, Timeout timeout) const -> std::vector<std::tuple<MotorID, int, ErrorCode, Parameter>> {
@@ -61,7 +59,7 @@ auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, size_t>> cons
 	simplyfile::write(mPort, mProtocol->createPacket(BroadcastID, Instruction::BULK_READ, txBuf));
 
 	for (auto const& [id, baseRegister, length] : motors) {
-		auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, length, mPort);
+		auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, id, length, mPort);
 		if (motorID == MotorIDInvalid or motorID != id) {
 			break;
 		}
@@ -79,6 +77,11 @@ void USB2Dynamixel::write(MotorID motor, int baseRegister, Parameter const& txBu
 	auto g = std::lock_guard(mMutex);
 	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::WRITE, parameters));
 }
+auto USB2Dynamixel::writeRead(MotorID motor, int baseRegister, Parameter const& txBuf, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
+	write(motor, baseRegister, txBuf);
+	return mProtocol->readPacket(timeout, motor, 0, mPort);
+}
+
 
 void USB2Dynamixel::sync_write(std::map<MotorID, Parameter> const& motorParams, int baseRegister) const {
 	auto g = std::lock_guard(mMutex);

@@ -140,22 +140,62 @@ auto ProtocolV2::createPacket(MotorID motorID, Instruction instr, Parameter data
 	return txBuf;
 }
 
-auto ProtocolV2::readPacket(std::chrono::high_resolution_clock::duration timeout, std::size_t, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
-	bool timeoutFlag = false;
-	Parameter rxBuf;
-	auto startTime = std::chrono::high_resolution_clock::now();
-	while (rxBuf.size() < 7 and not timeoutFlag) { // read up to the length field
-		auto buffer = read(port, 7 - rxBuf.size());
-		rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
-		timeoutFlag = (timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout);
+Parameter ProtocolV2::synchronizeOnHeader(Timeout timeout, MotorID expectedMotorID, std::size_t numParameters, simplyfile::SerialPort const& port) const {
+	Parameter preambleBuffer;
+	struct __attribute__((packed)) Header {
+		std::array<std::byte, 4> syncMarker;
+		uint8_t id;
+		uint16_t length;
+		uint8_t instruction;
+		uint8_t error;
 	};
-	if (timeoutFlag) {
+	std::array<std::byte, 4> syncMarker = {std::byte{0xff}, std::byte{0xff}, std::byte{0xfd}, std::byte{0x00}};
+	auto startTime = std::chrono::high_resolution_clock::now();
+	while (not ((timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout))) {
+		// figure out how many bytes have to be read
+		int indexOfSyncMarker = 0;
+		for (;indexOfSyncMarker <= static_cast<int>(preambleBuffer.size())-static_cast<int>(sizeof(syncMarker)); ++indexOfSyncMarker) {
+			if (0 == std::memcmp(&preambleBuffer[indexOfSyncMarker], syncMarker.data(), sizeof(syncMarker))) {
+				break;
+			}
+		}
+		preambleBuffer.erase(preambleBuffer.begin(), preambleBuffer.begin()+indexOfSyncMarker);
+		int bytesToRead = std::max(1, static_cast<int>(sizeof(Header)+2) - static_cast<int>(preambleBuffer.size()));
+		auto buffer = read(port, bytesToRead);
+		preambleBuffer.insert(preambleBuffer.end(), buffer.begin(), buffer.end());
+		if (preambleBuffer.size() >= sizeof(Header)) {
+			// test if this preamble contains the header of the packet we were looking for
+			Header header;
+			std::memcpy(&header, preambleBuffer.data(), sizeof(Header));
+			if (header.syncMarker == syncMarker and header.length+4 >= static_cast<int>(numParameters)) {
+				// found a synchronization token and a "matching" packet
+				if (expectedMotorID != 0xfe) {
+					if (expectedMotorID == header.id) {
+						return preambleBuffer;
+					}
+					// received an unexpected header -> flush this header and continue reading
+					preambleBuffer.clear();
+				} else {
+					return preambleBuffer;
+				}
+			}
+		}
+	}
+	return {};
+}
+
+auto ProtocolV2::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_t numParameters, simplyfile::SerialPort const& port) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
+	bool timeoutFlag = false;
+	auto startTime = std::chrono::high_resolution_clock::now();
+	Parameter rxBuf = synchronizeOnHeader(timeout, expectedMotorID, numParameters, port);
+	if (rxBuf.size() < 9) {// if we could not synchronize on a header bail out
 		rxBuf.clear();
 		flushRead(port);
 		return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 	}
 
-	std::size_t incomingLength = static_cast<int>(rxBuf[5]) + (static_cast<int>(rxBuf[6]) << 8) + rxBuf.size();
+	// this is the size of the entire packet [header + payload + checksum]
+	std::size_t incomingLength = static_cast<int>(rxBuf[5]) + (static_cast<int>(rxBuf[6]) << 8) + 7;
 	while (rxBuf.size() < incomingLength and not timeoutFlag) { // read the rest
 		auto buffer = read(port, incomingLength - rxBuf.size());
 		rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
