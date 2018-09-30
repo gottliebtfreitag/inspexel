@@ -96,8 +96,13 @@ struct RegisterFile : simplyfuse::FuseFile {
 std::atomic<bool> terminateFlag {false};
 
 template <meta::LayoutType LT>
-std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID, USB2Dynamixel& usb2dyn, simplyfuse::FuseFS& fuseFS) {
+std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID, int modelNumber, USB2Dynamixel& usb2dyn, simplyfuse::FuseFS& fuseFS) {
 	std::vector<std::unique_ptr<simplyfuse::FuseFile>> files;
+
+	auto motorInfoPtr = meta::getMotorInfo(modelNumber);
+	auto& motorModelFile = files.emplace_back(std::make_unique<simplyfuse::SimpleROFile>(motorInfoPtr->shortName + "\n"));
+	fuseFS.registerFile("/" + std::to_string(motorID) + "/motor_model", *motorModelFile);
+
 	auto infos = meta::getLayoutInfos<LT>();
 	for (auto const& [reg, info] : infos) {
 		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info, usb2dyn));
@@ -136,11 +141,11 @@ void runFuse() {
 			auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
 			std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
 			if (layout == 1) {
-				newFiles = registerMotor<meta::LayoutType::V1>(motor, usb2dyn, fuseFS);
+				newFiles = registerMotor<meta::LayoutType::V1>(motor, modelNumber, usb2dyn, fuseFS);
 			} else if (layout == 2) {
-				newFiles = registerMotor<meta::LayoutType::V2>(motor, usb2dyn, fuseFS);
+				newFiles = registerMotor<meta::LayoutType::V2>(motor, modelNumber, usb2dyn, fuseFS);
 			} else if (layout == 3) {
-				newFiles = registerMotor<meta::LayoutType::Pro>(motor, usb2dyn, fuseFS);
+				newFiles = registerMotor<meta::LayoutType::Pro>(motor, modelNumber, usb2dyn, fuseFS);
 			}
 			files.insert(files.end(), std::make_move_iterator(newFiles.begin()), std::make_move_iterator(newFiles.end()));
 		}
