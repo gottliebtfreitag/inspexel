@@ -220,8 +220,10 @@ void rmDirHelper(Node* node, FuseFS::Pimpl* pimpl) {
 	if (not node) {
 		return;
 	}
-	for (auto & child : node->children) {
-		rmDirHelper(child.second.get(), pimpl);
+	std::vector<Node*> children;
+	std::transform(node->children.begin(), node->children.end(), std::back_inserter(children), [](auto const& p) { return p.second.get(); });
+	for (auto & child : children) {
+		rmDirHelper(child, pimpl);
 	}
 	pimpl->deleteNode(node);
 }
