@@ -64,6 +64,7 @@ struct RegisterFile : simplyfuse::FuseFile {
 				param.emplace_back(std::byte{reinterpret_cast<uint8_t const*>(&toSet)[i]});
 			}
 			usb2dyn.write(motorID, registerID, param);
+			return size;
 		} catch (std::exception const&) {}
 		return -ENOENT;
 	}
