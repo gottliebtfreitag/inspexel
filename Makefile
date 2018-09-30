@@ -16,7 +16,7 @@ ZSH_COMPLETION_DIR  ?= $(PREFIX)/usr/share/zsh-completion/completions/
 MAN_DIR             ?= $(PREFIX)/usr/share/man/man1/
 
 SRC_FOLDERS = src/
-LIBS = c pthread stdc++fs
+LIBS = c pthread stdc++fs fuse
 LIB_PATHS =
 INCLUDES = src/ \
 
@@ -29,7 +29,7 @@ LIB_PATH_CMD = $(addprefix -L, $(LIB_PATHS))
 
 # Flags
 
-DEFINES		+=
+DEFINES		+= -D_FILE_OFFSET_BITS=64
 
 FP_FLAGS       ?=
 COMMON_FLAGS	+= $(DEFINES) $(FP_FLAGS)
