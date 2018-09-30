@@ -94,6 +94,24 @@ struct RegisterFile : simplyfuse::FuseFile {
 	USB2Dynamixel &usb2dyn;
 };
 
+struct PingFile : simplyfuse::SimpleWOFile {
+	std::function<bool(MotorID)> callback;
+	PingFile(std::function<bool(MotorID)> cb) : callback{cb} {}
+
+	int onWrite(const char* buf, std::size_t size, off_t) override {
+		int motorID;
+		if (std::stringstream{std::string{buf, size}} >> motorID) {
+			if (motorID >= 0xff) {
+				return -EINVAL;
+			}
+			if (callback(motorID)) {
+				return size;
+			}
+		}
+		return -EINVAL;
+	}
+};
+
 std::atomic<bool> terminateFlag {false};
 
 template <meta::LayoutType LT>
@@ -102,6 +120,7 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 
 	auto motorInfoPtr = meta::getMotorInfo(modelNumber);
 	auto& motorModelFile = files.emplace_back(std::make_unique<simplyfuse::SimpleROFile>(motorInfoPtr->shortName + "\n"));
+	fuseFS.rmdir("/" + std::to_string(motorID));
 	fuseFS.registerFile("/" + std::to_string(motorID) + "/motor_model", *motorModelFile);
 
 	auto infos = meta::getLayoutInfos<LT>();
@@ -130,25 +149,35 @@ void runFuse() {
 	}
 
 	simplyfuse::FuseFS fuseFS{mountPoint.get()};
-	// build the fuseFS with directories for all motors
 	std::vector<std::unique_ptr<simplyfuse::FuseFile>> files;
 
+	auto detectAndHandleMotor = [&](MotorID motor) {
+		auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
+		std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
+		if (layout == -1) {
+			return false;
+		}
+		if (layout == 1) {
+			newFiles = registerMotor<meta::LayoutType::V1>(motor, modelNumber, usb2dyn, fuseFS);
+		} else if (layout == 2) {
+			newFiles = registerMotor<meta::LayoutType::V2>(motor, modelNumber, usb2dyn, fuseFS);
+		} else if (layout == 3) {
+			newFiles = registerMotor<meta::LayoutType::Pro>(motor, modelNumber, usb2dyn, fuseFS);
+		}
+		files.insert(files.end(), std::make_move_iterator(newFiles.begin()), std::make_move_iterator(newFiles.end()));
+		return true;
+	};
+
+	auto pingFile = PingFile(detectAndHandleMotor);
+
+	fuseFS.registerFile("/detect_motor", pingFile);
 	auto future = std::async(std::launch::async, [&]{
 		// ping all motors
 		for (auto motor : range) {
 			if (terminateFlag) {
 				break;
 			}
-			auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
-			std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
-			if (layout == 1) {
-				newFiles = registerMotor<meta::LayoutType::V1>(motor, modelNumber, usb2dyn, fuseFS);
-			} else if (layout == 2) {
-				newFiles = registerMotor<meta::LayoutType::V2>(motor, modelNumber, usb2dyn, fuseFS);
-			} else if (layout == 3) {
-				newFiles = registerMotor<meta::LayoutType::Pro>(motor, modelNumber, usb2dyn, fuseFS);
-			}
-			files.insert(files.end(), std::make_move_iterator(newFiles.begin()), std::make_move_iterator(newFiles.end()));
+			detectAndHandleMotor(motor);
 		}
 	});
 
