@@ -132,6 +132,9 @@ void FuseFS::loop() {
 
 void FuseFS::registerFile(std::filesystem::path const& _path, FuseFile& file) {
 	std::filesystem::path path = _path.lexically_normal();
+	if (file.fuseFS and file.fuseFS != this) {
+		throw std::invalid_argument("the passed file is already registered at a different fuse");
+	}
 	if (not path.is_absolute()) {
 		throw InvalidPathError("path must be absolute");
 	}
@@ -144,6 +147,7 @@ void FuseFS::registerFile(std::filesystem::path const& _path, FuseFile& file) {
 		}
 	}
 	node->file = &file;
+	file.fuseFS = this;
 	if (not node->children.empty()) {
 		throw InvalidPathError("file already exists");
 	}
@@ -152,17 +156,25 @@ void FuseFS::registerFile(std::filesystem::path const& _path, FuseFile& file) {
 }
 
 void FuseFS::unregisterFile(FuseFile& file) {
-	std::lock_guard lock{pimpl->mutex};
+	if (file.fuseFS != this) {
+		throw std::invalid_argument("the passed file is not registered with this fuse instance");
+	}
 
+	std::lock_guard lock{pimpl->mutex};
 	auto range = pimpl->filesInvMap.equal_range(&file);
 	for (auto it = range.first; it != range.second; ++it) {
 		Node* node = it->second; // destroy this node
 		pimpl->files.erase(node);
 		destroyNode(node);
 	}
+	file.fuseFS = nullptr;
 }
 
 void FuseFS::unregisterFile(std::filesystem::path const& path, FuseFile& file) {
+	if (file.fuseFS != this) {
+		throw std::invalid_argument("the passed file is not registered with this fuse instance");
+	}
+
 	std::lock_guard lock{pimpl->mutex};
 	Node* node = pimpl->getNode(path);
 	if (not node or node->file != &file) {
@@ -170,6 +182,11 @@ void FuseFS::unregisterFile(std::filesystem::path const& path, FuseFile& file) {
 	}
 	pimpl->files.erase(node);
 	destroyNode(node);
+
+	auto range = pimpl->filesInvMap.equal_range(&file);
+	if (range.first == range.second) {
+		file.fuseFS = nullptr;
+	}
 }
 
 namespace {
