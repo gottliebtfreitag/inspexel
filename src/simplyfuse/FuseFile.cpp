@@ -31,4 +31,20 @@ int SimpleROFile::getFilePermissions() {
 	return 0444;
 }
 
+int SimpleRWFile::onWrite(const char* buf, std::size_t size, off_t offset) {
+	content.resize(content.size() + offset + size);
+	std::memcpy(content.data() + offset, buf, size);
+	return size;
+}
+
+int SimpleRWFile::onTruncate(off_t offset) {
+	content.resize(offset);
+	return 0;
+}
+
+int SimpleRWFile::getFilePermissions() {
+	return 0666;
+}
+
+
 }

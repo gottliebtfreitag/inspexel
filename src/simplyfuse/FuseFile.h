@@ -39,4 +39,12 @@ struct SimpleROFile : FuseFile {
 	int getFilePermissions() override;
 };
 
+struct SimpleRWFile : SimpleROFile {
+	using SimpleROFile::SimpleROFile;
+	virtual ~SimpleRWFile() = default;
+	int onWrite(const char* buf, std::size_t size, off_t offset);
+	int onTruncate(off_t offset);
+	int getFilePermissions() override;
+};
+
 } /* namespace simplyfile */
