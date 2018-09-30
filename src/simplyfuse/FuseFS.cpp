@@ -128,11 +128,11 @@ FuseFS::FuseFS(std::filesystem::path const& mountPoint) :
 	// try to create the mountpoint
 	std::filesystem::create_directory(mountPoint);
 
-	std::vector<std::string> argStrings {"", "-o", "auto_unmount"};
+	std::vector<std::string> argStrings {"", "-oauto_unmount"};
 	char* args[] = {
-			argStrings[0].data(), argStrings[1].data(), argStrings[2].data(), nullptr
+			argStrings[0].data(), argStrings[1].data()
 	};
-	struct fuse_args fuse_args {3, args, false};
+	struct fuse_args fuse_args = {2, args, false};
 	pimpl->channel = fuse_mount(pimpl->mountPoint.c_str(), &fuse_args);
 	if (not pimpl->channel) {
 		throw MountError("cannot mount");
