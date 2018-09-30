@@ -149,7 +149,7 @@ void runFuse() {
 	}
 
 	simplyfuse::FuseFS fuseFS{mountPoint.get()};
-	std::vector<std::unique_ptr<simplyfuse::FuseFile>> files;
+	std::map<MotorID, std::vector<std::unique_ptr<simplyfuse::FuseFile>>> files;
 
 	auto detectAndHandleMotor = [&](MotorID motor) {
 		auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
@@ -164,7 +164,7 @@ void runFuse() {
 		} else if (layout == 3) {
 			newFiles = registerMotor<meta::LayoutType::Pro>(motor, modelNumber, usb2dyn, fuseFS);
 		}
-		files.insert(files.end(), std::make_move_iterator(newFiles.begin()), std::make_move_iterator(newFiles.end()));
+		files[motor] = std::move(newFiles);
 		return true;
 	};
 
