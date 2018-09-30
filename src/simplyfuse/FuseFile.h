@@ -24,6 +24,8 @@ struct FuseFile {
 	virtual std::size_t getSize();
 	virtual int onTruncate(off_t offset);
 
+	virtual int getFilePermissions();
+
 	friend class FuseFS;
 protected:
 	FuseFS* fuseFS {nullptr};
@@ -34,6 +36,7 @@ struct SimpleROFile : FuseFile {
 	SimpleROFile(std::string const& _content) : content(_content) {};
 	virtual ~SimpleROFile() = default;
 	int onRead(char* buf, std::size_t size, off_t offset) override;
+	int getFilePermissions() override;
 };
 
 } /* namespace simplyfile */

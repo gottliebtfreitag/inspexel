@@ -25,35 +25,42 @@ auto mountPoint   = interactCmd.Parameter<std::string>("dynamixelFS", "mountpoin
 using namespace dynamixel;
 
 struct RegisterFile : simplyfuse::FuseFile {
-	RegisterFile(MotorID _motorID, int _registerID, std::size_t _registerSize, USB2Dynamixel &_usb2dyn)
+	RegisterFile(MotorID _motorID, int _registerID, meta::LayoutField const& _layoutField, USB2Dynamixel &_usb2dyn)
 		: motorID(_motorID)
 		, registerID(_registerID)
-		, registerSize(_registerSize)
+		, layoutField(_layoutField)
 		, usb2dyn(_usb2dyn)
 	{}
 
 	virtual ~RegisterFile() = default;
+
 	int onRead(char* buf, std::size_t size, off_t)  override {
-		auto [timeout, motor, error, parameters] = usb2dyn.read(motorID, registerID, registerSize, std::chrono::microseconds{g_timeout});
-		if (parameters.size() != registerSize or timeout or motor != motorID) {
-			return 0;
+		if (not (int(layoutField.access) & int(meta::LayoutField::Access::R))) {
+			return -EINVAL;
+		}
+		auto [timeout, motor, error, parameters] = usb2dyn.read(motorID, registerID, layoutField.length, std::chrono::microseconds{g_timeout});
+		if (timeout or motor != motorID or parameters.size() != layoutField.length) {
+			return -EINVAL;
 		}
 		int content {0};
-		memcpy(&content, parameters.data(), registerSize);
+		memcpy(&content, parameters.data(), layoutField.length);
 
-		std::string renderedContent = std::to_string(content);
+		std::string renderedContent = std::to_string(content) + "\n";
 		size = std::min(size, renderedContent.size()+1);
 		std::memcpy(buf, renderedContent.data(), size);
 		return size;
 	}
 
 	int onWrite(const char* buf, std::size_t size, off_t) override {
+		if (not (int(layoutField.access) & int(meta::LayoutField::Access::W))) {
+			return -ENOENT;
+		}
 		try {
 			std::string stripped;
 			std::stringstream{std::string{buf, size}} >> stripped;
 			int toSet = parameter::parsing::detail::parseFromString<int>(stripped);
 			Parameter param;
-			for (std::size_t i{0}; i < registerSize; ++i) {
+			for (std::size_t i{0}; i < layoutField.length; ++i) {
 				param.emplace_back(std::byte{reinterpret_cast<uint8_t const*>(&toSet)[i]});
 			}
 			usb2dyn.write(motorID, registerID, param);
@@ -66,12 +73,23 @@ struct RegisterFile : simplyfuse::FuseFile {
 	}
 
 	std::size_t getSize() override {
-		return registerSize;
+		return 4096;
+	}
+
+	int getFilePermissions() override {
+		int permissions {0};
+		if (int(layoutField.access) & int(meta::LayoutField::Access::R)) {
+			permissions |= 0444;
+		}
+		if (int(layoutField.access) & int(meta::LayoutField::Access::W)) {
+			permissions |= 0222;
+		}
+		return permissions;
 	}
 
 	MotorID motorID;
 	int registerID;
-	std::size_t registerSize;
+	meta::LayoutField layoutField;
 	USB2Dynamixel &usb2dyn;
 };
 
@@ -82,7 +100,7 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 	std::vector<std::unique_ptr<simplyfuse::FuseFile>> files;
 	auto infos = meta::getLayoutInfos<LT>();
 	for (auto const& [reg, info] : infos) {
-		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info.length, usb2dyn));
+		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info, usb2dyn));
 		fuseFS.registerFile("/" + std::to_string(motorID) + "/by-register-name/" + info.name, *newFile);
 		fuseFS.registerFile("/" + std::to_string(motorID) + "/by-register-id/" + std::to_string(int(reg)), *newFile);
 	}

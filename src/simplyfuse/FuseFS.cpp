@@ -206,7 +206,7 @@ int getattr_callback(const char *path, struct stat *stbuf) {
 	}
 	clock_gettime(CLOCK_REALTIME, &stbuf->st_mtim);
 	if (node->file) {
-		stbuf->st_mode = S_IFREG | 0666;
+		stbuf->st_mode = S_IFREG | node->file->getFilePermissions();
 		stbuf->st_nlink = 1;
 		stbuf->st_size = node->file->getSize();
 		return 0;
