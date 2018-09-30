@@ -11,6 +11,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include <filesystem>
 
@@ -25,22 +26,21 @@ struct Node {
 	FuseFile* file {nullptr};
 	std::string name;
 
-	Node* getOrCreateChild(std::string const& name) {
+	~Node() {}
+	auto getOrCreateChild(std::string const& name) -> std::pair<Node*, bool> {
 		auto& ptr = children[name];
-		if (not ptr) {
+		bool needCreation = not ptr;
+		if (needCreation) {
 			ptr = std::make_unique<Node>(name);
 			ptr->parent = this;
 		}
-		return ptr.get();
+		return std::make_pair(ptr.get(), needCreation);
 	}
 };
 
 void destroyNode(Node* node) {
 	Node* parent = node->parent;
 	parent->children.erase(node->name);
-	if (parent->children.empty() and parent->parent) {
-		destroyNode(parent);
-	}
 }
 
 static int getattr_callback(const char *path, struct stat *stbuf);
@@ -78,6 +78,45 @@ struct FuseFS::Pimpl {
 			node = childit->second.get();
 		}
 		return node;
+	}
+
+	Node* getOrCreateNode(std::filesystem::path const& path) {
+		if (not path.is_absolute()) {
+			throw InvalidPathError("path must be absolute");
+		}
+		std::lock_guard lock{mutex};
+		Node* node = &root;
+		std::vector<Node*> createdNodes;
+		for (auto it = std::next(path.begin()); it != path.end(); ++it) {
+			auto goc = node->getOrCreateChild(*it);
+			node = goc.first;
+			if (goc.second) {
+				createdNodes.emplace_back(node);
+			}
+			if (node->file) {
+				// unwind the inserts
+				for (auto cleanupIt = createdNodes.rbegin(); cleanupIt != createdNodes.rend(); ++cleanupIt) {
+					destroyNode(*cleanupIt);
+				}
+				throw InvalidPathError("path is invalid");
+			}
+		}
+		return node;
+	}
+
+	void deleteNode(Node* node) {
+		if (not node->children.empty()) {
+			throw std::logic_error("cannot destroy a node which has children");
+		}
+		if (node->file) {
+			auto range = filesInvMap.equal_range(node->file);
+			if (std::distance(range.first, range.second) == 1) {
+				node->file->fuseFS = nullptr;
+			}
+			filesInvMap.erase(std::find_if(range.first, range.second, [&](auto const& p) { return p.second == node; }));
+			files.erase(node);
+		}
+		destroyNode(node);
 	}
 
 	bool tearDownMountPoint = false;
@@ -129,23 +168,13 @@ void FuseFS::loop() {
 	}
 }
 
-
 void FuseFS::registerFile(std::filesystem::path const& _path, FuseFile& file) {
 	std::filesystem::path path = _path.lexically_normal();
 	if (file.fuseFS and file.fuseFS != this) {
 		throw std::invalid_argument("the passed file is already registered at a different fuse");
 	}
-	if (not path.is_absolute()) {
-		throw InvalidPathError("path must be absolute");
-	}
 	std::lock_guard lock{pimpl->mutex};
-	Node* node = &pimpl->root;
-	for (auto it = std::next(path.begin()); it != path.end(); ++it) {
-		node = node->getOrCreateChild(*it);
-		if (node->file) {
-			throw InvalidPathError("path is invalid");
-		}
-	}
+	Node* node = pimpl->getOrCreateNode(path);
 	node->file = &file;
 	file.fuseFS = this;
 	if (not node->children.empty()) {
@@ -159,15 +188,14 @@ void FuseFS::unregisterFile(FuseFile& file) {
 	if (file.fuseFS != this) {
 		throw std::invalid_argument("the passed file is not registered with this fuse instance");
 	}
-
 	std::lock_guard lock{pimpl->mutex};
-	auto range = pimpl->filesInvMap.equal_range(&file);
-	for (auto it = range.first; it != range.second; ++it) {
-		Node* node = it->second; // destroy this node
-		pimpl->files.erase(node);
-		destroyNode(node);
-	}
 	file.fuseFS = nullptr;
+	auto range = pimpl->filesInvMap.equal_range(&file);
+	std::for_each(range.first, range.second, [=] (auto const& p) {
+		pimpl->files.erase(p.second);
+		destroyNode(p.second);
+	});
+	pimpl->filesInvMap.erase(range.first, range.second);
 }
 
 void FuseFS::unregisterFile(std::filesystem::path const& path, FuseFile& file) {
@@ -177,15 +205,33 @@ void FuseFS::unregisterFile(std::filesystem::path const& path, FuseFile& file) {
 
 	std::lock_guard lock{pimpl->mutex};
 	Node* node = pimpl->getNode(path);
-	if (not node or node->file != &file) {
-		throw InvalidPathError("cannot unregister a wrong file");
-	}
-	pimpl->files.erase(node);
-	destroyNode(node);
+	pimpl->deleteNode(node);
+}
 
-	auto range = pimpl->filesInvMap.equal_range(&file);
-	if (range.first == range.second) {
-		file.fuseFS = nullptr;
+void FuseFS::mkdir(std::filesystem::path const& _path) {
+	std::filesystem::path path = _path.lexically_normal();
+	std::lock_guard lock{pimpl->mutex};
+	pimpl->getOrCreateNode(path);
+}
+
+namespace {
+
+void rmDirHelper(Node* node, FuseFS::Pimpl* pimpl) {
+	if (not node) {
+		return;
+	}
+	for (auto & child : node->children) {
+		rmDirHelper(child.second.get(), pimpl);
+	}
+	pimpl->deleteNode(node);
+}
+
+}
+
+void FuseFS::rmdir(std::filesystem::path const& path) {
+	Node* node = pimpl->getNode(path);
+	if (node) {
+		rmDirHelper(node, pimpl.get());
 	}
 }
 

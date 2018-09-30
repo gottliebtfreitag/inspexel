@@ -38,6 +38,13 @@ struct FuseFS {
 	// unregister all instances of this file from the file system
 	void unregisterFile(FuseFile& file);
 
+	// create a directory (will create intermediate directories, too)
+	void mkdir(std::filesystem::path const& path);
+
+	// delete a directory and all its contents.
+	// files registered within the deleted directory will simply be deregistered
+	void rmdir(std::filesystem::path const& path);
+
 	struct Pimpl;
 	std::unique_ptr<Pimpl> pimpl;
 
