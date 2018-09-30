@@ -33,9 +33,17 @@ protected:
 
 struct SimpleROFile : FuseFile {
 	std::string content;
-	SimpleROFile(std::string const& _content) : content(_content) {};
+	using FuseFile::FuseFile;
+	SimpleROFile(std::string const& _content="") : content(_content) {};
 	virtual ~SimpleROFile() = default;
 	int onRead(char* buf, std::size_t size, off_t offset) override;
+	int getFilePermissions() override;
+};
+
+struct SimpleWOFile : FuseFile {
+	using FuseFile::FuseFile;
+	virtual ~SimpleWOFile() = default;
+	int onTruncate(off_t offset);
 	int getFilePermissions() override;
 };
 
