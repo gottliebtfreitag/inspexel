@@ -1,6 +1,6 @@
 #include "ArgumentParsing.h"
 
-namespace parameter
+namespace sargp
 {
 
 namespace
@@ -66,7 +66,7 @@ void parseArguments(int argc, char const* const* argv) {
 			for (auto t{target.first}; t != target.second; ++t) {
 				try {
 					t->second->parse(arguments);
-				} catch (parameter::parsing::detail::ParseError const& error) {
+				} catch (sargp::parsing::detail::ParseError const& error) {
 					throw std::invalid_argument("cannot parse arguments for \"" + argName + "\" - " + error.what());
 				}
 			}
@@ -96,7 +96,7 @@ void parseArguments(int argc, char const* const* argv, std::set<ParameterBase*> 
 		}
 		try {
 			(*target)->parse(arguments);
-		} catch (parameter::parsing::detail::ParseError const& error) {
+		} catch (sargp::parsing::detail::ParseError const& error) {
 			throw std::invalid_argument("cannot parse arguments for \"" + argName + "\"");
 		}
 	});

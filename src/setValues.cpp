@@ -8,7 +8,7 @@
 namespace {
 
 void runSetAngle();
-auto setAngleCmd = parameter::Command{"set_angle", "set the angle of a motor", runSetAngle};
+auto setAngleCmd = sargp::Command{"set_angle", "set the angle of a motor", runSetAngle};
 auto angle       = setAngleCmd.Parameter<int>(0, "angle", "the goal angle (raw register value)");
 
 void runSetAngle() {
@@ -48,7 +48,7 @@ void runSetAngle() {
 
 
 void runSetRegister();
-auto setRegisterCmd = parameter::Command{"set_register", "set registers of a motor", runSetRegister};
+auto setRegisterCmd = sargp::Command{"set_register", "set registers of a motor", runSetRegister};
 auto reg            = setRegisterCmd.Parameter<int>(0, "register", "register to write to");
 auto values         = setRegisterCmd.Parameter<std::vector<uint8_t>>({}, "values", "values to write to the register");
 auto ids            = setRegisterCmd.Parameter<std::vector<int>>({}, "ids", "use this if you want to set multiple devices at once");
@@ -82,7 +82,7 @@ void runSetRegister() {
 }
 
 void runGetValue();
-auto getRegisterCmd = parameter::Command{"get_register", "get register(s) of a motor", runGetValue};
+auto getRegisterCmd = sargp::Command{"get_register", "get register(s) of a motor", runGetValue};
 auto read_reg       = getRegisterCmd.Parameter<int>(0, "register", "register to read from");
 auto count          = getRegisterCmd.Parameter<int>(1, "count", "amount of registers to read");
 auto timeout        = getRegisterCmd.Parameter<int>(10000, "timeout", "timeout in us");

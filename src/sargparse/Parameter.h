@@ -1,8 +1,5 @@
 #pragma once
 
-#include "utils/Singleton.h"
-#include "ParameterParsing.h"
-
 #include <regex>
 #include <map>
 #include <set>
@@ -10,15 +7,28 @@
 #include <functional>
 #include <numeric>
 #include <initializer_list>
+#include "ParameterParsing.h"
 
 
-namespace parameter
+namespace sargp
 {
 
 struct Command;
 
 namespace detail
 {
+
+
+template<typename T>
+struct Singleton {
+	static T& getInstance() {
+		static T instance;
+		return instance;
+	}
+protected:
+	Singleton() = default;
+	~Singleton() = default;
+};
 
 template<typename T>
 struct UniqueStorageManager final : Singleton<UniqueStorageManager<T>> {
@@ -258,7 +268,7 @@ private:
 	std::map<std::string, T> _name2ValMap;
 public:
 	Choice(T const& defaultVal, std::string const& argName, std::map<std::string, T> const& namedValues, std::string const& description, Callback cb=Callback{}, Command& command=getDefaultCommand())
-	: SuperClass(defaultVal, argName, description, cb, command)
+	: SuperClass(defaultVal, argName, description, cb, {}, command)
 	, _name2ValMap(namedValues)
 	{}
 
@@ -288,13 +298,7 @@ public:
 			return SuperClass::_hintFunc(args);
 		}
 		std::set<std::string> names;
-		if (args.empty()) {
-			for (auto const& n2v : _name2ValMap) { names.emplace(n2v.first); };
-		} else if (args.size() == 0) {
-			if (_name2ValMap.find(args[0]) == _name2ValMap.end()) {
-				for (auto const& n2v : _name2ValMap) { names.emplace(n2v.first); };
-			}
-		}
+		for (auto const& n2v : _name2ValMap) { names.emplace(n2v.first); };
 		return std::make_pair<bool, std::set<std::string>>(args.size() == 1, std::move(names));
 	}
 
@@ -321,15 +325,15 @@ public:
 
 	template<typename T, typename... Args>
 	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, Args &&... args) const -> Parameter<T> {
-		return ::parameter::Parameter<T>{defaultVal, _name + argName, std::forward<Args>(args)...};
+		return ::sargp::Parameter<T>{defaultVal, _name + argName, std::forward<Args>(args)...};
 	}
 	template<typename... Args>
 	[[nodiscard]] auto Flag(std::string const& argName, Args &&... args) const -> Flag {
-		return ::parameter::Flag{_name + argName, std::forward<Args>(args)...};
+		return ::sargp::Flag{_name + argName, std::forward<Args>(args)...};
 	}
 	template<typename T, typename... Args>
 	[[nodiscard]] auto Choice(T const& defaultVal, std::string const& argName, std::map<std::string, T> const& namedValues, Args &&... args) const -> Choice<T> {
-		return ::parameter::Choice<T>{defaultVal, _name + argName, namedValues, std::forward<Args>(args)...};
+		return ::sargp::Choice<T>{defaultVal, _name + argName, namedValues, std::forward<Args>(args)...};
 	}
 };
 
@@ -396,23 +400,23 @@ public:
 
 	// parameters that are enabled if this Command is active
 	template<typename T>
-	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, std::string const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}) -> ::parameter::Parameter<T> {
-		return ::parameter::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
+	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, std::string const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}) -> ::sargp::Parameter<T> {
+		return ::sargp::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
 	}
 	template<typename T>
-	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, DescribeFunc const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}) -> ::parameter::Parameter<T> {
-		return ::parameter::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
+	[[nodiscard]] auto Parameter(T const& defaultVal, std::string const& argName, DescribeFunc const& description, Callback cb=Callback{}, ValueHintFunc hintFunc=ValueHintFunc{}) -> ::sargp::Parameter<T> {
+		return ::sargp::Parameter<T>{defaultVal, argName, description, cb, hintFunc, *this};
 	}
 
-	[[nodiscard]] auto Flag(std::string const& argName, std::string const& description, Callback cb=Callback{}) -> ::parameter::Flag {
-		return ::parameter::Flag{argName, description, cb, *this};
+	[[nodiscard]] auto Flag(std::string const& argName, std::string const& description, Callback cb=Callback{}) -> ::sargp::Flag {
+		return ::sargp::Flag{argName, description, cb, *this};
 	}
 	template<typename T, typename... Args>
-	[[nodiscard]] auto Choice(T const& defaultVal, std::string const& argName, std::map<std::string, T> const& namedValues, std::string const& description, Callback cb=Callback{}) -> ::parameter::Choice<T> {
-		return ::parameter::Choice<T>{defaultVal, argName, namedValues, description, cb, *this};
+	[[nodiscard]] auto Choice(T const& defaultVal, std::string const& argName, std::map<std::string, T> const& namedValues, std::string const& description, Callback cb=Callback{}) -> ::sargp::Choice<T> {
+		return ::sargp::Choice<T>{defaultVal, argName, namedValues, description, cb, *this};
 	}
 	[[nodiscard]] auto Section(std::string const& name) -> Section {
-		return ::parameter::Section(name);
+		return ::sargp::Section(name);
 	}
 };
 

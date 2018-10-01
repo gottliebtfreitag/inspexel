@@ -14,7 +14,7 @@
 namespace {
 
 void runDetect();
-auto detectCmd  = parameter::Command{{"", "detect"}, "detect all dynamixel motors", runDetect};
+auto detectCmd  = sargp::Command{{"", "detect"}, "detect all dynamixel motors", runDetect};
 auto baudrates  = detectCmd.Parameter<std::set<int>>({57142}, "other_baudrates", "more baudrates to test", {}, &listTypicalBaudrates);
 auto readAll    = detectCmd.Flag("read_all", "read all registers from the detected motors (instead of just printing the found motors)");
 auto ids        = detectCmd.Parameter<std::set<int>>({}, "ids", "the target Id");

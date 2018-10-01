@@ -5,7 +5,7 @@
 namespace {
 
 void runReboot();
-auto rebootCmd = parameter::Command{"reboot", "reboot device with specified id", runReboot};
+auto rebootCmd = sargp::Command{"reboot", "reboot device with specified id", runReboot};
 
 void runReboot() {
 	if (not g_id.isSpecified()) {

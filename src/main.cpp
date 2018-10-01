@@ -1,10 +1,12 @@
-#include "parameter/Parameter.h"
-#include "parameter/ArgumentParsing.h"
+#include <sargparse/ArgumentParsing.h>
+#include <sargparse/Parameter.h>
 #include <iostream>
 
 namespace {
 
-auto printHelp  = parameter::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
+auto printHelp  = sargp::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
+
+auto myChoice = sargp::Choice<int>{1, "my_choice", {{"one", 1}, {"two", 2}}, "my test choice"};
 
 }
 
@@ -17,7 +19,7 @@ auto printHelp  = parameter::Parameter<std::optional<std::string>>{{}, "help", "
 int main(int argc, char** argv)
 {
 	if (std::string(argv[argc-1]) == "--bash_completion") {
-		auto hints = parameter::getNextArgHint(argc-2, argv+1);
+		auto hints = sargp::getNextArgHint(argc-2, argv+1);
 		for (auto const& hint : hints) {
 			std::cout << hint << " ";
 		}
@@ -25,20 +27,20 @@ int main(int argc, char** argv)
 	}
 	if (argc == 2 and std::string(argv[1]) == "--groff") {
 		std::cout << ".TH man 1 \"" << DATE << "\" \"" << VERSION << "\" inspexel man page\"\n";
-		std::cout << parameter::generateGroffString();
+		std::cout << sargp::generateGroffString();
 		return 0;
 	}
 
 	try {
 		// pass everything except the name of the application
-		parameter::parseArguments(argc-1, argv+1);
+		sargp::parseArguments(argc-1, argv+1);
 
 		if (printHelp.isSpecified()) {
 			std::cout << "inspexel version " << VERSION << " - " << DATE << "\n";
-			std::cout << parameter::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
+			std::cout << sargp::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
 			return 0;
 		}
-		parameter::callCommands();
+		sargp::callCommands();
 	} catch (std::exception const& e) {
 		std::cerr << "exception: " << TERM_RED << e.what() << TERM_RESET "\n";
 	}

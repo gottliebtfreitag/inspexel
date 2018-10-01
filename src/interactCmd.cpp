@@ -16,7 +16,7 @@
 namespace {
 
 void runInteract();
-auto interactCmd  = parameter::Command{"interact", "interact with dynamixel", runInteract};
+auto interactCmd  = sargp::Command{"interact", "interact with dynamixel", runInteract};
 auto optTimeout   = interactCmd.Parameter<int>(10000, "timeout", "timeout in us");
 
 using namespace dynamixel;

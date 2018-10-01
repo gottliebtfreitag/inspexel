@@ -18,7 +18,7 @@
 namespace {
 
 void runFuse();
-auto interactCmd  = parameter::Command{"fuse", "create a fuse fs representing the connected motors", runFuse};
+auto interactCmd  = sargp::Command{"fuse", "create a fuse fs representing the connected motors", runFuse};
 auto optTimeout   = interactCmd.Parameter<int>(10000, "timeout", "timeout in us");
 auto ids          = interactCmd.Parameter<std::set<int>>({}, "ids", "the target Id");
 auto mountPoint   = interactCmd.Parameter<std::string>("dynamixelFS", "mountpoint", "where to mount the fuse filesystem representing the motors");
@@ -58,7 +58,7 @@ struct RegisterFile : simplyfuse::FuseFile {
 		try {
 			std::string stripped;
 			std::stringstream{std::string{buf, size}} >> stripped;
-			int toSet = parameter::parsing::detail::parseFromString<int>(stripped);
+			int toSet = sargp::parsing::detail::parseFromString<int>(stripped);
 			Parameter param;
 			for (std::size_t i{0}; i < layoutField.length; ++i) {
 				param.emplace_back(std::byte{reinterpret_cast<uint8_t const*>(&toSet)[i]});

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Parameter.h"
-
 #include <string>
 #include <regex>
 #include <set>
 
-namespace parameter
+#include "Parameter.h"
+
+namespace sargp
 {
 
 /**

@@ -1,4 +1,4 @@
-#include "parameter/Parameter.h"
+#include <sargparse/Parameter.h>
 #include "usb2dynamixel/USB2Dynamixel.h"
 #include "usb2dynamixel/MotorMetaInfo.h"
 
@@ -7,7 +7,7 @@ namespace {
 using namespace dynamixel;
 
 void runMeta();
-auto metaCmd   = parameter::Command{"meta", "list all motors known to this program", runMeta};
+auto metaCmd   = sargp::Command{"meta", "list all motors known to this program", runMeta};
 auto optMotorName = metaCmd.Parameter<std::string>("", "motor", "motor to give detail specs", {},
 	[](std::vector<std::string> const& _str) -> std::pair<bool, std::set<std::string>> {
 		auto const& db = meta::getMotorInfos();

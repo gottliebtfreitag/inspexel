@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace parameter
+namespace sargp
 {
 
 ParameterBase::ParameterBase(std::string const& argName, DescribeFunc const& describeFunc, Callback cb, ValueHintFunc const& hintFunc, Command& command)
