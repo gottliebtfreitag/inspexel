@@ -6,8 +6,6 @@ namespace {
 
 auto printHelp  = sargp::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
 
-auto myChoice = sargp::Choice<int>{1, "my_choice", {{"one", 1}, {"two", 2}}, "my test choice"};
-
 }
 
 #define VERSION "1.1.0"
