@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:gottliebtfreitag/sargparse
+	branch = master
+	commit = 4c4547517f9986d0c0485e7e805c5c65b46918c9
+	parent = 794a889babc8c36bfc9a9a83c0fedea6a084231e
+	cmdver = 0.3.1
