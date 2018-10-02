@@ -501,6 +501,46 @@ auto getLayoutProDefaults() -> std::map<uint32_t, std::map<pro::Register, std::o
 			m[pro::Register::VELOCITY_P_GAIN] = 520;
 			m[pro::Register::POSITION_P_GAIN] =  32;
 		}
+
+		{ // h54-200-s500-r
+			auto& m = data[54'024];
+			m = data.at(46352);
+			m[pro::Register::MODEL_NUMBER] = 54'024;
+			m[pro::Register::TORQUE_LIMIT] = 620;
+			m[pro::Register::VELOCITY_LIMIT] = 17'000;
+			m[pro::Register::MAX_POSITION_LIMIT] =  250'961;
+			m[pro::Register::MIN_POSITION_LIMIT] = -250'961;
+			m[pro::Register::VELOCITY_I_GAIN] =  14;
+			m[pro::Register::VELOCITY_P_GAIN] = 399;
+			m[pro::Register::POSITION_P_GAIN] =  32;
+		}
+
+		{ // h54-100-s500-r
+			auto& m = data[53'768];
+			m = data.at(46352);
+			m[pro::Register::MODEL_NUMBER] = 53'768;
+			m[pro::Register::TORQUE_LIMIT] = 310;
+			m[pro::Register::VELOCITY_LIMIT] = 17'000;
+			m[pro::Register::MAX_POSITION_LIMIT] =  250'961;
+			m[pro::Register::MIN_POSITION_LIMIT] = -250'961;
+			m[pro::Register::VELOCITY_I_GAIN] =  16;
+			m[pro::Register::VELOCITY_P_GAIN] = 256;
+			m[pro::Register::POSITION_P_GAIN] =  32;
+		}
+
+		{ // h42-20-s300-r
+			auto& m = data[51'200];
+			m = data.at(46352);
+			m[pro::Register::MODEL_NUMBER] = 53'768;
+			m[pro::Register::ACCELERATION_LIMIT] =255;
+			m[pro::Register::TORQUE_LIMIT] = 465;
+			m[pro::Register::VELOCITY_LIMIT] = 10'300;
+			m[pro::Register::MAX_POSITION_LIMIT] =  151'875;
+			m[pro::Register::MIN_POSITION_LIMIT] = -151'875;
+			m[pro::Register::VELOCITY_I_GAIN] =  40;
+			m[pro::Register::VELOCITY_P_GAIN] = 440;
+			m[pro::Register::POSITION_P_GAIN] =  32;
+		}
 	}
 	return data;
 };
@@ -550,9 +590,12 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{ 1'130, LayoutType::V2,  "XM540-W270",    {"XM540-W270-T", "XM540-W270-R"}, buildConverters(4096, 2048, .229)},
 
 		// dynamixel pro
-		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"}, buildConverters(251417, 0, 0.00397746)},
-		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"}, buildConverters(251417, 0, 0.00397746)},
-		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"}, buildConverters(263187, 0, 0.00389076)},
+		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"},   buildConverters(251'417, 0, 0.00397746)},
+		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"},   buildConverters(251'417, 0, 0.00397746)},
+		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"},   buildConverters(263'187, 0, 0.00389076)},
+		{54'024, LayoutType::Pro, "H54-200-S500-R", {"H54-200-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
+		{53'768, LayoutType::Pro, "H54-100-S500-R", {"H54-100-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
+		{51'200, LayoutType::Pro,  "H42-20-S300-R", { "H42-20-S300-R"}, buildConverters(303'750, 0, 0.00329218)},
 	};
 	return data;
 }
