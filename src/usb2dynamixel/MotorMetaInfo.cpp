@@ -218,9 +218,21 @@ auto getLayoutV1Defaults() -> std::map<uint32_t, std::map<v1::Register, std::opt
 		auto& m29 = data[29]; // mx28
 		m29 = data.at(310);
 		m29[v1::Register::MODEL_NUMBER] = 29;
+		m29.erase(v1::Register::DRIVE_MODE);
 		m29.erase(v1::Register::TORQUE_CONTROL_MODE);
 		m29.erase(v1::Register::GOAL_TORQUE);
-		m29.erase(v1::Register::DRIVE_MODE);
+
+		auto& m360 = data[360]; // mx12
+		m360 = data.at(320);
+		m360[v1::Register::MODEL_NUMBER] = 360;
+		m360[v1::Register::BAUD_RATE]    = 1;
+		m360[v1::Register::D_GAIN]       = 8;
+		m360[v1::Register::P_GAIN]       = 8;
+		m360[v1::Register::PUNCH]        = 32;
+		m360.erase(v1::Register::DRIVE_MODE);
+		m360.erase(v1::Register::CURRENT);
+		m360.erase(v1::Register::TORQUE_CONTROL_MODE);
+		m360.erase(v1::Register::GOAL_TORQUE);
 	}
 	return data;
 };
@@ -427,6 +439,7 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{    29, LayoutType::V1,  "MX28",          {"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"}, buildConverters(4096, 2048, .114)},
 		{   310, LayoutType::V1,  "MX64",          {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"}, buildConverters(4096, 2048, .114)},
 		{   320, LayoutType::V1,  "MX106",         {"MX-106T", "MX-106R"}, buildConverters(4096, 2048, .114)},
+		{   360, LayoutType::V1,  "MX12",          {"MX-12W"}, buildConverters(4096, 2048, 0.916)},
 		{    30, LayoutType::V2,  "MX28-V2",       {"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"}, buildConverters(4096, 2048, .229)},
 		{   311, LayoutType::V2,  "MX64-V2",       {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}, buildConverters(4096, 2048, .229)},
 		{   321, LayoutType::V2,  "MX106-V2",      {"MX-106T-V2", "MX-106R-V2"}, buildConverters(4096, 2048, .229)},
