@@ -20,6 +20,9 @@ Detect all connected motors and gives verbose information about them
 ```
 $ inspexel detect --read_all
 ```
+![consol output of inspexel](https://github.com/gottliebtfreitag/miscellaneous/blob/master/inspexel/inspexel.png)
+
+
 List all supported motor types
 ```
 $ inspexel meta
