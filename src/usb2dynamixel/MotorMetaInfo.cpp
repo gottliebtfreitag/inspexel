@@ -212,29 +212,35 @@ auto getLayoutV1Defaults() -> std::map<uint32_t, std::map<v1::Register, std::opt
 	static bool firstRun{true};
 	if (firstRun) {
 		firstRun = false;
-		auto& m310 = data[310]; // mx64
-		m310 = data.at(320);
-		m310[v1::Register::MODEL_NUMBER] = 310;
-		m310.erase(v1::Register::DRIVE_MODE);
 
-		auto& m29 = data[29]; // mx28
-		m29 = data.at(310);
-		m29[v1::Register::MODEL_NUMBER] = 29;
-		m29.erase(v1::Register::DRIVE_MODE);
-		m29.erase(v1::Register::TORQUE_CONTROL_MODE);
-		m29.erase(v1::Register::GOAL_TORQUE);
+		{ // mx64
+			auto& m = data[310];
+			m = data.at(320);
+			m[v1::Register::MODEL_NUMBER] = 310;
+			m.erase(v1::Register::DRIVE_MODE);
+		}
 
-		auto& m360 = data[360]; // mx12
-		m360 = data.at(320);
-		m360[v1::Register::MODEL_NUMBER] = 360;
-		m360[v1::Register::BAUD_RATE]    = 1;
-		m360[v1::Register::D_GAIN]       = 8;
-		m360[v1::Register::P_GAIN]       = 8;
-		m360[v1::Register::PUNCH]        = 32;
-		m360.erase(v1::Register::DRIVE_MODE);
-		m360.erase(v1::Register::CURRENT);
-		m360.erase(v1::Register::TORQUE_CONTROL_MODE);
-		m360.erase(v1::Register::GOAL_TORQUE);
+		{ // mx28
+			auto& m = data[29];
+			m = data.at(320);
+			m[v1::Register::MODEL_NUMBER] = 29;
+			m.erase(v1::Register::DRIVE_MODE);
+			m.erase(v1::Register::TORQUE_CONTROL_MODE);
+			m.erase(v1::Register::GOAL_TORQUE);
+		}
+		{ // mx12
+			auto& m = data[360];
+			m = data.at(320);
+			m[v1::Register::MODEL_NUMBER] = 360;
+			m[v1::Register::BAUD_RATE]    = 1;
+			m[v1::Register::D_GAIN]       = 8;
+			m[v1::Register::P_GAIN]       = 8;
+			m[v1::Register::PUNCH]        = 32;
+			m.erase(v1::Register::DRIVE_MODE);
+			m.erase(v1::Register::CURRENT);
+			m.erase(v1::Register::TORQUE_CONTROL_MODE);
+			m.erase(v1::Register::GOAL_TORQUE);
+		}
 	}
 	return data;
 };
@@ -301,7 +307,6 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 		firstRun = false;
 
 		{ // mx 106-v2
-
 			auto& m = data[321];
 			m = data.at(1020);
 			m[v2::Register::MODEL_NUMBER] = 321;
