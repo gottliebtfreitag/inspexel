@@ -260,7 +260,7 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			{v2::Register::PWM_LIMIT              ,   885},
 			{v2::Register::CURRENT_LIMIT          ,  1193},
 			{v2::Register::ACCELERATION_LIMIT     , 32767},
-			{v2::Register::VELOCITY_LIMIT         ,   350},
+			{v2::Register::VELOCITY_LIMIT         ,   200},
 			{v2::Register::MAX_POSITION_LIMIT     ,  4095},
 			{v2::Register::MIN_POSITION_LIMIT     ,     0},
 			{v2::Register::SHUTDOWN               ,    52},
@@ -351,12 +351,19 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m.erase(v2::Register::ACCELERATION_LIMIT);
 		}
 
+		{ // xm430-w210
+			auto& m = data[1030];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1030;
+			m[v2::Register::VELOCITY_LIMIT] = 300;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
+
 		{ // xh430-v350
 			auto& m = data[1040];
 			m = data.at(1020);
 			m[v2::Register::MODEL_NUMBER] = 1040;
-			m[v2::Register::MAX_VOLTAGE_LIMIT] = 300;
-			m[v2::Register::MIN_VOLTAGE_LIMIT] = 110;
 			m[v2::Register::CURRENT_LIMIT] = 689;
 			m[v2::Register::VELOCITY_LIMIT] = 135;
 			m.erase(v2::Register::ACCELERATION_LIMIT);
@@ -368,10 +375,35 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m[v2::Register::MODEL_NUMBER] = 1050;
 			m[v2::Register::MAX_VOLTAGE_LIMIT] = 300;
 			m[v2::Register::MIN_VOLTAGE_LIMIT] = 110;
-			m[v2::Register::CURRENT_LIMIT] = 689;
 			m[v2::Register::VELOCITY_LIMIT] = 230;
 			m.erase(v2::Register::ACCELERATION_LIMIT);
 		}
+
+		{ // xm540-w150
+			auto& m = data[1120];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1120;
+			m[v2::Register::CURRENT_LIMIT] = 2047;
+			m[v2::Register::VELOCITY_LIMIT] = 230;
+			m[v2::Register::EXTERNAL_PORT_MODE_1] = 1;
+			m[v2::Register::EXTERNAL_PORT_MODE_2] = 1;
+			m[v2::Register::EXTERNAL_PORT_MODE_3] = 1;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
+		{ // xm540-w270
+			auto& m = data[1130];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1130;
+			m[v2::Register::CURRENT_LIMIT] = 2047;
+			m[v2::Register::VELOCITY_LIMIT] = 128;
+			m[v2::Register::EXTERNAL_PORT_MODE_1] = 1;
+			m[v2::Register::EXTERNAL_PORT_MODE_2] = 1;
+			m[v2::Register::EXTERNAL_PORT_MODE_3] = 1;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
+
 
 	}
 	return data;
@@ -490,8 +522,11 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{ 1'000, LayoutType::V2,  "XH430-W350",    {"XH430-W350-T", "XH430-W350-R"}, buildConverters(4096, 2048, .229)},
 		{ 1'010, LayoutType::V2,  "XH430-W210",    {"XH430-W210-T", "XH430-W210-R"}, buildConverters(4096, 2048, .229)},
 		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'030, LayoutType::V2,  "XM430-W210",    {"XM430-W210-T", "XM430-W210-R"}, buildConverters(4096, 2048, .229)},
 		{ 1'040, LayoutType::V2,  "XH430-V350",    {"XH430-V350"}, buildConverters(4096, 2048, .229)},
 		{ 1'050, LayoutType::V2,  "XH430-V210",    {"XH430-V210"}, buildConverters(4096, 2048, .229)},
+		{ 1'120, LayoutType::V2,  "XM540-W150",    {"XM540-W150-T", "XM540-W150-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'130, LayoutType::V2,  "XM540-W270",    {"XM540-W270-T", "XM540-W270-R"}, buildConverters(4096, 2048, .229)},
 
 		// dynamixel pro
 		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"}, buildConverters(251417, 0, 0.00397746)},

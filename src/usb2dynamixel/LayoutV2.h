@@ -31,6 +31,9 @@ enum class Register : int {
 	VELOCITY_LIMIT         = 44,
 	MAX_POSITION_LIMIT     = 48,
 	MIN_POSITION_LIMIT     = 52,
+	EXTERNAL_PORT_MODE_1   = 56,
+	EXTERNAL_PORT_MODE_2   = 57,
+	EXTERNAL_PORT_MODE_3   = 58,
 	SHUTDOWN               = 63,
 	TORQUE_ENABLE          = 64,
 	LED                    = 65,
@@ -124,6 +127,9 @@ LayoutPart(Type::ACCELERATION_LIMIT     , uint32_t, acceleration_limit     );
 LayoutPart(Type::VELOCITY_LIMIT         , uint32_t, velocity_limit         );
 LayoutPart(Type::MAX_POSITION_LIMIT     ,  int32_t, max_position_limit     );
 LayoutPart(Type::MIN_POSITION_LIMIT     ,  int32_t, min_position_limit     );
+LayoutPart(Type::EXTERNAL_PORT_MODE_1   ,  uint8_t, external_port_mode_1   );
+LayoutPart(Type::EXTERNAL_PORT_MODE_2   ,  uint8_t, external_port_mode_2   );
+LayoutPart(Type::EXTERNAL_PORT_MODE_3   ,  uint8_t, external_port_mode_3   );
 LayoutPart(Type::SHUTDOWN               , uint8_t , shutdown               );
 LayoutPart(Type::TORQUE_ENABLE          ,    bool , torque_enable          );
 LayoutPart(Type::LED                    ,    bool , led                    );
