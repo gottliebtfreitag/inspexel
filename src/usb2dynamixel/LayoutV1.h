@@ -44,6 +44,7 @@ enum class Register : int {
 	MOVING              = 0x2e,
 	LOCK                = 0x2f,
 	PUNCH               = 0x30,
+	REALTIME_TICK       = 0x32,
 	CURRENT             = 0x44,
 	TORQUE_CONTROL_MODE = 0x46,
 	GOAL_TORQUE         = 0x47,
@@ -124,6 +125,7 @@ LayoutPart(Type::REGISTERED          , uint16_t, registered         );
 LayoutPart(Type::MOVING              ,    bool , moving             );
 LayoutPart(Type::LOCK                ,    bool , lock               );
 LayoutPart(Type::PUNCH               , uint16_t, punch              );
+LayoutPart(Type::REALTIME_TICK       , uint16_t, realtime_tick      );
 LayoutPart(Type::CURRENT             , int16_t , current            );
 LayoutPart(Type::TORQUE_CONTROL_MODE , uint8_t , torque_control_mode);
 LayoutPart(Type::GOAL_TORQUE         , uint16_t, goal_torque        );
