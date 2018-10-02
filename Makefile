@@ -16,7 +16,7 @@ ZSH_COMPLETION_DIR  ?= $(PREFIX)/usr/share/zsh-completion/completions/
 MAN_DIR             ?= $(PREFIX)/usr/share/man/man1/
 
 SRC_FOLDERS = src/
-LIBS = c pthread stdc++fs fuse
+LIBS = c pthread stdc++fs fuse atomic
 LIB_PATHS =
 INCLUDES = src/ \
 
