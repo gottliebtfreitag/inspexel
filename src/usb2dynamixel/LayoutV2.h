@@ -64,7 +64,11 @@ enum class Register : int {
 	VELOCITY_TRAJECTORY    = 136,
 	POSITION_TRAJECTORY    = 140,
 	PRESENT_INPUT_VOLTAGE  = 144,
-	PRESENT_TEMPERATURE    = 146
+	PRESENT_TEMPERATURE    = 146,
+	INDIRECT_ADDRESS_BLOCK1 = 168,
+	INDIRECT_DATA_BLOCK1    = 224,
+	INDIRECT_ADDRESS_BLOCK2 = 578,
+	INDIRECT_DATA_BLOCK2    = 634,
 };
 using Type = Register;
 constexpr Type operator+(Type t1, size_t t2) {
@@ -106,6 +110,9 @@ struct LayoutPart<enum> { \
 	bool reserved() const { return false; } \
 };
 
+
+using IndirectAddresses = std::array<uint16_t, 28>;
+using IndirectData      = std::array<uint8_t, 28>;
 LayoutPart(Type::MODEL_NUMBER           , uint16_t, model_number           );
 LayoutPart(Type::MODEL_INFORMATION      , uint32_t, model_information      );
 LayoutPart(Type::VERSION_FIRMWARE       , uint8_t , version_firmware       );
@@ -161,6 +168,10 @@ LayoutPart(Type::VELOCITY_TRAJECTORY    ,  int32_t, velocity_trajectory    )
 LayoutPart(Type::POSITION_TRAJECTORY    ,  int32_t, position_trajectory    )
 LayoutPart(Type::PRESENT_INPUT_VOLTAGE  , uint16_t, present_input_voltage  );
 LayoutPart(Type::PRESENT_TEMPERATURE    , uint8_t , present_temperature    );
+LayoutPart(Type::INDIRECT_ADDRESS_BLOCK1 , IndirectAddresses, indirect_address_block1);
+LayoutPart(Type::INDIRECT_DATA_BLOCK1  ,   IndirectData,      indirect_data_block1);
+LayoutPart(Type::INDIRECT_ADDRESS_BLOCK2 , IndirectAddresses, indirect_address_block2);
+LayoutPart(Type::INDIRECT_DATA_BLOCK2 ,    IndirectData,      indirect_data_block2);
 
 template <Type type, size_t L>
 struct Layout : LayoutPart<type> , Layout<type+sizeof(LayoutPart<type>), L-sizeof(LayoutPart<type>)> {

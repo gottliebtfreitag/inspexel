@@ -23,6 +23,15 @@ auto optCont    = detectCmd.Flag("continues", "runs bulk read repeatably after d
 
 using namespace dynamixel;
 
+template <typename T>
+struct is_array : std::false_type {};
+
+template <typename T, size_t N>
+struct is_array<std::array<T, N>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_array_v = is_array<T>::value;
+
 
 auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple<MotorID, uint16_t>> const& motors, std::chrono::microseconds timeout, bool _print) -> std::tuple<int, int> {
 	int expectedTransactions = 1 + motors.size();
@@ -90,32 +99,36 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 		std::cout << " " << (info.romArea?"ROM":"RAM");
 
 		for (auto const& [g_id, modelNumber, errorCode, layout] : response) {
-			visit([reg=reg, modelNumber=modelNumber](auto _reg, auto&& value) {
+			visit([reg=reg, modelNumber=modelNumber](auto _reg, auto& value) {
 				if (_reg != reg) return;
-				auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);
-				auto iter = defaults.find(reg);
-
-				std::stringstream ss;
-				int extra = 0;
-				if (iter == defaults.end()) {
-					ss << std::boolalpha;
-					ss << "-na-";
+				if constexpr (is_array_v<std::decay_t<decltype(value)>>) {
+					return;
 				} else {
-					if (iter->second) {
-						extra = 9;
-						if (int(value) != int(iter->second.value())) {
-							ss << " " TERM_RED << int(value) << TERM_RESET "(";
-						} else {
-							ss << " " << TERM_GREEN << int(value) << TERM_RESET "(";
-						}
-						ss << int(iter->second.value());
+					auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);
+					auto iter = defaults.find(reg);
+
+					std::stringstream ss;
+					int extra = 0;
+					if (iter == defaults.end()) {
+						ss << std::boolalpha;
+						ss << "-na-";
 					} else {
-						ss << " " << int(value) << "(";
-						ss << "-";
+						if (iter->second) {
+							extra = 9;
+							if (int(value) != int(iter->second.value())) {
+								ss << " " TERM_RED << int(value) << TERM_RESET "(";
+							} else {
+								ss << " " << TERM_GREEN << int(value) << TERM_RESET "(";
+							}
+							ss << int(iter->second.value());
+						} else {
+							ss << " " << int(value) << "(";
+							ss << "-";
+						}
+						ss << ")";
 					}
-					ss << ")";
+					std::cout << std::setw(14+extra) << ss.str();
 				}
-				std::cout << std::setw(14+extra) << ss.str();
 			}, layout);
 		}
 		std::cout << std::setw(30) << info.name << " - " << info.description << "\n";

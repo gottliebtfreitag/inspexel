@@ -13,10 +13,10 @@
 namespace dynamixel::meta {
 
 struct LayoutField {
-	uint8_t length;
-	bool     romArea;
+	uint16_t   length;
+	bool       romArea;
 	enum class Access { R = 0x01, W = 0x02, RW = 0x03 };
-	Access access;
+	Access      access;
 	std::string name;
 	std::string description;
 };
