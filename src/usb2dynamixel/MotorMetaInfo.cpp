@@ -308,6 +308,7 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m[v2::Register::CURRENT_LIMIT] = 2047;
 			m[v2::Register::VELOCITY_LIMIT] = 360;
 			m[v2::Register::POSITION_P_GAIN] = 850;
+			m[v2::Register::ACCELERATION_LIMIT] = 32767;
 		}
 
 		{ // mx64-v2
@@ -317,6 +318,7 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m[v2::Register::CURRENT_LIMIT] = 1941;
 			m[v2::Register::VELOCITY_LIMIT] = 435;
 			m[v2::Register::POSITION_P_GAIN] = 850;
+			m[v2::Register::ACCELERATION_LIMIT] = 32767;
 		}
 
 		{ // mx28-v2
@@ -326,6 +328,7 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m.erase(v2::Register::CURRENT_LIMIT);
 			m[v2::Register::VELOCITY_LIMIT] = 380;
 			m[v2::Register::POSITION_P_GAIN] = 850;
+			m[v2::Register::ACCELERATION_LIMIT] = 32767;
 		}
 
 		{ // xh430-w350
