@@ -403,6 +403,26 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			m.erase(v2::Register::ACCELERATION_LIMIT);
 		}
 
+		{ // xl430-w250
+			auto& m = data[1060];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1060;
+			m[v2::Register::TEMPERATURE_LIMIT] = 72;
+			m[v2::Register::MAX_VOLTAGE_LIMIT] = 140;
+			m[v2::Register::MIN_VOLTAGE_LIMIT] =  60;
+			m[v2::Register::VELOCITY_LIMIT] =  265;
+
+			m[v2::Register::VELOCITY_I_GAIN] =  1000;
+			m[v2::Register::VELOCITY_P_GAIN] =  100;
+			m[v2::Register::POSITION_D_GAIN] =  4000;
+			m[v2::Register::POSITION_P_GAIN] =  640;
+
+			m.erase(v2::Register::CURRENT_LIMIT);
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+
+		}
+
+
 
 
 	}
@@ -525,6 +545,7 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{ 1'030, LayoutType::V2,  "XM430-W210",    {"XM430-W210-T", "XM430-W210-R"}, buildConverters(4096, 2048, .229)},
 		{ 1'040, LayoutType::V2,  "XH430-V350",    {"XH430-V350"}, buildConverters(4096, 2048, .229)},
 		{ 1'050, LayoutType::V2,  "XH430-V210",    {"XH430-V210"}, buildConverters(4096, 2048, .229)},
+		{ 1'060, LayoutType::V2,  "XL430-W250",    {"XL430-W250"}, buildConverters(4096, 2048, .229)},
 		{ 1'120, LayoutType::V2,  "XM540-W150",    {"XM540-W150-T", "XM540-W150-R"}, buildConverters(4096, 2048, .229)},
 		{ 1'130, LayoutType::V2,  "XM540-W270",    {"XM540-W270-T", "XM540-W270-R"}, buildConverters(4096, 2048, .229)},
 
