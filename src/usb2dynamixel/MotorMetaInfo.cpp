@@ -232,6 +232,7 @@ auto getLayoutV1Defaults() -> std::map<uint32_t, std::map<v1::Register, std::opt
 			m[v1::Register::MODEL_NUMBER] = 29;
 			m.erase(v1::Register::DRIVE_MODE);
 			m.erase(v1::Register::TORQUE_CONTROL_MODE);
+			m.erase(v1::Register::CURRENT);
 			m.erase(v1::Register::GOAL_TORQUE);
 		}
 		{ // mx12
@@ -555,16 +556,6 @@ auto getLayoutProDefaults() -> std::map<uint32_t, std::map<pro::Register, std::o
 	}
 	return data;
 };
-
-template<int ANGULAR_RESOLUTION, int CENTER_VAL>
-static int toMotorValueHelper(double val) {
-	return std::round(val / (2. * M_PI) * ANGULAR_RESOLUTION + CENTER_VAL);
-}
-template<int ANGULAR_RESOLUTION, int CENTER_VAL>
-static double fromMotorValueHelper(int val) {
-	return (static_cast<double>(val) - CENTER_VAL) * 2. * M_PI / static_cast<double>(ANGULAR_RESOLUTION);
-}
-
 
 ConverterFunctions buildConverters(double angularResolution, int centerVal, double speedResolution) {
 	return ConverterFunctions{
