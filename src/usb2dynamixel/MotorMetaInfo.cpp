@@ -332,10 +332,44 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, std::map<v2::Register, std::opt
 			auto& m = data[1000];
 			m = data.at(1020);
 			m[v2::Register::MODEL_NUMBER] = 1000;
-			m[v2::Register::CURRENT_LIMIT] = 648;
+			m[v2::Register::CURRENT_LIMIT] = 689;
 			m[v2::Register::VELOCITY_LIMIT] = 280;
 			m[v2::Register::POSITION_P_GAIN] = 900;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
 		}
+
+		{ // xh430-w210
+			auto& m = data[1010];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1010;
+			m[v2::Register::CURRENT_LIMIT] = 689;
+			m[v2::Register::VELOCITY_LIMIT] = 210;
+			m[v2::Register::POSITION_P_GAIN] = 900;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
+		{ // xh430-v350
+			auto& m = data[1040];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1040;
+			m[v2::Register::MAX_VOLTAGE_LIMIT] = 300;
+			m[v2::Register::MIN_VOLTAGE_LIMIT] = 110;
+			m[v2::Register::CURRENT_LIMIT] = 689;
+			m[v2::Register::VELOCITY_LIMIT] = 135;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
+		{ // xh430-v210
+			auto& m = data[1050];
+			m = data.at(1020);
+			m[v2::Register::MODEL_NUMBER] = 1050;
+			m[v2::Register::MAX_VOLTAGE_LIMIT] = 300;
+			m[v2::Register::MIN_VOLTAGE_LIMIT] = 110;
+			m[v2::Register::CURRENT_LIMIT] = 689;
+			m[v2::Register::VELOCITY_LIMIT] = 230;
+			m.erase(v2::Register::ACCELERATION_LIMIT);
+		}
+
 	}
 	return data;
 };
@@ -438,15 +472,25 @@ ConverterFunctions buildConverters(double angularResolution, int centerVal, doub
 
 auto getMotorInfos() -> std::vector<MotorInfo> const& {
 	static std::vector<MotorInfo> data {
+		// mx motors
 		{    29, LayoutType::V1,  "MX28",          {"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"}, buildConverters(4096, 2048, .114)},
 		{   310, LayoutType::V1,  "MX64",          {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"}, buildConverters(4096, 2048, .114)},
 		{   320, LayoutType::V1,  "MX106",         {"MX-106T", "MX-106R"}, buildConverters(4096, 2048, .114)},
 		{   360, LayoutType::V1,  "MX12",          {"MX-12W"}, buildConverters(4096, 2048, 0.916)},
+
+		// mx motors with protocol table 2
 		{    30, LayoutType::V2,  "MX28-V2",       {"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"}, buildConverters(4096, 2048, .229)},
 		{   311, LayoutType::V2,  "MX64-V2",       {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}, buildConverters(4096, 2048, .229)},
 		{   321, LayoutType::V2,  "MX106-V2",      {"MX-106T-V2", "MX-106R-V2"}, buildConverters(4096, 2048, .229)},
-		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}, buildConverters(4096, 2048, .229)},
+
+		// dynamixel x
 		{ 1'000, LayoutType::V2,  "XH430-W350",    {"XH430-W350-T", "XH430-W350-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'010, LayoutType::V2,  "XH430-W210",    {"XH430-W210-T", "XH430-W210-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}, buildConverters(4096, 2048, .229)},
+		{ 1'040, LayoutType::V2,  "XH430-V350",    {"XH430-V350"}, buildConverters(4096, 2048, .229)},
+		{ 1'050, LayoutType::V2,  "XH430-V210",    {"XH430-V210"}, buildConverters(4096, 2048, .229)},
+
+		// dynamixel pro
 		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"}, buildConverters(251417, 0, 0.00397746)},
 		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"}, buildConverters(251417, 0, 0.00397746)},
 		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"}, buildConverters(263187, 0, 0.00389076)},
