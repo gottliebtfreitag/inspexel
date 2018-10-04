@@ -44,7 +44,6 @@ man inspexel
 ## Ubuntu 16.04
 ```
 # install gcc-8
-sudo add-apt-repository 'deb https://gottliebtfreitag.de/ubuntu-packages xenial main' -y
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt-get update
 sudo apt-get install g++-8 gcc-8
