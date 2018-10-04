@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:gottliebtfreitag/usb2dynamixel
+	branch = master
+	commit = 4ba27786d426e92b5dcabcda4ce23f036d80055d
+	parent = bbc9498879b065ea9dfe9a9f8828720667d34e55
+	cmdver = 0.3.1
