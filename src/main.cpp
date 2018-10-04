@@ -8,8 +8,8 @@ auto printHelp  = sargp::Parameter<std::optional<std::string>>{{}, "help", "prin
 
 }
 
-#define VERSION "1.1.0"
-#define DATE    "28 September 2018"
+#define VERSION "1.2.0"
+#define DATE    "04 October 2018"
 
 #define TERM_RED                        "\033[31m"
 #define TERM_RESET                      "\033[0m"
