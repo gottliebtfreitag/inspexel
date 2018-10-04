@@ -51,12 +51,12 @@ sudo apt-get install g++-8 gcc-8
 # build inspexel
 git clone https://github.com/gottliebtfreitag/inspexel.git
 cd inspexel
-make && sude make install
+make && sudo make install
 ```
 ## Archlinux
 ```
 # build inspexel
 git clone https://github.com/gottliebtfreitag/inspexel.git
 cd inspexel
-make && sude make install
+make && sudo make install
 ```
