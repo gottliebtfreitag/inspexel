@@ -43,7 +43,7 @@ struct RegisterFile : simplyfuse::FuseFile {
 			return -EINVAL;
 		}
 		int content {0};
-		memcpy(&content, parameters.data(), layoutField.length);
+		memcpy(&content, parameters.data(), std::min(sizeof(content), std::size_t(layoutField.length)));
 
 		std::string renderedContent = std::to_string(content) + "\n";
 		size = std::min(size, renderedContent.size()+1);
