@@ -1,13 +1,9 @@
 #pragma once
 
-#include <cstddef>
-#include <cassert>
-#include <cstring>
-#include <bitset>
-#include <stdexcept>
-#include <vector>
+#include "LayoutPart.h"
 
-namespace dynamixel::v2 {
+namespace dynamixel {
+namespace v2 {
 
 enum class Register : int {
 	MODEL_NUMBER           = 0x00,
@@ -70,173 +66,76 @@ enum class Register : int {
 	INDIRECT_ADDRESS_BLOCK2 = 578,
 	INDIRECT_DATA_BLOCK2    = 634,
 };
-using Type = Register;
-constexpr Type operator+(Type t1, size_t t2) {
-	return Type(size_t(t1) + t2);
-}
-
-#pragma pack(push, 1)
-template <Type type>
-struct LayoutPart {
-	using PartType = uint8_t;
-	LayoutPart() = default;
-	LayoutPart(LayoutPart const& _other) = default;
-	auto operator=(LayoutPart const& _other) -> LayoutPart& = default;
-
-	LayoutPart(uint8_t value)
-		: _oneByte {value}
-	{}
-
-	PartType _oneByte {};
-	template <typename L> void visit(L l) const { l(type, _oneByte); }
-	template <typename L> void visit(L l) { l(type, _oneByte); }
-	[[nodiscard]] bool reserved() const { return true; }
-};
-
-#define LayoutPart(enum, type, name) \
-template <> \
-struct LayoutPart<enum> { \
-	using PartType = type; \
-	LayoutPart() = default; \
-	LayoutPart(LayoutPart const& _other) = default; \
-	auto operator=(LayoutPart const& _other) -> LayoutPart& = default; \
-	LayoutPart(type value) \
-		: name {value} \
-	{} \
-	\
-	type name {}; \
-	template <typename L> void visit(L l) const { l(enum, name); } \
-	template <typename L> void visit(L l) { l(enum, name); } \
-	bool reserved() const { return false; } \
-};
-
-
-using IndirectAddresses = std::array<uint16_t, 28>;
-using IndirectData      = std::array<uint8_t, 28>;
-LayoutPart(Type::MODEL_NUMBER           , uint16_t, model_number           );
-LayoutPart(Type::MODEL_INFORMATION      , uint32_t, model_information      );
-LayoutPart(Type::VERSION_FIRMWARE       , uint8_t , version_firmware       );
-LayoutPart(Type::ID                     , uint8_t , id                     );
-LayoutPart(Type::BAUD_RATE              , uint8_t , baud_rate              );
-LayoutPart(Type::RETURN_DELAY_TIME      , uint8_t , return_delay_time      );
-LayoutPart(Type::DRIVE_MODE             , uint8_t , drive_mode             );
-LayoutPart(Type::OPERATING_MODE         , uint8_t , operating_mode         );
-LayoutPart(Type::SECONDARY_ID           , uint8_t , secondary_id           );
-LayoutPart(Type::PROTOCOL_VERSION       , uint8_t , protocol_version       );
-LayoutPart(Type::HOMING_OFFSET          ,  int32_t, homing_offset          );
-LayoutPart(Type::MOVING_THRESHOLD       ,  int32_t, moving_threshold       );
-LayoutPart(Type::TEMPERATURE_LIMIT      , uint8_t , temperature_limit      );
-LayoutPart(Type::MAX_VOLTAGE_LIMIT      , uint16_t, max_voltage_limit      );
-LayoutPart(Type::MIN_VOLTAGE_LIMIT      , uint16_t, min_voltage_limit      );
-LayoutPart(Type::PWM_LIMIT              , uint16_t, pwm_limit              );
-LayoutPart(Type::CURRENT_LIMIT          , uint16_t, current_limit          );
-LayoutPart(Type::ACCELERATION_LIMIT     , uint32_t, acceleration_limit     );
-LayoutPart(Type::VELOCITY_LIMIT         , uint32_t, velocity_limit         );
-LayoutPart(Type::MAX_POSITION_LIMIT     ,  int32_t, max_position_limit     );
-LayoutPart(Type::MIN_POSITION_LIMIT     ,  int32_t, min_position_limit     );
-LayoutPart(Type::EXTERNAL_PORT_MODE_1   ,  uint8_t, external_port_mode_1   );
-LayoutPart(Type::EXTERNAL_PORT_MODE_2   ,  uint8_t, external_port_mode_2   );
-LayoutPart(Type::EXTERNAL_PORT_MODE_3   ,  uint8_t, external_port_mode_3   );
-LayoutPart(Type::SHUTDOWN               , uint8_t , shutdown               );
-LayoutPart(Type::TORQUE_ENABLE          ,    bool , torque_enable          );
-LayoutPart(Type::LED                    ,    bool , led                    );
-LayoutPart(Type::STATUS_RETURN_LEVEL    , uint8_t , status_return_level    );
-LayoutPart(Type::REGISTERED_INSTRUCTION , uint8_t , registered_instruction );
-LayoutPart(Type::HARDWARE_ERROR_STATUS  , uint8_t , hardware_error_status  );
-LayoutPart(Type::VELOCITY_I_GAIN        , uint16_t, velocity_i_gain        );
-LayoutPart(Type::VELOCITY_P_GAIN        , uint16_t, velocity_p_gain        );
-LayoutPart(Type::POSITION_D_GAIN        , uint16_t, position_d_gain        );
-LayoutPart(Type::POSITION_I_GAIN        , uint16_t, position_i_gain        );
-LayoutPart(Type::POSITION_P_GAIN        , uint16_t, position_p_gain        );
-LayoutPart(Type::FEEDFORWARD_2ND_GAIN   , uint16_t, feedforward_2nd_gain   );
-LayoutPart(Type::FEEDFORWARD_1ST_GAIN   , uint16_t, feedforward_1st_gain   );
-LayoutPart(Type::BUS_WATCHDOG           , uint8_t , bus_watchdog           );
-LayoutPart(Type::GOAL_PWM               , uint16_t, goal_pwm               );
-LayoutPart(Type::GOAL_CURRENT           ,  int16_t, goal_current           );
-LayoutPart(Type::GOAL_VELOCITY          ,  int32_t, goal_velocity          )
-LayoutPart(Type::PROFILE_ACCELERATION   ,  int32_t, profile_acceleration   )
-LayoutPart(Type::PROFILE_VELOCITY       ,  int32_t, profile_velocity       )
-LayoutPart(Type::GOAL_POSITION          ,  int32_t, goal_position          )
-LayoutPart(Type::REALTIME_TICK          , uint16_t, realtime_tick          )
-LayoutPart(Type::MOVING                 ,    bool , moving                 )
-LayoutPart(Type::MOVING_STATUS          , uint8_t , moving_status          )
-LayoutPart(Type::PRESENT_PWM            , uint16_t, present_pwm            )
-LayoutPart(Type::PRESENT_CURRENT        ,  int16_t, present_current        )
-LayoutPart(Type::PRESENT_VELOCITY       ,  int32_t, present_velocity       )
-LayoutPart(Type::PRESENT_POSITION       ,  int32_t, present_position       )
-LayoutPart(Type::VELOCITY_TRAJECTORY    ,  int32_t, velocity_trajectory    )
-LayoutPart(Type::POSITION_TRAJECTORY    ,  int32_t, position_trajectory    )
-LayoutPart(Type::PRESENT_INPUT_VOLTAGE  , uint16_t, present_input_voltage  );
-LayoutPart(Type::PRESENT_TEMPERATURE    , uint8_t , present_temperature    );
-LayoutPart(Type::INDIRECT_ADDRESS_BLOCK1 , IndirectAddresses, indirect_address_block1);
-LayoutPart(Type::INDIRECT_DATA_BLOCK1  ,   IndirectData,      indirect_data_block1);
-LayoutPart(Type::INDIRECT_ADDRESS_BLOCK2 , IndirectAddresses, indirect_address_block2);
-LayoutPart(Type::INDIRECT_DATA_BLOCK2 ,    IndirectData,      indirect_data_block2);
-
-template <Type type, size_t L>
-struct Layout : LayoutPart<type> , Layout<type+sizeof(LayoutPart<type>), L-sizeof(LayoutPart<type>)> {
-	using SuperClass = Layout<type+sizeof(LayoutPart<type>), L-sizeof(LayoutPart<type>)>;
-	using Part = LayoutPart<type>;
-	using PartType = typename Part::PartType;
-
-	Layout() = default;
-	Layout(Layout const& _other) = default;
-	auto operator=(Layout const& _other) -> Layout& = default;
-	explicit Layout(std::vector<std::byte> const& buffer) {
-		if (buffer.size() != sizeof(Layout)) {
-			throw std::runtime_error("buffer " + std::to_string(buffer.size()) + " has not same size as layout " + std::to_string(sizeof(Layout)));
-		}
-		memcpy((void*)this, buffer.data(), sizeof(Layout));
-	}
-
-	template <typename ...Args>
-	Layout(PartType head, Args...next)
-		: LayoutPart<type>{head}
-		, SuperClass{next...}
-	{}
-
-	static_assert(L >= sizeof(LayoutPart<type>), "must fit layout size");
-	static constexpr Type BaseRegister {type};
-	static constexpr size_t Length {L};
-
-	template <Type type2>
-	struct Has {
-		static constexpr bool value = type <= type2 and int(type) + L > int(type2);
-	};
-	template <Type type2>
-	static constexpr bool has = Has<type2>::value;
-
-	template <typename CB>
-	void visit(CB cb) const {
-		LayoutPart<type>::visit(cb);
-		SuperClass::visit(cb);
-	}
-	template <typename CB>
-	void visit(CB cb) {
-		LayoutPart<type>::visit(cb);
-		SuperClass::visit(cb);
-	}
-};
-
-template <Type type>
-struct Layout<type, 0> {
-	template <typename L> void visit(L) const {}
-	template <typename L> void visit(L) {}
-};
-
-template <typename CB, auto Register, size_t L>
-void visit(CB cb, Layout<Register, L> const& o) {
-	o.visit(cb);
-}
-
-template <typename CB, auto Register, size_t L>
-void visit(CB cb, Layout<Register, L>& o) {
-	o.visit(cb);
+constexpr Register operator+(Register t1, size_t t2) {
+	return Register(size_t(t1) + t2);
 }
 
 using FullLayout = Layout<Register::MODEL_NUMBER, 147>;
 
+using IndirectAddresses = std::array<uint16_t, 28>;
+using IndirectData      = std::array<uint8_t, 28>;
+}
+
+#pragma pack(push, 1)
+DynamixelLayoutPart(v2::Register::MODEL_NUMBER           , uint16_t, model_number           );
+DynamixelLayoutPart(v2::Register::MODEL_INFORMATION      , uint32_t, model_information      );
+DynamixelLayoutPart(v2::Register::VERSION_FIRMWARE       ,  uint8_t, version_firmware       );
+DynamixelLayoutPart(v2::Register::ID                     ,  uint8_t, id                     );
+DynamixelLayoutPart(v2::Register::BAUD_RATE              ,  uint8_t, baud_rate              );
+DynamixelLayoutPart(v2::Register::RETURN_DELAY_TIME      ,  uint8_t, return_delay_time      );
+DynamixelLayoutPart(v2::Register::DRIVE_MODE             ,  uint8_t, drive_mode             );
+DynamixelLayoutPart(v2::Register::OPERATING_MODE         ,  uint8_t, operating_mode         );
+DynamixelLayoutPart(v2::Register::SECONDARY_ID           ,  uint8_t, secondary_id           );
+DynamixelLayoutPart(v2::Register::PROTOCOL_VERSION       ,  uint8_t, protocol_version       );
+DynamixelLayoutPart(v2::Register::HOMING_OFFSET          ,  int32_t, homing_offset          );
+DynamixelLayoutPart(v2::Register::MOVING_THRESHOLD       ,  int32_t, moving_threshold       );
+DynamixelLayoutPart(v2::Register::TEMPERATURE_LIMIT      ,  uint8_t, temperature_limit      );
+DynamixelLayoutPart(v2::Register::MAX_VOLTAGE_LIMIT      , uint16_t, max_voltage_limit      );
+DynamixelLayoutPart(v2::Register::MIN_VOLTAGE_LIMIT      , uint16_t, min_voltage_limit      );
+DynamixelLayoutPart(v2::Register::PWM_LIMIT              , uint16_t, pwm_limit              );
+DynamixelLayoutPart(v2::Register::CURRENT_LIMIT          , uint16_t, current_limit          );
+DynamixelLayoutPart(v2::Register::ACCELERATION_LIMIT     , uint32_t, acceleration_limit     );
+DynamixelLayoutPart(v2::Register::VELOCITY_LIMIT         , uint32_t, velocity_limit         );
+DynamixelLayoutPart(v2::Register::MAX_POSITION_LIMIT     ,  int32_t, max_position_limit     );
+DynamixelLayoutPart(v2::Register::MIN_POSITION_LIMIT     ,  int32_t, min_position_limit     );
+DynamixelLayoutPart(v2::Register::EXTERNAL_PORT_MODE_1   ,  uint8_t, external_port_mode_1   );
+DynamixelLayoutPart(v2::Register::EXTERNAL_PORT_MODE_2   ,  uint8_t, external_port_mode_2   );
+DynamixelLayoutPart(v2::Register::EXTERNAL_PORT_MODE_3   ,  uint8_t, external_port_mode_3   );
+DynamixelLayoutPart(v2::Register::SHUTDOWN               ,  uint8_t, shutdown               );
+DynamixelLayoutPart(v2::Register::TORQUE_ENABLE          ,     bool, torque_enable          );
+DynamixelLayoutPart(v2::Register::LED                    ,     bool, led                    );
+DynamixelLayoutPart(v2::Register::STATUS_RETURN_LEVEL    ,  uint8_t, status_return_level    );
+DynamixelLayoutPart(v2::Register::REGISTERED_INSTRUCTION ,  uint8_t, registered_instruction );
+DynamixelLayoutPart(v2::Register::HARDWARE_ERROR_STATUS  ,  uint8_t, hardware_error_status  );
+DynamixelLayoutPart(v2::Register::VELOCITY_I_GAIN        , uint16_t, velocity_i_gain        );
+DynamixelLayoutPart(v2::Register::VELOCITY_P_GAIN        , uint16_t, velocity_p_gain        );
+DynamixelLayoutPart(v2::Register::POSITION_D_GAIN        , uint16_t, position_d_gain        );
+DynamixelLayoutPart(v2::Register::POSITION_I_GAIN        , uint16_t, position_i_gain        );
+DynamixelLayoutPart(v2::Register::POSITION_P_GAIN        , uint16_t, position_p_gain        );
+DynamixelLayoutPart(v2::Register::FEEDFORWARD_2ND_GAIN   , uint16_t, feedforward_2nd_gain   );
+DynamixelLayoutPart(v2::Register::FEEDFORWARD_1ST_GAIN   , uint16_t, feedforward_1st_gain   );
+DynamixelLayoutPart(v2::Register::BUS_WATCHDOG           ,  uint8_t, bus_watchdog           );
+DynamixelLayoutPart(v2::Register::GOAL_PWM               , uint16_t, goal_pwm               );
+DynamixelLayoutPart(v2::Register::GOAL_CURRENT           ,  int16_t, goal_current           );
+DynamixelLayoutPart(v2::Register::GOAL_VELOCITY          ,  int32_t, goal_velocity          )
+DynamixelLayoutPart(v2::Register::PROFILE_ACCELERATION   ,  int32_t, profile_acceleration   )
+DynamixelLayoutPart(v2::Register::PROFILE_VELOCITY       ,  int32_t, profile_velocity       )
+DynamixelLayoutPart(v2::Register::GOAL_POSITION          ,  int32_t, goal_position          )
+DynamixelLayoutPart(v2::Register::REALTIME_TICK          , uint16_t, realtime_tick          )
+DynamixelLayoutPart(v2::Register::MOVING                 ,     bool, moving                 )
+DynamixelLayoutPart(v2::Register::MOVING_STATUS          ,  uint8_t, moving_status          )
+DynamixelLayoutPart(v2::Register::PRESENT_PWM            , uint16_t, present_pwm            )
+DynamixelLayoutPart(v2::Register::PRESENT_CURRENT        ,  int16_t, present_current        )
+DynamixelLayoutPart(v2::Register::PRESENT_VELOCITY       ,  int32_t, present_velocity       )
+DynamixelLayoutPart(v2::Register::PRESENT_POSITION       ,  int32_t, present_position       )
+DynamixelLayoutPart(v2::Register::VELOCITY_TRAJECTORY    ,  int32_t, velocity_trajectory    )
+DynamixelLayoutPart(v2::Register::POSITION_TRAJECTORY    ,  int32_t, position_trajectory    )
+DynamixelLayoutPart(v2::Register::PRESENT_INPUT_VOLTAGE  , uint16_t, present_input_voltage  );
+DynamixelLayoutPart(v2::Register::PRESENT_TEMPERATURE    ,  uint8_t, present_temperature    );
+DynamixelLayoutPart(v2::Register::INDIRECT_ADDRESS_BLOCK1 , v2::IndirectAddresses, indirect_address_block1);
+DynamixelLayoutPart(v2::Register::INDIRECT_DATA_BLOCK1  ,   v2::IndirectData,      indirect_data_block1);
+DynamixelLayoutPart(v2::Register::INDIRECT_ADDRESS_BLOCK2 , v2::IndirectAddresses, indirect_address_block2);
+DynamixelLayoutPart(v2::Register::INDIRECT_DATA_BLOCK2 ,    v2::IndirectData,      indirect_data_block2);
 
 #pragma pack(pop)
-#undef LayoutPart
 }
