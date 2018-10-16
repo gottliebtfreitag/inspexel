@@ -29,8 +29,6 @@ auto optMotorName = metaCmd.Parameter<std::string>("", "motor", "motor to give d
 	}
 );
 
-auto optJson      = metaCmd.Flag("json", "print list as json");
-
 using namespace dynamixel;
 
 template <typename Iter, typename Delim>
@@ -43,38 +41,6 @@ auto join(Iter iter, Iter end, Delim const& delim) -> std::decay_t<decltype(*ite
 		res = res + delim + *(iter++);
 	}
 	return res;
-}
-
-void printDetailInfoJson(meta::MotorInfo const& data) {
-	std::cout << "name: " << data.shortName << "\n";
-	std::cout << "altNames: "<< "[" << join(begin(data.motorNames), end(data.motorNames), ", ") << "]\n";
-	std::cout << "registers:\n";
-
-	auto printEntries = [](auto const& layout, auto const& defaults) {
-		for (auto [id, info] : layout) {
-			auto iter = defaults.find(id);
-			if (iter == defaults.end()) continue;
-
-			std::cout << "    address: " << int(id) << "\n";
-			std::cout << "    length: " << int(info.length) << "\n";
-			std::cout << "    access: "   << to_string(info.access) << "\n";
-			std::cout << "    dataName: " << info.name << "\n";
-			std::cout << "    description: " << info.description << "\n";
-			std::cout << "    inRom: " << info.romArea << "\n";
-			if (iter->second) {
-				std::cout << "    default: " << int(iter->second.value()) << "\n";
-			}
-		}
-	};
-	if (data.layout == meta::LayoutType::V1) {
-		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V1>();
-		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V1>().at(data.modelNumber);
-		printEntries(layout, defaults);
-	} else {
-		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V2>();
-		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V2>().at(data.modelNumber);
-		printEntries(layout, defaults);
-	}
 }
 
 void printDetailInfoTable(meta::MotorInfo const& data) {
@@ -133,11 +99,7 @@ void runMeta() {
 		std::transform(begin(name), end(name), begin(name), ::toupper);
 		for (auto const& data : db) {
 			if (data.shortName == name) {
-				if (optJson) {
-					printDetailInfoJson(data);
-				} else {
-					printDetailInfoTable(data);
-				}
+				printDetailInfoTable(data);
 				return;
 			}
 		}
