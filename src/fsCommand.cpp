@@ -153,17 +153,16 @@ void runFuse() {
 
 	auto detectAndHandleMotor = [&](MotorID motor) {
 		auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
-		std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
-		if (layout == -1) {
+		if (modelNumber == 0) {
 			return false;
 		}
-		if (layout == 1) {
-			newFiles = registerMotor<meta::LayoutType::V1>(motor, modelNumber, usb2dyn, fuseFS);
-		} else if (layout == 2) {
-			newFiles = registerMotor<meta::LayoutType::V2>(motor, modelNumber, usb2dyn, fuseFS);
-		} else if (layout == 3) {
-			newFiles = registerMotor<meta::LayoutType::Pro>(motor, modelNumber, usb2dyn, fuseFS);
-		}
+		std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
+		meta::forAllLayoutTypes([&](auto const& info) {
+			using Info = std::decay_t<decltype(info)>;
+			if (layout == Info::type) {
+				newFiles= registerMotor<Info::type>(motor, modelNumber,usb2dyn, fuseFS);
+			}
+		});
 		files[motor] = std::move(newFiles);
 		return true;
 	};

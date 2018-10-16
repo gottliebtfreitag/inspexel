@@ -163,12 +163,13 @@ void runDetect() {
 			}
 
 			// ping all motors
-			std::map<int, std::vector<std::tuple<MotorID, uint16_t>>> motors;
+			std::map<meta::LayoutType, std::vector<std::tuple<MotorID, uint16_t>>> motors;
 			for (auto motor : range) {
 				auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
-				motors[layout].push_back(std::make_tuple(motor, modelNumber));
+				if (modelNumber != 0) {
+					motors[layout].push_back(std::make_tuple(motor, modelNumber));
+				}
 			}
-			motors.erase(-1);
 			// read detailed infos if requested
 			if ((readAll or optCont) and not motors.empty()) {
 				static int count = 0;
@@ -181,24 +182,19 @@ void runDetect() {
 					auto now = std::chrono::high_resolution_clock::now();
 					auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPrint);
 					bool print = (diff.count() > 100) or readAll;
-					if (not motors[1].empty()) {
-						auto [suc, tot] = readDetailedInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, motors[1], timeout, print);
-						successful += suc;
-						total += tot;
-					}
-					if (not motors[2].empty()) {
-						auto [suc, tot] = readDetailedInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, motors[2], timeout, print);
-						successful += suc;
-						total += tot;
-					}
-					if (not motors[3].empty()) { // dynamixel pro
-						auto [suc, tot] = readDetailedInfos<meta::LayoutType::Pro, pro::FullLayout>(usb2dyn, motors[3], timeout, print);
-						successful += suc;
-						total += tot;
-					}
 
-					if (not motors[0].empty()) {
-						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[0], timeout, print);
+					meta::forAllLayoutTypes([&](auto const& info) {
+						using Info = std::decay_t<decltype(info)>;
+						if (not motors[Info::type].empty()) {
+							using FullLayout = typename meta::FullLayout<Info::type>::Layout;
+							auto [suc, tot] = readDetailedInfos<Info::type, FullLayout>(usb2dyn, motors[Info::type], timeout, print);
+							successful += suc;
+							total += tot;
+						}
+					});
+
+					if (not motors[meta::LayoutType::None].empty()) {
+						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[meta::LayoutType::None], timeout, print);
 						successful += suc;
 						total += tot;
 					}

@@ -21,16 +21,37 @@ struct LayoutField {
 	std::string description;
 };
 
-enum class LayoutType { V1, V2, Pro };
+enum class LayoutType { None, V1, V2, Pro, XL320 };
 
 inline auto to_string(LayoutType layout) -> std::string {
 	switch(layout) {
 	case LayoutType::V1:  return "V1";
 	case LayoutType::V2:  return "V2";
 	case LayoutType::Pro: return "Pro";
+	case LayoutType::XL320: return "XL320";
+	default:
+		throw std::runtime_error("unknown layout");
 	}
-	throw std::runtime_error("unknown layout");
 }
+
+template <LayoutType TType>
+struct LayoutInfo {
+	static constexpr LayoutType type {TType};
+};
+
+template <LayoutType Head, LayoutType... Types, typename CB>
+void forLayoutTypes(CB&& cb) {
+	cb(LayoutInfo<Head>{});
+	if constexpr (sizeof...(Types) > 0) {
+		forLayoutTypes<Types...>(std::forward<CB>(cb));
+	}
+};
+
+template <typename CB>
+void forAllLayoutTypes(CB&& cb) {
+	forLayoutTypes<LayoutType::V1, LayoutType::V2, LayoutType::Pro, LayoutType::XL320>(std::forward<CB>(cb));
+};
+
 
 template <typename Reg>
 using Layout = std::map<Reg, LayoutField>;
@@ -50,20 +71,26 @@ inline auto to_string(LayoutField::Access access) -> std::string {
 auto getLayoutV1Infos()  -> Layout<v1::Register> const&;
 auto getLayoutV2Infos()  -> Layout<v2::Register> const&;
 auto getLayoutProInfos() -> Layout<pro::Register> const&;
+auto getLayoutXL320Infos() -> Layout<xl320::Register> const&;
 
 template <LayoutType type>
 auto getLayoutInfos() {
-	if constexpr(type == LayoutType::V1) {
+	if constexpr (type == LayoutType::V1) {
 		return getLayoutV1Infos();
-	} else if constexpr(type == LayoutType::V2) {
+	} else if constexpr (type == LayoutType::V2) {
 		return getLayoutV2Infos();
-	} else {
+	} else if constexpr (type == LayoutType::Pro) {
 		return getLayoutProInfos();
+	} else if constexpr (type == LayoutType::XL320) {
+		return getLayoutXL320Infos();
 	}
+
+	throw std::runtime_error("unknown layout");
 }
 auto getLayoutV1Defaults() -> std::map<uint32_t, DefaultLayout<v1::Register>> const&;
 auto getLayoutV2Defaults() -> std::map<uint32_t, DefaultLayout<v2::Register>> const&;
 auto getLayoutProDefaults() -> std::map<uint32_t, DefaultLayout<pro::Register>> const&;
+auto getLayoutXL320Defaults() -> std::map<uint32_t, DefaultLayout<xl320::Register>> const&;
 
 template <LayoutType type>
 auto const& getLayoutDefaults() {
@@ -71,10 +98,22 @@ auto const& getLayoutDefaults() {
 		return getLayoutV1Defaults();
 	} else if constexpr(type == LayoutType::V2) {
 		return getLayoutV2Defaults();
-	} else {
+	} else if constexpr (type == LayoutType::Pro) {
 		return getLayoutProDefaults();
+	} else if constexpr (type == LayoutType::XL320) {
+		return getLayoutXL320Defaults();
 	}
+
+	throw std::runtime_error("unknown layout");
 }
+
+template <LayoutType type> struct FullLayout;
+template <> struct FullLayout<LayoutType::V1>    { using Layout = v1::FullLayout; };
+template <> struct FullLayout<LayoutType::V2>    { using Layout = v2::FullLayout; };
+template <> struct FullLayout<LayoutType::Pro  > { using Layout = pro::FullLayout; };
+template <> struct FullLayout<LayoutType::XL320> { using Layout = xl320::FullLayout; };
+
+
 
 struct ConverterFunctions {
 	std::function<int(double)>      toMotorPosition;

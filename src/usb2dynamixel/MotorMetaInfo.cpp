@@ -169,6 +169,45 @@ auto getLayoutProInfos() -> std::map<pro::Register, LayoutField> const& {
 	return data;
 }
 
+auto getLayoutXL320Infos() -> std::map<xl320::Register, LayoutField> const& {
+	using A = LayoutField::Access;
+	static std::map<xl320::Register, LayoutField> data {
+		{xl320::Register::MODEL_NUMBER         , {2,  true, A:: R, "Model Number", "model number"}},
+		{xl320::Register::FIRMWARE_VERSION     , {1,  true, A:: R, "Version of Firmware", "Information on the version of firmware"}},
+		{xl320::Register::ID                   , {1,  true, A::RW, "ID", "ID of Dynamixel"}},
+		{xl320::Register::BAUD_RATE            , {1,  true, A::RW, "Baud Rate", "Baud Rate of Dynamixel"}},
+		{xl320::Register::RETURN_DELAY_TIME    , {1,  true, A::RW, "Return Delay Time", "Return Delay Time"}},
+		{xl320::Register::CW_ANGLE_LIMIT       , {2,  true, A::RW, "CW Angle Limit", "clockwise Angle Limit"}},
+		{xl320::Register::CCW_ANGLE_LIMIT      , {2,  true, A::RW, "CCW Angle Limit", "counterclockwise Angle Limit"}},
+		{xl320::Register::CONTROL_MODE         , {1,  true, A::RW, "Control Mode", "Dual Mode Setting"}},
+		{xl320::Register::TEMPERATURE_LIMIT    , {1,  true, A::RW, "Highest Limit Temperature", "Internal Limit Temperature"}},
+		{xl320::Register::MIN_VOLTAGE_LIMIT    , {1,  true, A::RW, "Min Limit Voltage", "Min Limit Voltage"}},
+		{xl320::Register::MAX_VOLTAGE_LIMIT    , {1,  true, A::RW, "Max Limit Voltage", "Max Limit Voltage"}},
+		{xl320::Register::MAX_TORQUE           , {2,  true, A::RW, "Max Torque", "Max. Torque"}},
+		{xl320::Register::STATUS_RETURN_LEVEL  , {1,  true, A::RW, "Status Return Level", "Status Return Level"}},
+		{xl320::Register::SHUTDOWN             , {1,  true, A::RW, "Shutdown", "Shutdown for Alarm"}},
+		{xl320::Register::TORQUE_ENABLE        , {1, false, A::RW, "Torque Enable", "Torque On/Off"}},
+		{xl320::Register::LED                  , {1, false, A::RW, "LED", "LED On/Off"}},
+		{xl320::Register::D_GAIN               , {1, false, A::RW, "D Gain", "Derivative Gain"}},
+		{xl320::Register::I_GAIN               , {1, false, A::RW, "I Gain", "Integral Gain"}},
+		{xl320::Register::P_GAIN               , {1, false, A::RW, "P Gain", "Proportional Gain"}},
+		{xl320::Register::GOAL_POSITION        , {2, false, A::RW, "Goal Position", "Goal Position"}},
+		{xl320::Register::MOVING_SPEED         , {2, false, A::RW, "Moving Speed", "Moving Speed (Moving Velocity)"}},
+		{xl320::Register::TORQUE_LIMIT         , {2, false, A::RW, "Torque Limit", "Torque Limit (Goal Torque)"}},
+		{xl320::Register::PRESENT_POSITION     , {2, false, A:: R, "Present Position", "Current Position (Present Velocity)"}},
+		{xl320::Register::PRESENT_SPEED        , {2, false, A:: R, "Present Speed", "Current Speed"}},
+		{xl320::Register::PRESENT_LOAD         , {2, false, A:: R, "Present Load", "Current Load"}},
+		{xl320::Register::PRESENT_VOLTAGE      , {1, false, A:: R, "Present Voltage", "Current Voltage"}},
+		{xl320::Register::PRESENT_TEMPERATURE  , {1, false, A:: R, "Present Temperature", "Current Temperature"}},
+		{xl320::Register::REGISTERED           , {1, false, A:: R, "Registered", "Means if Instruction is registered"}},
+		{xl320::Register::MOVING               , {1, false, A:: R, "Moving", "Means if there is any movement"}},
+		{xl320::Register::HARDWARE_ERROR_STATUS, {1, false, A:: R, "Hardware Error Status", "Hardware Error Status"}},
+		{xl320::Register::PUNCH                , {2, false, A::RW, "Punch", "Punch"}},
+	};
+	return data;
+}
+
+
 
 
 auto getLayoutV1Defaults() -> std::map<uint32_t, std::map<v1::Register, std::optional<uint32_t>>> const& {
@@ -557,6 +596,50 @@ auto getLayoutProDefaults() -> std::map<uint32_t, std::map<pro::Register, std::o
 	return data;
 };
 
+auto getLayoutXL320Defaults() -> std::map<uint32_t, std::map<xl320::Register, std::optional<uint32_t>>> const& {
+	static std::map<uint32_t, std::map<xl320::Register, std::optional<uint32_t>>> data {
+		{350, { // xl320
+			{xl320::Register::MODEL_NUMBER         ,    350},
+			{xl320::Register::FIRMWARE_VERSION     ,     {}},
+			{xl320::Register::ID                   ,      1},
+			{xl320::Register::BAUD_RATE            ,      3},
+			{xl320::Register::RETURN_DELAY_TIME    ,    250},
+			{xl320::Register::CW_ANGLE_LIMIT       ,      0},
+			{xl320::Register::CCW_ANGLE_LIMIT      , 0x03ff},
+			{xl320::Register::CONTROL_MODE         ,      2},
+			{xl320::Register::TEMPERATURE_LIMIT    ,     65},
+			{xl320::Register::MIN_VOLTAGE_LIMIT    ,     60},
+			{xl320::Register::MIN_VOLTAGE_LIMIT    ,     90},
+			{xl320::Register::MAX_TORQUE           , 0x03ff},
+			{xl320::Register::STATUS_RETURN_LEVEL  ,      2},
+			{xl320::Register::SHUTDOWN             ,      3},
+			{xl320::Register::TORQUE_ENABLE        ,      0},
+			{xl320::Register::LED                  ,      0},
+			{xl320::Register::D_GAIN               ,      0},
+			{xl320::Register::I_GAIN               ,      0},
+			{xl320::Register::P_GAIN               ,     32},
+			{xl320::Register::GOAL_POSITION        ,     {}},
+			{xl320::Register::MOVING_SPEED         ,     {}},
+			{xl320::Register::TORQUE_LIMIT         ,     {}},
+			{xl320::Register::PRESENT_POSITION     ,     {}},
+			{xl320::Register::PRESENT_SPEED        ,     {}},
+			{xl320::Register::PRESENT_LOAD         ,     {}},
+			{xl320::Register::PRESENT_VOLTAGE      ,     {}},
+			{xl320::Register::PRESENT_TEMPERATURE  ,     {}},
+			{xl320::Register::REGISTERED           ,      0},
+			{xl320::Register::MOVING               ,      0},
+			{xl320::Register::HARDWARE_ERROR_STATUS,      0},
+			{xl320::Register::PUNCH                ,     32},
+		}}
+	};
+	static bool firstRun{true};
+	if (firstRun) {
+		firstRun = false;
+	}
+	return data;
+};
+
+
 ConverterFunctions buildConverters(double angularResolution, int centerVal, double speedResolution) {
 	return ConverterFunctions{
 		[=](double val) { return std::round(val / (2. * M_PI) * angularResolution + centerVal); },
@@ -598,6 +681,11 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 		{54'024, LayoutType::Pro, "H54-200-S500-R", {"H54-200-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
 		{53'768, LayoutType::Pro, "H54-100-S500-R", {"H54-100-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
 		{51'200, LayoutType::Pro,  "H42-20-S300-R", { "H42-20-S300-R"}, buildConverters(303'750, 0, 0.00329218)},
+
+		// dynamixel xl320
+		{   350, LayoutType::XL320, "XL-320", {"XL-320"},   buildConverters(1024*360/300, 512, .111)},
+
+
 	};
 	return data;
 }

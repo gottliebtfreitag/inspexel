@@ -74,19 +74,15 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 		}
 	};
 
-	if (data.layout == meta::LayoutType::V1) {
-		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V1>();
-		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V1>().at(data.modelNumber);
-		printEntries(layout, defaults);
-	} else if (data.layout == meta::LayoutType::V2) {
-		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::V2>();
-		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::V2>().at(data.modelNumber);
-		printEntries(layout, defaults);
-	} else if (data.layout == meta::LayoutType::Pro) {
-		auto const& layout   = meta::getLayoutInfos<meta::LayoutType::Pro>();
-		auto const& defaults = meta::getLayoutDefaults<meta::LayoutType::Pro>().at(data.modelNumber);
-		printEntries(layout, defaults);
-	} else {
+	meta::forAllLayoutTypes([&](auto const& info) {
+		using Info = std::decay_t<decltype(info)>;
+		if (data.layout == Info::type) {
+			auto const& layout   = meta::getLayoutInfos<Info::type>();
+			auto const& defaults = meta::getLayoutDefaults<Info::type>().at(data.modelNumber);
+			printEntries(layout, defaults);
+		}
+	});
+	if (data.layout == meta::LayoutType::None) {
 		throw std::runtime_error("unknown layout type");
 	}
 }
