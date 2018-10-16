@@ -207,6 +207,47 @@ auto getLayoutXL320Infos() -> std::map<xl320::Register, LayoutField> const& {
 	return data;
 }
 
+auto getLayoutAXInfos() -> std::map<ax::Register, LayoutField> const& {
+	using A = LayoutField::Access;
+	static std::map<ax::Register, LayoutField> data {
+		{ax::Register::MODEL_NUMBER         , {2,  true, A:: R, "Model Number", "model number"}},
+		{ax::Register::FIRMWARE_VERSION     , {1,  true, A:: R, "Version of Firmware", "Information on the version of firmware"}},
+		{ax::Register::ID                   , {1,  true, A::RW, "ID", "ID of Dynamixel"}},
+		{ax::Register::BAUD_RATE            , {1,  true, A::RW, "Baud Rate", "Baud Rate of Dynamixel"}},
+		{ax::Register::RETURN_DELAY_TIME    , {1,  true, A::RW, "Return Delay Time", "Return Delay Time"}},
+		{ax::Register::CW_ANGLE_LIMIT       , {2,  true, A::RW, "CW Angle Limit", "clockwise Angle Limit"}},
+		{ax::Register::CCW_ANGLE_LIMIT      , {2,  true, A::RW, "CCW Angle Limit", "counterclockwise Angle Limit"}},
+		{ax::Register::TEMPERATURE_LIMIT    , {1,  true, A::RW, "Highest Limit Temperature", "Internal Limit Temperature"}},
+		{ax::Register::MIN_VOLTAGE_LIMIT    , {1,  true, A::RW, "Min Limit Voltage", "Min Limit Voltage"}},
+		{ax::Register::MAX_VOLTAGE_LIMIT    , {1,  true, A::RW, "Max Limit Voltage", "Max Limit Voltage"}},
+		{ax::Register::MAX_TORQUE           , {2,  true, A::RW, "Max Torque", "Max. Torque"}},
+		{ax::Register::STATUS_RETURN_LEVEL  , {1,  true, A::RW, "Status Return Level", "Status Return Level"}},
+		{ax::Register::ALARM_LED            , {1,  true, A::RW, "Alarm LED", "LED for Alarm"}},
+		{ax::Register::SHUTDOWN             , {1,  true, A::RW, "Shutdown", "Shutdown for Alarm"}},
+		{ax::Register::TORQUE_ENABLE        , {1, false, A::RW, "Torque Enable", "Torque On/Off"}},
+		{ax::Register::LED                  , {1, false, A::RW, "LED", "LED On/Off"}},
+		{ax::Register::CW_COMPLIANCE_MARGIN , {1, false, A::RW, "CW Compliance Margin", "CW Compliance Margin"}},
+		{ax::Register::CCW_COMPLIANCE_MARGIN, {1, false, A::RW, "CCW Compliance Margin", "CCW Compliance Margin"}},
+		{ax::Register::CW_COMPLIANCE_SLOPE  , {1, false, A::RW, "CW Compliance Slope", "CW Compliance Slope"}},
+		{ax::Register::CCW_COMPLIANCE_SLOPE , {1, false, A::RW, "CCW Compliance Slope", "CCW Compliance Slope"}},
+		{ax::Register::GOAL_POSITION        , {2, false, A::RW, "Goal Position", "Goal Position"}},
+		{ax::Register::MOVING_SPEED         , {2, false, A::RW, "Moving Speed", "Moving Speed (Moving Velocity)"}},
+		{ax::Register::TORQUE_LIMIT         , {2, false, A::RW, "Torque Limit", "Torque Limit (Goal Torque)"}},
+		{ax::Register::PRESENT_POSITION     , {2, false, A:: R, "Present Position", "Current Position (Present Velocity)"}},
+		{ax::Register::PRESENT_SPEED        , {2, false, A:: R, "Present Speed", "Current Speed"}},
+		{ax::Register::PRESENT_LOAD         , {2, false, A:: R, "Present Load", "Current Load"}},
+		{ax::Register::PRESENT_VOLTAGE      , {1, false, A:: R, "Present Voltage", "Current Voltage"}},
+		{ax::Register::PRESENT_TEMPERATURE  , {1, false, A:: R, "Present Temperature", "Current Temperature"}},
+		{ax::Register::REGISTERED           , {1, false, A:: R, "Registered", "Means if Instruction is registered"}},
+		{ax::Register::MOVING               , {1, false, A:: R, "Moving", "Means if there is any movement"}},
+		{ax::Register::LOCK                 , {1, false, A::RW, "Lock", "Locking EEPROM"}},
+		{ax::Register::PUNCH                , {2, false, A::RW, "Punch", "Punch"}},
+	};
+	return data;
+}
+
+
+
 
 
 
@@ -639,6 +680,73 @@ auto getLayoutXL320Defaults() -> std::map<uint32_t, std::map<xl320::Register, st
 	return data;
 };
 
+auto getLayoutAXDefaults() -> std::map<uint32_t, std::map<ax::Register, std::optional<uint32_t>>> const& {
+	static std::map<uint32_t, std::map<ax::Register, std::optional<uint32_t>>> data {
+		{300, { // ax-12w
+			{ax::Register::MODEL_NUMBER         ,    300},
+			{ax::Register::FIRMWARE_VERSION     ,     {}},
+			{ax::Register::ID                   ,      1},
+			{ax::Register::BAUD_RATE            ,      1},
+			{ax::Register::RETURN_DELAY_TIME    ,    250},
+			{ax::Register::CW_ANGLE_LIMIT       ,      0},
+			{ax::Register::CCW_ANGLE_LIMIT      , 0x03ff},
+			{ax::Register::TEMPERATURE_LIMIT    ,     70},
+			{ax::Register::MIN_VOLTAGE_LIMIT    ,     60},
+			{ax::Register::MIN_VOLTAGE_LIMIT    ,    140},
+			{ax::Register::MAX_TORQUE           , 0x03ff},
+			{ax::Register::STATUS_RETURN_LEVEL  ,      2},
+			{ax::Register::ALARM_LED            ,     36},
+			{ax::Register::SHUTDOWN             ,     36},
+			{ax::Register::TORQUE_ENABLE        ,      0},
+			{ax::Register::LED                  ,      0},
+			{ax::Register::CW_COMPLIANCE_MARGIN ,      4},
+			{ax::Register::CCW_COMPLIANCE_MARGIN,      4},
+			{ax::Register::CW_COMPLIANCE_SLOPE  ,     64},
+			{ax::Register::CCW_COMPLIANCE_SLOPE ,     64},
+			{ax::Register::GOAL_POSITION        ,     {}},
+			{ax::Register::MOVING_SPEED         ,     {}},
+			{ax::Register::TORQUE_LIMIT         ,     {}},
+			{ax::Register::PRESENT_POSITION     ,     {}},
+			{ax::Register::PRESENT_SPEED        ,     {}},
+			{ax::Register::PRESENT_LOAD         ,     {}},
+			{ax::Register::PRESENT_VOLTAGE      ,     {}},
+			{ax::Register::PRESENT_TEMPERATURE  ,     {}},
+			{ax::Register::REGISTERED           ,      0},
+			{ax::Register::MOVING               ,      0},
+			{ax::Register::LOCK                 ,      0},
+			{ax::Register::PUNCH                ,     32},
+		}}
+	};
+	static bool firstRun{true};
+	if (firstRun) {
+		firstRun = false;
+
+		{ // ax-12a
+			auto& m = data[12];
+			m = data.at(300);
+			m[ax::Register::MODEL_NUMBER] = 12;
+			m[ax::Register::CW_COMPLIANCE_MARGIN] = 1;
+			m[ax::Register::CCW_COMPLIANCE_MARGIN] = 1;
+			m[ax::Register::CW_COMPLIANCE_SLOPE] = 32;
+			m[ax::Register::CCW_COMPLIANCE_SLOPE] = 32;
+		}
+
+		{ // ax-18a
+			auto& m = data[18];
+			m = data.at(300);
+			m[ax::Register::MODEL_NUMBER] = 18;
+			m[ax::Register::TEMPERATURE_LIMIT] = 75;
+			m[ax::Register::MAX_TORQUE] = 983;
+			m[ax::Register::CW_COMPLIANCE_MARGIN] = 1;
+			m[ax::Register::CCW_COMPLIANCE_MARGIN] = 1;
+			m[ax::Register::CW_COMPLIANCE_SLOPE] = 32;
+			m[ax::Register::CCW_COMPLIANCE_SLOPE] = 32;
+		}
+	}
+	return data;
+};
+
+
 
 ConverterFunctions buildConverters(double angularResolution, int centerVal, double speedResolution) {
 	return ConverterFunctions{
@@ -684,6 +792,11 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 
 		// dynamixel xl320
 		{   350, LayoutType::XL320, "XL-320", {"XL-320"},   buildConverters(1024*360/300, 512, .111)},
+
+		// dynamixel ax
+		{   300, LayoutType::AX, "AX-12W", {"AX-12W"},   buildConverters(1024*360/300, 512, .111)},
+		{    12, LayoutType::AX, "AX-12A", {"AX-12A"},   buildConverters(1024*360/300, 512, .111)},
+		{    18, LayoutType::AX, "AX-18A", {"AX-18A"},   buildConverters(1024*360/300, 512, .111)},
 
 
 	};
