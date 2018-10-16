@@ -474,7 +474,7 @@ auto getLayoutV2Defaults() -> std::map<uint32_t, Info<v2::Register>> const& {
 			m.defaultLayout.erase(v2::Register::ACCELERATION_LIMIT);
 		}
 		{
-			auto& m = newMotor(1050, "", {});
+			auto& m = newMotor(1050, "XH430-V210", {"XH430-V210"});
 			m.defaultLayout[v2::Register::MAX_VOLTAGE_LIMIT] = 300;
 			m.defaultLayout[v2::Register::MIN_VOLTAGE_LIMIT] = 110;
 			m.defaultLayout[v2::Register::VELOCITY_LIMIT] = 230;
@@ -765,47 +765,27 @@ auto getLayoutAXDefaults() -> std::map<uint32_t, Info<ax::Register>> const& {
 };
 
 auto getMotorInfos() -> std::vector<MotorInfo> const& {
-	static std::vector<MotorInfo> data {
-		// mx motors
-		{    29, LayoutType::V1,  "MX28",          {"MX-28T", "MX-28R", "MX-28AT", "MX-28AR"}, buildConverters(4096, 2048, .114)},
-		{   310, LayoutType::V1,  "MX64",          {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"}, buildConverters(4096, 2048, .114)},
-		{   320, LayoutType::V1,  "MX106",         {"MX-106T", "MX-106R"}, buildConverters(4096, 2048, .114)},
-		{   360, LayoutType::V1,  "MX12",          {"MX-12W"}, buildConverters(4096, 2048, 0.916)},
+	static auto data = std::vector<MotorInfo>{};
+	static bool firstRun{true};
+	if (firstRun) {
+		firstRun = false;
 
-		// mx motors with protocol table 2
-		{    30, LayoutType::V2,  "MX28-V2",       {"MX-28T-V2", "MX-28R-V2", "MX-28AT-V2", "MX-28AR-V2"}, buildConverters(4096, 2048, .229)},
-		{   311, LayoutType::V2,  "MX64-V2",       {"MX-64T-V2", "MX-64R-V2", "MX-64AT-V2", "MX-64AR-V2"}, buildConverters(4096, 2048, .229)},
-		{   321, LayoutType::V2,  "MX106-V2",      {"MX-106T-V2", "MX-106R-V2"}, buildConverters(4096, 2048, .229)},
+		meta::forAllLayoutTypes([&](auto const& _info) {
+			using Info = std::decay_t<decltype(_info)>;
+			auto& defaults = getLayoutDefaults<Info::Type>();
+			for (auto [id, d] : defaults) {
+				MotorInfo info;
+				info.modelNumber = d.modelNumber;
+				info.layout      = d.layout;
 
-		// dynamixel x
-		{ 1'000, LayoutType::V2,  "XH430-W350",    {"XH430-W350-T", "XH430-W350-R"}, buildConverters(4096, 2048, .229)},
-		{ 1'010, LayoutType::V2,  "XH430-W210",    {"XH430-W210-T", "XH430-W210-R"}, buildConverters(4096, 2048, .229)},
-		{ 1'020, LayoutType::V2,  "XM430-W350",    {"XM430-W350-T", "XM430-W350-R"}, buildConverters(4096, 2048, .229)},
-		{ 1'030, LayoutType::V2,  "XM430-W210",    {"XM430-W210-T", "XM430-W210-R"}, buildConverters(4096, 2048, .229)},
-		{ 1'040, LayoutType::V2,  "XH430-V350",    {"XH430-V350"}, buildConverters(4096, 2048, .229)},
-		{ 1'050, LayoutType::V2,  "XH430-V210",    {"XH430-V210"}, buildConverters(4096, 2048, .229)},
-		{ 1'060, LayoutType::V2,  "XL430-W250",    {"XL430-W250"}, buildConverters(4096, 2048, .229)},
-		{ 1'120, LayoutType::V2,  "XM540-W150",    {"XM540-W150-T", "XM540-W150-R"}, buildConverters(4096, 2048, .229)},
-		{ 1'130, LayoutType::V2,  "XM540-W270",    {"XM540-W270-T", "XM540-W270-R"}, buildConverters(4096, 2048, .229)},
+				info.shortName   = d.shortName;
+				info.motorNames  = d.motorNames;
 
-		// dynamixel pro
-		{46'352, LayoutType::Pro, "M54-60-S250-R", {"M54-60-S250-R"},   buildConverters(251'417, 0, 0.00397746)},
-		{46'096, LayoutType::Pro, "M54-40-S250-R", {"M54-40-S250-R"},   buildConverters(251'417, 0, 0.00397746)},
-		{43'288, LayoutType::Pro, "M42-10-S260-R", {"M42-10-S260-R"},   buildConverters(263'187, 0, 0.00389076)},
-		{54'024, LayoutType::Pro, "H54-200-S500-R", {"H54-200-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
-		{53'768, LayoutType::Pro, "H54-100-S500-R", {"H54-100-S500-R"}, buildConverters(501'923, 0, 0.00199234)},
-		{51'200, LayoutType::Pro,  "H42-20-S300-R", { "H42-20-S300-R"}, buildConverters(303'750, 0, 0.00329218)},
-
-		// dynamixel xl320
-		{   350, LayoutType::XL320, "XL-320", {"XL-320"},   buildConverters(1024*360/300, 512, .111)},
-
-		// dynamixel ax
-		{   300, LayoutType::AX, "AX-12W", {"AX-12W"},   buildConverters(1024*360/300, 512, .111)},
-		{    12, LayoutType::AX, "AX-12A", {"AX-12A"},   buildConverters(1024*360/300, 512, .111)},
-		{    18, LayoutType::AX, "AX-18A", {"AX-18A"},   buildConverters(1024*360/300, 512, .111)},
-
-
-	};
+				info.converterFunctions = d.converterFunctions;
+				data.push_back(info);
+			}
+		});
+	}
 	return data;
 }
 auto getMotorInfo(uint16_t _modelNumber) -> MotorInfo const* {

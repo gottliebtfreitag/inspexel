@@ -123,7 +123,8 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 	fuseFS.rmdir("/" + std::to_string(motorID));
 	fuseFS.registerFile("/" + std::to_string(motorID) + "/motor_model", *motorModelFile);
 
-	auto infos = meta::getLayoutInfos<LT>();
+	using Info = meta::LayoutInfo<LT>;
+	auto const& infos = Info::getInfos();
 	for (auto const& [reg, info] : infos) {
 		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info, usb2dyn));
 		fuseFS.registerFile("/" + std::to_string(motorID) + "/by-register-name/" + info.name, *newFile);
@@ -159,8 +160,8 @@ void runFuse() {
 		std::vector<std::unique_ptr<simplyfuse::FuseFile>> newFiles;
 		meta::forAllLayoutTypes([&](auto const& info) {
 			using Info = std::decay_t<decltype(info)>;
-			if (layout == Info::type) {
-				newFiles= registerMotor<Info::type>(motor, modelNumber,usb2dyn, fuseFS);
+			if (layout == Info::Type) {
+				newFiles= registerMotor<Info::Type>(motor, modelNumber,usb2dyn, fuseFS);
 			}
 		});
 		files[motor] = std::move(newFiles);

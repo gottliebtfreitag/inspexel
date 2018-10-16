@@ -10,21 +10,24 @@ void runMeta();
 auto metaCmd   = sargp::Command{"meta", "list all motors known to this program", runMeta};
 auto optMotorName = metaCmd.Parameter<std::string>("", "motor", "motor to give detail specs", {},
 	[](std::vector<std::string> const& _str) -> std::pair<bool, std::set<std::string>> {
-		auto const& db = meta::getMotorInfos();
 		std::set<std::string> resList;
-		if (_str.empty()) {
-			for (auto const& data: db) {
-				resList.insert(data.shortName);
-			}
-		} else {
-			for (auto const& data : db) {
-				if (data.shortName.size() < _str.size()) continue;
-				auto str = _str.back();
-				if (std::equal(begin(str), end(str), begin(data.shortName))) {
+		meta::forAllLayoutTypes([&](auto const& info) {
+			using Info = std::decay_t<decltype(info)>;
+			auto const& defaults = Info::getDefaults();
+			if (_str.empty()) {
+				for (auto const& [id, data] : defaults) {
 					resList.insert(data.shortName);
 				}
+			} else {
+				for (auto const& [id, data] : defaults) {
+					if (data.shortName.size() < _str.size()) continue;
+					auto str = _str.back();
+					if (std::equal(begin(str), end(str), begin(data.shortName))) {
+						resList.insert(data.shortName);
+					}
+				}
 			}
-		}
+		});
 		return std::make_pair(true, std::move(resList));
 	}
 );
@@ -76,9 +79,9 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 
 	meta::forAllLayoutTypes([&](auto const& info) {
 		using Info = std::decay_t<decltype(info)>;
-		if (data.layout == Info::type) {
-			auto const& layout   = meta::getLayoutInfos<Info::type>();
-			auto const& defaults = meta::getLayoutDefaults<Info::type>().at(data.modelNumber).defaultLayout;
+		if (data.layout == Info::Type) {
+			auto const& layout   = Info::getInfos();
+			auto const& defaults = Info::getDefaults().at(data.modelNumber).defaultLayout;
 			printEntries(layout, defaults);
 		}
 	});
@@ -89,23 +92,24 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 
 
 void runMeta() {
-	auto const& db = meta::getMotorInfos();
 	if (optMotorName.isSpecified()) {
 		auto name = optMotorName.get();
 		std::transform(begin(name), end(name), begin(name), ::toupper);
-		for (auto const& data : db) {
-			if (data.shortName == name) {
-				printDetailInfoTable(data);
-				return;
-			}
+		auto info = meta::getMotorInfo(name);
+		if (not info) {
+			throw std::runtime_error("motor with name: " + name + " not found");
 		}
-		throw std::runtime_error("motor with name: " + name + " not found");
+		printDetailInfoTable(*info);
 	} else {
 		std::cout << "motors: \n";
-		for (auto const& data : db) {
-			std::cout << data.shortName << ": [";
-			std::cout << join(begin(data.motorNames), end(data.motorNames), ", ") << "]\n";
-		}
+		meta::forAllLayoutTypes([&](auto const& info) {
+			using Info = std::decay_t<decltype(info)>;
+			auto const& defaults = Info::getDefaults();
+			for (auto const& [id, data] : defaults) {
+				std::cout << data.shortName << ": [";
+				std::cout << join(begin(data.motorNames), end(data.motorNames), ", ") << "]\n";
+			}
+		});
 	}
 }
 

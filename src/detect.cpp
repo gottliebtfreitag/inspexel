@@ -91,7 +91,8 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 	}
 	std::cout << "\n";
 
-	auto infos = meta::getLayoutInfos<LT>();
+	using Info = meta::LayoutInfo<LT>;
+	auto const& infos = Info::getInfos();
 	for (auto const& [reg, info] : infos) {
 		std::cout << "0x" << std::hex << std::setfill('0') << std::setw(2) << int(reg) << std::setfill(' ');
 		std::cout << std::dec << " " << int(info.length);
@@ -104,7 +105,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 				if constexpr (is_array_v<std::decay_t<decltype(value)>>) {
 					return;
 				} else {
-					auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber).defaultLayout;
+					auto const& defaults = Info::getDefaults().at(modelNumber).defaultLayout;
 					auto iter = defaults.find(reg);
 
 					std::stringstream ss;
@@ -185,9 +186,9 @@ void runDetect() {
 
 					meta::forAllLayoutTypes([&](auto const& info) {
 						using Info = std::decay_t<decltype(info)>;
-						if (not motors[Info::type].empty()) {
-							using FullLayout = typename meta::FullLayout<Info::type>::Layout;
-							auto [suc, tot] = readDetailedInfos<Info::type, FullLayout>(usb2dyn, motors[Info::type], timeout, print);
+						if (not motors[Info::Type].empty()) {
+							using FullLayout = typename Info::FullLayout;
+							auto [suc, tot] = readDetailedInfos<Info::Type, FullLayout>(usb2dyn, motors[Info::Type], timeout, print);
 							successful += suc;
 							total += tot;
 						}
