@@ -772,7 +772,7 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 
 		meta::forAllLayoutTypes([&](auto const& _info) {
 			using Info = std::decay_t<decltype(_info)>;
-			auto& defaults = getLayoutDefaults<Info::Type>();
+			auto& defaults = Info::getDefaults();
 			for (auto [id, d] : defaults) {
 				MotorInfo info;
 				info.modelNumber = d.modelNumber;
