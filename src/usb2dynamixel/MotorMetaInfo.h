@@ -90,11 +90,32 @@ auto getLayoutInfos() {
 	}
 	throw std::runtime_error("unknown layout");
 }
-auto getLayoutV1Defaults() -> std::map<uint32_t, DefaultLayout<v1::Register>> const&;
-auto getLayoutV2Defaults() -> std::map<uint32_t, DefaultLayout<v2::Register>> const&;
-auto getLayoutProDefaults() -> std::map<uint32_t, DefaultLayout<pro::Register>> const&;
-auto getLayoutXL320Defaults() -> std::map<uint32_t, DefaultLayout<xl320::Register>> const&;
-auto getLayoutAXDefaults() -> std::map<uint32_t, DefaultLayout<ax::Register>> const&;
+
+struct ConverterFunctions {
+	std::function<int(double)>      toMotorPosition;
+	std::function<double(int)>      fromMotorPosition;
+	std::function<int(double)>      toMotorSpeed;
+	std::function<double(int)>      fromMotorSpeed;
+};
+
+template <typename Register>
+struct Info {
+	uint16_t modelNumber;
+	LayoutType layout;
+
+	std::string shortName;
+	std::vector<std::string> motorNames;
+
+	ConverterFunctions converterFunctions;
+
+	DefaultLayout<Register> defaultLayout;
+};
+
+auto getLayoutV1Defaults() -> std::map<uint32_t, Info<v1::Register>> const&;
+auto getLayoutV2Defaults() -> std::map<uint32_t, Info<v2::Register>> const&;
+auto getLayoutProDefaults() -> std::map<uint32_t, Info<pro::Register>> const&;
+auto getLayoutXL320Defaults() -> std::map<uint32_t, Info<xl320::Register>> const&;
+auto getLayoutAXDefaults() -> std::map<uint32_t, Info<ax::Register>> const&;
 
 template <LayoutType type>
 auto const& getLayoutDefaults() {
@@ -121,13 +142,6 @@ template <> struct FullLayout<LayoutType::XL320> { using Layout = xl320::FullLay
 template <> struct FullLayout<LayoutType::AX>    { using Layout = ax::FullLayout; };
 
 
-
-struct ConverterFunctions {
-	std::function<int(double)>      toMotorPosition;
-	std::function<double(int)>      fromMotorPosition;
-	std::function<int(double)>      toMotorSpeed;
-	std::function<double(int)>      fromMotorSpeed;
-};
 
 struct MotorInfo {
 	uint16_t                        modelNumber;

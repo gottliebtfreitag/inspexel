@@ -104,7 +104,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 				if constexpr (is_array_v<std::decay_t<decltype(value)>>) {
 					return;
 				} else {
-					auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber);
+					auto const& defaults = meta::getLayoutDefaults<LT>().at(modelNumber).defaultLayout;
 					auto iter = defaults.find(reg);
 
 					std::stringstream ss;

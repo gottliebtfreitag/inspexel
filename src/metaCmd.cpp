@@ -78,7 +78,7 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 		using Info = std::decay_t<decltype(info)>;
 		if (data.layout == Info::type) {
 			auto const& layout   = meta::getLayoutInfos<Info::type>();
-			auto const& defaults = meta::getLayoutDefaults<Info::type>().at(data.modelNumber);
+			auto const& defaults = meta::getLayoutDefaults<Info::type>().at(data.modelNumber).defaultLayout;
 			printEntries(layout, defaults);
 		}
 	});
