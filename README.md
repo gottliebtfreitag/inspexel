@@ -5,7 +5,7 @@ The swiss army knife for dynamixel servo motors.
 - Automatic Motor discovery
 - All Baudrates
 - Dynamixel Protocol V1 and V2
-- MX-Series, Pro-Series, X-Series (excluded all discontinued motors and XL-320)
+- AX-Series, MX-Series, Pro-Series, X-Series (excluded all discontinued motors)
 - Reading Register with additional information
 - Setting/Getting individual registers
 - Integrating motors into filesystem for command line based access
