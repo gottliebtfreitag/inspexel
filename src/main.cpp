@@ -4,15 +4,19 @@
 
 namespace {
 
-auto printHelp  = sargp::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
-
-}
-
 #define VERSION "1.3.0"
 #define DATE    "16 October 2018"
 
 #define TERM_RED                        "\033[31m"
 #define TERM_RESET                      "\033[0m"
+
+auto printHelp  = sargp::Parameter<std::optional<std::string>>{{}, "help", "print this help add a string which will be used in a grep-like search through the parameters"};
+
+auto cmdVersion = sargp::Command("version", "prints the version", []() {
+	std::cout << "inspexel version " << VERSION << " - " << DATE << "\n";
+});
+
+}
 
 int main(int argc, char** argv)
 {
