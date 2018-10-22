@@ -26,7 +26,7 @@ void runSetAngle() {
 	}
 
 	auto usb2dyn = dynamixel::USB2Dynamixel(g_baudrate, g_device.get(), dynamixel::Protocol(g_protocolVersion.get()));
-	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<dynamixel::v1::Register::MODEL_NUMBER, 2>(dynamixel::MotorID(g_id), std::chrono::microseconds{g_timeout});
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<dynamixel::mx_v1::Register::MODEL_NUMBER, 2>(dynamixel::MotorID(g_id), std::chrono::microseconds{g_timeout});
 	if (timeoutFlag) {
 		std::cout << "the specified motor is not present" << std::endl;
 		exit(-1);
@@ -36,10 +36,10 @@ void runSetAngle() {
 		std::cout << "the specified motor has an unknown register layout" << std::endl;
 		exit(-1);
 	}
-	if (modelPtr->layout == dynamixel::LayoutType::V1) {
-		usb2dyn.write<dynamixel::v1::Register::GOAL_POSITION, 2>(g_id, {int16_t(angle)});
-	} else if (modelPtr->layout == dynamixel::LayoutType::V2) {
-		usb2dyn.write<dynamixel::v2::Register::GOAL_POSITION, 4>(g_id, {int32_t(angle)});
+	if (modelPtr->layout == dynamixel::LayoutType::MX_V1) {
+		usb2dyn.write<dynamixel::mx_v1::Register::GOAL_POSITION, 2>(g_id, {int16_t(angle)});
+	} else if (modelPtr->layout == dynamixel::LayoutType::MX_V2) {
+		usb2dyn.write<dynamixel::mx_v2::Register::GOAL_POSITION, 4>(g_id, {int32_t(angle)});
 	} else if (modelPtr->layout == dynamixel::LayoutType::Pro) {
 		usb2dyn.write<dynamixel::pro::Register::GOAL_POSITION, 4>(g_id, {int32_t(angle)});
 	} else if (modelPtr->layout == dynamixel::LayoutType::XL320) {

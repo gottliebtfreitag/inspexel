@@ -1,6 +1,6 @@
-#include "LayoutV1.h"
+#include "LayoutMX_V1.h"
 
-namespace dynamixel::v1 {
+namespace dynamixel::mx_v1 {
 
 auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 	using A = meta::LayoutField::Access;
@@ -52,7 +52,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 	static auto data = std::map<uint32_t, meta::Info<Register>> {
 		{320, {
 			320,
-			LayoutType::V1,
+			LayoutType::MX_V1,
 			"MX106",
 			{"MX-106T", "MX-106R"},
 			meta::buildConverters(4096, 2048, .114), {

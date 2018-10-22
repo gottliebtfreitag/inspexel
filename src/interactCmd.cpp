@@ -23,7 +23,7 @@ using namespace dynamixel;
 
 auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> int {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<v1::Register::MODEL_NUMBER, 2>(motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<mx_v1::Register::MODEL_NUMBER, 2>(motor, timeout);
 	if (timeoutFlag or motorID == MotorIDInvalid) {
 		throw std::runtime_error("failed checking model number");
 	}
@@ -31,9 +31,9 @@ auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2d
 	auto modelPtr = meta::getMotorInfo(layout.model_number);
 	if (modelPtr) {
 		std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << layout.model_number << ") Layout " << to_string(modelPtr->layout) << "\n";
-		if (modelPtr->layout == LayoutType::V1) {
+		if (modelPtr->layout == LayoutType::MX_V1) {
 			return 1;
-		} else if (modelPtr->layout == LayoutType::V2) {
+		} else if (modelPtr->layout == LayoutType::MX_V2) {
 			return 2;
 		} else if (modelPtr->layout == LayoutType::Pro) {
 			return 3;
@@ -87,30 +87,30 @@ void runInteract() {
 			};
 			try {
 				if (layoutVersion == 1) {
-					auto layout = readMotorInfos<LayoutType::V1, v1::FullLayout>(usb2dyn, g_id, timeout);
+					auto layout = readMotorInfos<LayoutType::MX_V1, mx_v1::FullLayout>(usb2dyn, g_id, timeout);
 					printVals(layout.cw_angle_limit, layout.ccw_angle_limit, layout.present_position);
 					if (detectInput) {
 						auto g = std::lock_guard(mInputMutex);
 						detectInput = false;
 						if (minValue) {
-							usb2dyn.write<v1::Register::CW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
+							usb2dyn.write<mx_v1::Register::CW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
 						} else {
-							usb2dyn.write<v1::Register::CCW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
+							usb2dyn.write<mx_v1::Register::CCW_ANGLE_LIMIT, 2>(g_id, {layout.present_position});
 						}
 						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
 						usleep(100000);
 					}
 				} else if (layoutVersion == 2) {
-					auto layout = readMotorInfos<LayoutType::V2, v2::FullLayout>(usb2dyn, g_id, timeout);
+					auto layout = readMotorInfos<LayoutType::MX_V2, mx_v2::FullLayout>(usb2dyn, g_id, timeout);
 					printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
 
 					if (detectInput) {
 						auto g = std::lock_guard(mInputMutex);
 						detectInput = false;
 						if (minValue) {
-							usb2dyn.write<v2::Register::MIN_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+							usb2dyn.write<mx_v2::Register::MIN_POSITION_LIMIT, 4>(g_id, {layout.present_position});
 						} else {
-							usb2dyn.write<v2::Register::MAX_POSITION_LIMIT, 4>(g_id, {layout.present_position});
+							usb2dyn.write<mx_v2::Register::MAX_POSITION_LIMIT, 4>(g_id, {layout.present_position});
 						}
 						std::cout << TERM_GREEN " writing limits " TERM_RESET "\n";
 						usleep(100000);

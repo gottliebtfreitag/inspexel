@@ -22,7 +22,7 @@ void forLayoutTypes(CB&& cb) {
 
 template <typename CB>
 void forAllLayoutTypes(CB&& cb) {
-	forLayoutTypes<LayoutType::V1, LayoutType::V2, LayoutType::Pro, LayoutType::XL320, LayoutType::AX>(std::forward<CB>(cb));
+	forLayoutTypes<LayoutType::MX_V1, LayoutType::MX_V2, LayoutType::Pro, LayoutType::XL320, LayoutType::AX>(std::forward<CB>(cb));
 };
 
 

@@ -5,7 +5,7 @@
 using namespace dynamixel;
 auto detectMotor(MotorID motor, USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<dynamixel::LayoutType, uint16_t> {
 	// only read model information, when model is known read full motor
-	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<v1::Register::MODEL_NUMBER, 2>(motor, timeout);
+	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<mx_v1::Register::MODEL_NUMBER, 2>(motor, timeout);
 	if (timeoutFlag) {
 		return std::make_tuple(LayoutType::None, 0);
 	}
