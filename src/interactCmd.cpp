@@ -31,18 +31,18 @@ auto checkMotorVersion(dynamixel::MotorID motor, dynamixel::USB2Dynamixel& usb2d
 	auto modelPtr = meta::getMotorInfo(layout.model_number);
 	if (modelPtr) {
 		std::cout << int(motor) << " " <<  modelPtr->shortName << " (" << layout.model_number << ") Layout " << to_string(modelPtr->layout) << "\n";
-		if (modelPtr->layout == meta::LayoutType::V1) {
+		if (modelPtr->layout == LayoutType::V1) {
 			return 1;
-		} else if (modelPtr->layout == meta::LayoutType::V2) {
+		} else if (modelPtr->layout == LayoutType::V2) {
 			return 2;
-		} else if (modelPtr->layout == meta::LayoutType::Pro) {
+		} else if (modelPtr->layout == LayoutType::Pro) {
 			return 3;
 		}
 	}
 	throw std::runtime_error("failed, unknown model (" + std::to_string(layout.model_number) + ")\n");
 }
 
-template <meta::LayoutType LT, typename Layout>
+template <LayoutType LT, typename Layout>
 auto readMotorInfos(dynamixel::USB2Dynamixel& usb2dyn, MotorID motor, std::chrono::microseconds timeout) {
 	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<Layout::BaseRegister, Layout::Length>(motor, timeout);
 
@@ -87,7 +87,7 @@ void runInteract() {
 			};
 			try {
 				if (layoutVersion == 1) {
-					auto layout = readMotorInfos<meta::LayoutType::V1, v1::FullLayout>(usb2dyn, g_id, timeout);
+					auto layout = readMotorInfos<LayoutType::V1, v1::FullLayout>(usb2dyn, g_id, timeout);
 					printVals(layout.cw_angle_limit, layout.ccw_angle_limit, layout.present_position);
 					if (detectInput) {
 						auto g = std::lock_guard(mInputMutex);
@@ -101,7 +101,7 @@ void runInteract() {
 						usleep(100000);
 					}
 				} else if (layoutVersion == 2) {
-					auto layout = readMotorInfos<meta::LayoutType::V2, v2::FullLayout>(usb2dyn, g_id, timeout);
+					auto layout = readMotorInfos<LayoutType::V2, v2::FullLayout>(usb2dyn, g_id, timeout);
 					printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
 
 					if (detectInput) {
@@ -116,7 +116,7 @@ void runInteract() {
 						usleep(100000);
 					}
 				} else if (layoutVersion == 3) { //layout pro
-					auto layout = readMotorInfos<meta::LayoutType::Pro, pro::FullLayout>(usb2dyn, g_id, timeout);
+					auto layout = readMotorInfos<LayoutType::Pro, pro::FullLayout>(usb2dyn, g_id, timeout);
 					printVals(layout.min_position_limit, layout.max_position_limit, layout.present_position);
 
 					if (detectInput) {

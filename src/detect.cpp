@@ -67,7 +67,7 @@ auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector
 	return {successfullTransactions, expectedTransactions};
 }
 
-template <meta::LayoutType LT, typename Layout>
+template <LayoutType LT, typename Layout>
 auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple<MotorID, uint16_t>> const& motors, std::chrono::microseconds timeout, bool _print) -> std::tuple<int, int> {
 	int expectedTransactions = 1 + motors.size();
 	int successfullTransactions = 0;
@@ -91,7 +91,7 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 	}
 	std::cout << "\n";
 
-	using Info = meta::LayoutInfo<LT>;
+	using Info = meta::MotorLayoutInfo<LT>;
 	auto const& infos = Info::getInfos();
 	for (auto const& [reg, info] : infos) {
 		std::cout << "0x" << std::hex << std::setfill('0') << std::setw(2) << int(reg) << std::setfill(' ');
@@ -164,7 +164,7 @@ void runDetect() {
 			}
 
 			// ping all motors
-			std::map<meta::LayoutType, std::vector<std::tuple<MotorID, uint16_t>>> motors;
+			std::map<LayoutType, std::vector<std::tuple<MotorID, uint16_t>>> motors;
 			for (auto motor : range) {
 				auto [layout, modelNumber] = detectMotor(MotorID(motor), usb2dyn, timeout);
 				if (modelNumber != 0) {
@@ -194,8 +194,8 @@ void runDetect() {
 						}
 					});
 
-					if (not motors[meta::LayoutType::None].empty()) {
-						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[meta::LayoutType::None], timeout, print);
+					if (not motors[LayoutType::None].empty()) {
+						auto [suc, tot] = readDetailedInfosFromUnknown(usb2dyn, motors[LayoutType::None], timeout, print);
 						successful += suc;
 						total += tot;
 					}

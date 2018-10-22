@@ -114,7 +114,7 @@ struct PingFile : simplyfuse::SimpleWOFile {
 
 std::atomic<bool> terminateFlag {false};
 
-template <meta::LayoutType LT>
+template <LayoutType LT>
 std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID, int modelNumber, USB2Dynamixel& usb2dyn, simplyfuse::FuseFS& fuseFS) {
 	std::vector<std::unique_ptr<simplyfuse::FuseFile>> files;
 
@@ -123,7 +123,7 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 	fuseFS.rmdir("/" + std::to_string(motorID));
 	fuseFS.registerFile("/" + std::to_string(motorID) + "/motor_model", *motorModelFile);
 
-	using Info = meta::LayoutInfo<LT>;
+	using Info = meta::MotorLayoutInfo<LT>;
 	auto const& infos = Info::getInfos();
 	for (auto const& [reg, info] : infos) {
 		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info, usb2dyn));

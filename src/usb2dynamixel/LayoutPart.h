@@ -1,7 +1,11 @@
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <functional>
+#include <map>
+#include <vector>
 #include <stdexcept>
 
 namespace dynamixel {
@@ -100,6 +104,84 @@ void visit(CB cb, Layout<Register, L> const& o) {
 template <typename CB, auto Register, size_t L>
 void visit(CB cb, Layout<Register, L>& o) {
 	o.visit(cb);
+}
+
+enum class LayoutType { None, V1, V2, Pro, XL320, AX };
+
+inline auto to_string(LayoutType layout) -> std::string {
+	switch(layout) {
+	case LayoutType::V1:    return "V1";
+	case LayoutType::V2:    return "V2";
+	case LayoutType::Pro:   return "Pro";
+	case LayoutType::XL320: return "XL320";
+	case LayoutType::AX:    return "AX";
+	default:
+		throw std::runtime_error("unknown layout");
+	}
+}
+
+
+namespace meta {
+struct LayoutField {
+	uint16_t   length;
+	bool       romArea;
+	enum class Access { R = 0x01, W = 0x02, RW = 0x03 };
+	Access      access;
+	std::string name;
+	std::string description;
+};
+
+inline auto to_string(LayoutField::Access access) -> std::string {
+	switch(access) {
+	case LayoutField::Access::R: return "R";
+	case LayoutField::Access::W: return "W";
+	case LayoutField::Access::RW: return "RW";
+	}
+	throw std::runtime_error("unknown access value");
+}
+
+
+struct ConverterFunctions {
+	std::function<int(double)>      toMotorPosition;
+	std::function<double(int)>      fromMotorPosition;
+	std::function<int(double)>      toMotorSpeed;
+	std::function<double(int)>      fromMotorSpeed;
+};
+
+template <typename Reg>
+using Layout = std::map<Reg, LayoutField>;
+
+
+template <typename Reg>
+using DefaultLayout = std::map<Reg, std::optional<uint32_t>>;
+
+template <typename Register>
+struct Info {
+	uint16_t modelNumber;
+	LayoutType layout;
+
+	std::string shortName;
+	std::vector<std::string> motorNames;
+
+	ConverterFunctions converterFunctions;
+
+	DefaultLayout<Register> defaultLayout;
+};
+
+
+
+inline auto buildConverters(double angularResolution, int centerVal, double speedResolution) -> ConverterFunctions {
+	return ConverterFunctions{
+		[=](double val) { return std::round(val / (2. * M_PI) * angularResolution + centerVal); },
+		[=](int val) { return (static_cast<double>(val) - centerVal) * 2. * M_PI / static_cast<double>(angularResolution); },
+
+		[=](double speed) { return std::round(speed / (2. * M_PI) * 60. / speedResolution); },
+		[=](int speed) { return static_cast<double>(speed) * (2. * M_PI) / 60. * speedResolution; }
+	};
+}
+
+template <LayoutType type> struct MotorLayoutInfo;
+
 }
 
 }

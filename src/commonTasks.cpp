@@ -3,15 +3,15 @@
 
 
 using namespace dynamixel;
-auto detectMotor(MotorID motor, USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<dynamixel::meta::LayoutType, uint16_t> {
+auto detectMotor(MotorID motor, USB2Dynamixel& usb2dyn, std::chrono::microseconds timeout) -> std::tuple<dynamixel::LayoutType, uint16_t> {
 	// only read model information, when model is known read full motor
 	auto [timeoutFlag, motorID, errorCode, layout] = usb2dyn.read<v1::Register::MODEL_NUMBER, 2>(motor, timeout);
 	if (timeoutFlag) {
-		return std::make_tuple(meta::LayoutType::None, 0);
+		return std::make_tuple(LayoutType::None, 0);
 	}
 	if (motorID == MotorIDInvalid) {
 		std::cout << "something answered when pinging " << int(motor) << " but answer was not valid\n";
-		return std::make_tuple(meta::LayoutType::None, 0);
+		return std::make_tuple(LayoutType::None, 0);
 	}
 	auto modelPtr = meta::getMotorInfo(layout.model_number);
 	if (modelPtr) {
@@ -20,5 +20,5 @@ auto detectMotor(MotorID motor, USB2Dynamixel& usb2dyn, std::chrono::microsecond
 	}
 
 	std::cout << int(motor) << " unknown model (" << layout.model_number << ")\n";
-	return std::make_tuple(meta::LayoutType::None, layout.model_number);
+	return std::make_tuple(LayoutType::None, layout.model_number);
 }

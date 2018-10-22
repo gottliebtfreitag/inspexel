@@ -85,7 +85,7 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 			printEntries(layout, defaults);
 		}
 	});
-	if (data.layout == meta::LayoutType::None) {
+	if (data.layout == LayoutType::None) {
 		throw std::runtime_error("unknown layout type");
 	}
 }

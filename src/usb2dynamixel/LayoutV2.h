@@ -2,8 +2,7 @@
 
 #include "LayoutPart.h"
 
-namespace dynamixel {
-namespace v2 {
+namespace dynamixel::v2 {
 
 enum class Register : int {
 	MODEL_NUMBER           = 0x00,
@@ -70,11 +69,24 @@ constexpr Register operator+(Register t1, size_t t2) {
 	return Register(size_t(t1) + t2);
 }
 
-using FullLayout = Layout<Register::MODEL_NUMBER, 147>;
+struct MotorLayoutInfo {
+	static constexpr LayoutType Type{LayoutType::V2};
+	using FullLayout = Layout<Register::MODEL_NUMBER, 147>;
+
+	static auto getInfos()    -> meta::Layout<Register> const&;
+	static auto getDefaults() -> std::map<uint32_t, meta::Info<Register>> const&;
+};
+
+using FullLayout = MotorLayoutInfo::FullLayout;
 
 using IndirectAddresses = std::array<uint16_t, 28>;
 using IndirectData      = std::array<uint8_t, 28>;
+
 }
+
+namespace dynamixel {
+
+template <> struct meta::MotorLayoutInfo<LayoutType::V2> : v2::MotorLayoutInfo {};
 
 #pragma pack(push, 1)
 DynamixelLayoutPart(v2::Register::MODEL_NUMBER           , uint16_t, model_number           );
