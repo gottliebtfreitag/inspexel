@@ -66,82 +66,88 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 }
 
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
-	static auto data = std::map<uint32_t, meta::Info<Register>> {
-		{1020, {
-			1020,
-			LayoutType::MX_V2,
-			"XM430-W350",
-			{"XM430-W350-T", "XM430-W350-R"},
-			meta::buildConverters(4096, 2048, .229), {
-				{Register::MODEL_NUMBER           , { 1020, {}}},
-				{Register::MODEL_INFORMATION      , {   {}, {}}},
-				{Register::VERSION_FIRMWARE       , {   {}, {}}},
-				{Register::ID                     , {    1, {}}},
-				{Register::BAUD_RATE              , {    1, {}}},
-				{Register::RETURN_DELAY_TIME      , {  250, {}}},
-				{Register::DRIVE_MODE             , {    0, {}}},
-				{Register::OPERATING_MODE         , {    3, {}}},
-				{Register::SECONDARY_ID           , {  255, {}}},
-				{Register::PROTOCOL_VERSION       , {    2, {}}},
-				{Register::HOMING_OFFSET          , {    0, {}}},
-				{Register::MOVING_THRESHOLD       , {   10, {}}},
-				{Register::TEMPERATURE_LIMIT      , {   80, {}}},
-				{Register::MAX_VOLTAGE_LIMIT      , {  160, {}}},
-				{Register::MIN_VOLTAGE_LIMIT      , {   95, {}}},
-				{Register::PWM_LIMIT              , {  885, {}}},
-				{Register::CURRENT_LIMIT          , { 1193, {}}},
-				{Register::ACCELERATION_LIMIT     , {32767, {}}},
-				{Register::VELOCITY_LIMIT         , {  200, {}}},
-				{Register::MAX_POSITION_LIMIT     , { 4095, {}}},
-				{Register::MIN_POSITION_LIMIT     , {    0, {}}},
-				{Register::SHUTDOWN               , {   52, {}}},
-				{Register::TORQUE_ENABLE          , {    0, {}}},
-				{Register::LED                    , {    0, {}}},
-				{Register::STATUS_RETURN_LEVEL    , {    2, {}}},
-				{Register::REGISTERED_INSTRUCTION , {    0, {}}},
-				{Register::HARDWARE_ERROR_STATUS  , {    0, {}}},
-				{Register::VELOCITY_I_GAIN        , { 1920, {}}},
-				{Register::VELOCITY_P_GAIN        , {  100, {}}},
-				{Register::POSITION_D_GAIN        , {    0, {}}},
-				{Register::POSITION_I_GAIN        , {    0, {}}},
-				{Register::POSITION_P_GAIN        , {  800, {}}},
-				{Register::FEEDFORWARD_2ND_GAIN   , {    0, {}}},
-				{Register::FEEDFORWARD_1ST_GAIN   , {    0, {}}},
-				{Register::BUS_WATCHDOG           , {    0, {}}},
-				{Register::GOAL_PWM               , {   {}, {}}},
-				{Register::GOAL_CURRENT           , {   {}, {}}},
-				{Register::GOAL_VELOCITY          , {   {}, {}}},
-				{Register::PROFILE_ACCELERATION   , {    0, {}}},
-				{Register::PROFILE_VELOCITY       , {    0, {}}},
-				{Register::GOAL_POSITION          , {   {}, {}}},
-				{Register::REALTIME_TICK          , {   {}, {}}},
-				{Register::MOVING                 , {    0, {}}},
-				{Register::MOVING_STATUS          , {    0, {}}},
-				{Register::PRESENT_PWM            , {   {}, {}}},
-				{Register::PRESENT_CURRENT        , {   {}, {}}},
-				{Register::PRESENT_VELOCITY       , {   {}, {}}},
-				{Register::PRESENT_POSITION       , {   {}, {}}},
-				{Register::VELOCITY_TRAJECTORY    , {   {}, {}}},
-				{Register::POSITION_TRAJECTORY    , {   {}, {}}},
-				{Register::PRESENT_INPUT_VOLTAGE  , {   {}, {}}},
-				{Register::PRESENT_TEMPERATURE    , {   {}, {}}},
-			}
-		}}
-	};
+	static auto data = []() {
+		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/4095, 2048);
+		auto convertSpeed       = meta::buildConverter("r/s", (235.18/60*2.*M_PI)/1023.);
+		auto convertTemperature = meta::buildConverter("C", 1.);
+		auto convertVoltage     = meta::buildConverter("V", 16./160);
+		auto convertPID_P       = meta::buildConverter("", 1./128.);
+		auto convertPID_I       = meta::buildConverter("", 1./65'536.);
+		auto convertPID_D       = meta::buildConverter("", 1/16.);
+		auto convertCurrent     = meta::buildConverter("A", 3.36/1000., 0.);
 
-	auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
-		auto& m = data[number];
-		m = data.at(1020);
-		m.modelNumber = number;
-		m.shortName = std::move(shortName);
-		m.motorNames = std::move(names);
-		std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
-		return m;
-	};
+		auto data = std::map<uint32_t, meta::Info<Register>> {
+			{1020, {
+				1020,
+				LayoutType::MX_V2,
+				"XM430-W350",
+				{"XM430-W350-T", "XM430-W350-R"},
+				meta::buildConverters(4096, 2048, .229), {
+					{Register::MODEL_NUMBER           , { 1020, {}}},
+					{Register::MODEL_INFORMATION      , {   {}, {}}},
+					{Register::VERSION_FIRMWARE       , {   {}, {}}},
+					{Register::ID                     , {    1, {}}},
+					{Register::BAUD_RATE              , {    1, {}}},
+					{Register::RETURN_DELAY_TIME      , {  250, {}}},
+					{Register::DRIVE_MODE             , {    0, {}}},
+					{Register::OPERATING_MODE         , {    3, {}}},
+					{Register::SECONDARY_ID           , {  255, {}}},
+					{Register::PROTOCOL_VERSION       , {    2, {}}},
+					{Register::HOMING_OFFSET          , {    0, {}}},
+					{Register::MOVING_THRESHOLD       , {   10, {}}},
+					{Register::TEMPERATURE_LIMIT      , {   80, convertTemperature}},
+					{Register::MAX_VOLTAGE_LIMIT      , {  160, convertVoltage}},
+					{Register::MIN_VOLTAGE_LIMIT      , {   95, convertVoltage}},
+					{Register::PWM_LIMIT              , {  885, {}}},
+					{Register::CURRENT_LIMIT          , { 1193, convertCurrent}},
+					{Register::ACCELERATION_LIMIT     , {32767, {}}},
+					{Register::VELOCITY_LIMIT         , {  200, convertSpeed}},
+					{Register::MAX_POSITION_LIMIT     , { 4095, convertPosition}},
+					{Register::MIN_POSITION_LIMIT     , {    0, convertPosition}},
+					{Register::SHUTDOWN               , {   52, {}}},
+					{Register::TORQUE_ENABLE          , {    0, {}}},
+					{Register::LED                    , {    0, {}}},
+					{Register::STATUS_RETURN_LEVEL    , {    2, {}}},
+					{Register::REGISTERED_INSTRUCTION , {    0, {}}},
+					{Register::HARDWARE_ERROR_STATUS  , {    0, {}}},
+					{Register::VELOCITY_I_GAIN        , { 1920, {}}},
+					{Register::VELOCITY_P_GAIN        , {  100, {}}},
+					{Register::POSITION_D_GAIN        , {    0, convertPID_D}},
+					{Register::POSITION_I_GAIN        , {    0, convertPID_I}},
+					{Register::POSITION_P_GAIN        , {  800, convertPID_P}},
+					{Register::FEEDFORWARD_2ND_GAIN   , {    0, {}}},
+					{Register::FEEDFORWARD_1ST_GAIN   , {    0, {}}},
+					{Register::BUS_WATCHDOG           , {    0, {}}},
+					{Register::GOAL_PWM               , {   {}, {}}},
+					{Register::GOAL_CURRENT           , {   {}, convertCurrent}},
+					{Register::GOAL_VELOCITY          , {   {}, convertSpeed}},
+					{Register::PROFILE_ACCELERATION   , {    0, {}}},
+					{Register::PROFILE_VELOCITY       , {    0, convertSpeed}},
+					{Register::GOAL_POSITION          , {   {}, convertPosition}},
+					{Register::REALTIME_TICK          , {   {}, {}}},
+					{Register::MOVING                 , {    0, {}}},
+					{Register::MOVING_STATUS          , {    0, {}}},
+					{Register::PRESENT_PWM            , {   {}, {}}},
+					{Register::PRESENT_CURRENT        , {   {}, convertCurrent}},
+					{Register::PRESENT_VELOCITY       , {   {}, convertSpeed}},
+					{Register::PRESENT_POSITION       , {   {}, convertPosition}},
+					{Register::VELOCITY_TRAJECTORY    , {   {}, convertSpeed}},
+					{Register::POSITION_TRAJECTORY    , {   {}, convertPosition}},
+					{Register::PRESENT_INPUT_VOLTAGE  , {   {}, convertVoltage}},
+					{Register::PRESENT_TEMPERATURE    , {   {}, convertTemperature}},
+				}
+			}}
+		};
 
-	static bool firstRun{true};
-	if (firstRun) {
-		firstRun = false;
+		auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
+			auto& m = data[number];
+			m = data.at(1020);
+			m.modelNumber = number;
+			m.shortName = std::move(shortName);
+			m.motorNames = std::move(names);
+			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
+			return m;
+		};
 
 		{
 			auto& m = newMotor(321, "MX106-V2", {"MX-106T-V2", "MX-106R-V2"});
@@ -236,7 +242,8 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 			std::get<0>(m.defaultLayout[Register::EXTERNAL_PORT_MODE_2]) = 1;
 			std::get<0>(m.defaultLayout[Register::EXTERNAL_PORT_MODE_3]) = 1;
 		}
-	}
+		return data;
+	}();
 	return data;
 };
 
