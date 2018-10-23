@@ -148,12 +148,18 @@ struct ConverterFunctions {
 	std::function<double(int)>      fromMotorSpeed;
 };
 
+struct Convert {
+	std::string unit;
+	std::function<int(double)> toMotor;
+	std::function<double(int)> fromMotor;
+};
+
 template <typename Reg>
 using Layout = std::map<Reg, LayoutField>;
 
 
 template <typename Reg>
-using DefaultLayout = std::map<Reg, std::optional<uint32_t>>;
+using DefaultLayout = std::map<Reg, std::tuple<std::optional<int32_t>, Convert>>;
 
 template <typename Register>
 struct Info {
@@ -179,6 +185,15 @@ inline auto buildConverters(double angularResolution, int centerVal, double spee
 		[=](int speed) { return static_cast<double>(speed) * (2. * M_PI) / 60. * speedResolution; }
 	};
 }
+
+inline auto buildConverter(std::string unit, double resolution, int centerVal=0) -> Convert {
+	return Convert{
+		unit,
+		[=](double val) { return std::round(val / resolution + centerVal); },
+		[=](int val)    { return (val - centerVal) * resolution; },
+	};
+}
+
 
 template <LayoutType type> struct MotorLayoutInfo;
 

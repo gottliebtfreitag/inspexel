@@ -47,8 +47,8 @@ auto join(Iter iter, Iter end, Delim const& delim) -> std::decay_t<decltype(*ite
 }
 
 void printDetailInfoTable(meta::MotorInfo const& data) {
-	std::cout << " addr | l | Ac | mem |  init  |                          name | description \n";
-	std::cout << "------+---+----+-----+--------+-------------------------------+-------------------------------\n";
+	std::cout << " addr | l | Ac | mem |   init |        unit |                          name | description \n";
+	std::cout << "------+---+----+-----+--------+-------------+-------------------------------+-------------------------------\n";
 
 	auto printEntries = [](auto const& layout, auto const& defaults) {
 		for (auto [id, info] : layout) {
@@ -63,11 +63,21 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 			std::cout << to_string(info.access) << " |";
 			std::cout << (info.romArea?" ROM":" RAM") << " |";
 
-			if (iter->second) {
+			auto const& [optDefault, convert] = iter->second;
+			if (optDefault) {
 				std::cout.width(7);
-				std::cout << int(iter->second.value()) << " |";
+				std::cout << int(optDefault.value()) << " |";
 			} else {
 				std::cout << "      - |";
+			}
+			if (convert.toMotor and convert.fromMotor and optDefault) {
+				std::cout.width(9);
+				std::cout << convert.fromMotor(optDefault.value());
+				std::cout.width(3);
+				std::cout << convert.unit;
+				std::cout << " |";
+			} else {
+				std::cout << "           - |";
 			}
 			std::cout.width(30);
 			std::cout << info.name << " |";

@@ -114,14 +114,15 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 						ss << std::boolalpha;
 						ss << "-na-";
 					} else {
-						if (iter->second) {
+						auto const& [optDefault, convert] = iter->second;
+						if (optDefault) {
 							extra = 9;
-							if (int(value) != int(iter->second.value())) {
+							if (int(value) != int(optDefault.value())) {
 								ss << " " TERM_RED << int(value) << TERM_RESET "(";
 							} else {
 								ss << " " << TERM_GREEN << int(value) << TERM_RESET "(";
 							}
-							ss << int(iter->second.value());
+							ss << int(optDefault.value());
 						} else {
 							ss << " " << int(value) << "(";
 							ss << "-";

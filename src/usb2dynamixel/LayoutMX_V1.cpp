@@ -40,7 +40,7 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 		{Register::LOCK                ,{1, false, A::RW, "Lock", "Locking EEPROM"}},
 		{Register::PUNCH               ,{2, false, A::RW, "Punch", "Punch"}},
 		{Register::REALTIME_TICK       ,{2, false, A:: R, "Realtime Tick", "Realtime Tick"}},
-		{Register::CURRENT             ,{2, false, A::RW, "Current", "Consuming Current"}},
+		{Register::CURRENT             ,{2, false, A:: R, "Current", "Consuming Current"}},
 		{Register::TORQUE_CONTROL_MODE ,{1, false, A::RW, "Torque Control Mode Enable", "Torque control mode on/off"}},
 		{Register::GOAL_TORQUE         ,{2, false, A::RW, "Goal Torque", "goal torque value"}},
 		{Register::GOAL_ACCELERATION   ,{1, false, A::RW, "Goal Acceleration", "Goal Acceleration"}},
@@ -49,67 +49,76 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 }
 
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
-	static auto data = std::map<uint32_t, meta::Info<Register>> {
-		{320, {
-			320,
-			LayoutType::MX_V1,
-			"MX106",
-			{"MX-106T", "MX-106R"},
-			meta::buildConverters(4096, 2048, .114), {
-				{Register::MODEL_NUMBER        ,    320},
-				{Register::VERSION_FIRMWARE    ,     {}},
-				{Register::ID                  ,      1},
-				{Register::BAUD_RATE           ,     34},
-				{Register::RETURN_DELAY_TIME   ,    250},
-				{Register::CW_ANGLE_LIMIT      ,      0},
-				{Register::CCW_ANGLE_LIMIT     , 0x0fff},
-				{Register::DRIVE_MODE          ,      0},
-				{Register::TEMPERATURE_LIMIT   ,     80},
-				{Register::VOLTAGE_LIMIT_LOW   ,     60},
-				{Register::VOLTAGE_LIMIT_HIGH  ,    160},
-				{Register::MAX_TORQUE          , 0x03ff},
-				{Register::STATUS_RETURN_LEVEL ,      2},
-				{Register::ALARM_LED           ,     36},
-				{Register::ALARM_SHUTDOWN      ,     36},
-				{Register::MULTI_TURN_OFFSET   ,      0},
-				{Register::RESOLUTION_DIVIDER  ,      1},
-				{Register::TORQUE_ENABLE       ,      0},
-				{Register::LED                 ,      0},
-				{Register::D_GAIN              ,      0},
-				{Register::I_GAIN              ,      0},
-				{Register::P_GAIN              ,     32},
-				{Register::GOAL_POSITION       ,     {}},
-				{Register::MOVING_SPEED        ,     {}},
-				{Register::TORQUE_LIMIT        ,     {}},
-				{Register::PRESENT_POSITION    ,     {}},
-				{Register::PRESENT_SPEED       ,     {}},
-				{Register::PRESENT_LOAD        ,     {}},
-				{Register::PRESENT_VOLTAGE     ,     {}},
-				{Register::PRESENT_TEMPERATURE ,     {}},
-				{Register::REGISTERED          ,      0},
-				{Register::MOVING              ,      0},
-				{Register::LOCK                ,      0},
-				{Register::PUNCH               ,      0},
-				{Register::REALTIME_TICK       ,      0},
-				{Register::CURRENT             ,      0},
-				{Register::TORQUE_CONTROL_MODE ,      0},
-				{Register::GOAL_TORQUE         ,      0},
-				{Register::GOAL_ACCELERATION   ,      0},
-			}
-		}}
-	};
-	auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
-		auto& m = data[number];
-		m = data.at(320);
-		m.modelNumber = number;
-		m.shortName = std::move(shortName);
-		m.motorNames = std::move(names);
-		m.defaultLayout[Register::MODEL_NUMBER] = number;
-		return m;
-	};
-	static bool firstRun{true};
-	if (firstRun) {
-		firstRun = false;
+	static auto data = []() {
+		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/4095, 2048);
+		auto convertSpeed       = meta::buildConverter("r/s", (116.62/60*2.*M_PI)/1023.);
+		auto convertTemperature = meta::buildConverter("C", 1.);
+		auto convertVoltage     = meta::buildConverter("V", 16./160);
+		auto convertPID_P       = meta::buildConverter("", 1./8.);
+		auto convertPID_I       = meta::buildConverter("", 1000./2048.);
+		auto convertPID_D       = meta::buildConverter("", 4/1000.);
+		auto convertCurrent     = meta::buildConverter("A", 4.5/1000., 2048);
+		auto convertTorque      = meta::buildConverter("%", 100./1023., 0);
+
+		auto data = std::map<uint32_t, meta::Info<Register>> {
+			{320, {
+				320,
+				LayoutType::MX_V1,
+				"MX106",
+				{"MX-106T", "MX-106R"},
+				meta::buildConverters(4096, 2048, .114), {
+					{Register::MODEL_NUMBER        , {   320, {}}},
+					{Register::VERSION_FIRMWARE    , {    {}, {}}},
+					{Register::ID                  , {     1, {}}},
+					{Register::BAUD_RATE           , {    34, {}}},
+					{Register::RETURN_DELAY_TIME   , {   250, {}}},
+					{Register::CW_ANGLE_LIMIT      , {     0, convertPosition}},
+					{Register::CCW_ANGLE_LIMIT     , {0x0fff, convertPosition}},
+					{Register::DRIVE_MODE          , {     0, {}}},
+					{Register::TEMPERATURE_LIMIT   , {    80, convertTemperature}},
+					{Register::VOLTAGE_LIMIT_LOW   , {    60, convertVoltage}},
+					{Register::VOLTAGE_LIMIT_HIGH  , {   160, convertVoltage}},
+					{Register::MAX_TORQUE          , {0x03ff, convertTorque}},
+					{Register::STATUS_RETURN_LEVEL , {     2, {}}},
+					{Register::ALARM_LED           , {    36, {}}},
+					{Register::ALARM_SHUTDOWN      , {    36, {}}},
+					{Register::MULTI_TURN_OFFSET   , {     0, {}}},
+					{Register::RESOLUTION_DIVIDER  , {     1, {}}},
+					{Register::TORQUE_ENABLE       , {     0, {}}},
+					{Register::LED                 , {     0, {}}},
+					{Register::D_GAIN              , {     0, convertPID_D}},
+					{Register::I_GAIN              , {     0, convertPID_I}},
+					{Register::P_GAIN              , {    32, convertPID_P}},
+					{Register::GOAL_POSITION       , {    {}, convertPosition}},
+					{Register::MOVING_SPEED        , {    {}, convertSpeed}},
+					{Register::TORQUE_LIMIT        , {    {}, convertTorque}},
+					{Register::PRESENT_POSITION    , {    {}, convertPosition}},
+					{Register::PRESENT_SPEED       , {    {}, convertSpeed}},
+					{Register::PRESENT_LOAD        , {    {}, {}}},
+					{Register::PRESENT_VOLTAGE     , {    {}, convertVoltage}},
+					{Register::PRESENT_TEMPERATURE , {    {}, convertTemperature}},
+					{Register::REGISTERED          , {     0, {}}},
+					{Register::MOVING              , {     0, {}}},
+					{Register::LOCK                , {     0, {}}},
+					{Register::PUNCH               , {     0, {}}},
+					{Register::REALTIME_TICK       , {     0, {}}},
+					{Register::CURRENT             , {  2048, convertCurrent}},
+					{Register::TORQUE_CONTROL_MODE , {     0, {}}},
+					{Register::GOAL_TORQUE         , {     0, convertTorque}},
+					{Register::GOAL_ACCELERATION   , {     0, {}}},
+				}
+			}}
+		};
+		auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
+			auto& m = data[number];
+			m = data.at(320);
+			m.modelNumber = number;
+			m.shortName = std::move(shortName);
+			m.motorNames = std::move(names);
+			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
+			return m;
+		};
+
 		{
 			auto& m = newMotor(310, "MX64", {"MX-64T", "MX-64R", "MX-64AT", "MX-64AR"});
 			m.defaultLayout.erase(Register::DRIVE_MODE);
@@ -123,18 +132,21 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 		}
 		{
 			auto& m = newMotor(360, "MX12", {"MX-12W"});
-			m.converterFunctions = meta::buildConverters(4096, 2048, 0.916);
-			m.defaultLayout[Register::MODEL_NUMBER] = 360;
-			m.defaultLayout[Register::BAUD_RATE]    = 1;
-			m.defaultLayout[Register::D_GAIN]       = 8;
-			m.defaultLayout[Register::P_GAIN]       = 8;
-			m.defaultLayout[Register::PUNCH]        = 32;
+			std::get<1>(m.defaultLayout[Register::MOVING_SPEED])  = meta::buildConverter("r/s", (937.1/60*2.*M_PI)/1023.);
+			std::get<1>(m.defaultLayout[Register::PRESENT_SPEED]) = meta::buildConverter("r/s", (937.1/60*2.*M_PI)/1023.);
+
+			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = 360;
+			std::get<0>(m.defaultLayout[Register::BAUD_RATE])    = 1;
+			std::get<0>(m.defaultLayout[Register::D_GAIN])       = 8;
+			std::get<0>(m.defaultLayout[Register::P_GAIN])       = 8;
+			std::get<0>(m.defaultLayout[Register::PUNCH])        = 32;
 			m.defaultLayout.erase(Register::DRIVE_MODE);
 			m.defaultLayout.erase(Register::CURRENT);
 			m.defaultLayout.erase(Register::TORQUE_CONTROL_MODE);
 			m.defaultLayout.erase(Register::GOAL_TORQUE);
 		}
-	}
+		return data;
+	}();
 	return data;
 };
 
