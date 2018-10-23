@@ -41,47 +41,59 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 }
 
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
-	static auto data = std::map<uint32_t, meta::Info<Register>> {
-		{350, {
-			350,
-			LayoutType::XL320,
-			"XL-320",
-			{"XL-320"},
-			meta::buildConverters(1024*360/300, 512, .111), {
-				{Register::MODEL_NUMBER         , {   350, {}}},
-				{Register::FIRMWARE_VERSION     , {    {}, {}}},
-				{Register::ID                   , {     1, {}}},
-				{Register::BAUD_RATE            , {     3, {}}},
-				{Register::RETURN_DELAY_TIME    , {   250, {}}},
-				{Register::CW_ANGLE_LIMIT       , {     0, {}}},
-				{Register::CCW_ANGLE_LIMIT      , {0x03ff, {}}},
-				{Register::CONTROL_MODE         , {     2, {}}},
-				{Register::TEMPERATURE_LIMIT    , {    65, {}}},
-				{Register::MIN_VOLTAGE_LIMIT    , {    60, {}}},
-				{Register::MIN_VOLTAGE_LIMIT    , {    90, {}}},
-				{Register::MAX_TORQUE           , {0x03ff, {}}},
-				{Register::STATUS_RETURN_LEVEL  , {     2, {}}},
-				{Register::SHUTDOWN             , {     3, {}}},
-				{Register::TORQUE_ENABLE        , {     0, {}}},
-				{Register::LED                  , {     0, {}}},
-				{Register::D_GAIN               , {     0, {}}},
-				{Register::I_GAIN               , {     0, {}}},
-				{Register::P_GAIN               , {    32, {}}},
-				{Register::GOAL_POSITION        , {    {}, {}}},
-				{Register::MOVING_SPEED         , {    {}, {}}},
-				{Register::TORQUE_LIMIT         , {    {}, {}}},
-				{Register::PRESENT_POSITION     , {    {}, {}}},
-				{Register::PRESENT_SPEED        , {    {}, {}}},
-				{Register::PRESENT_LOAD         , {    {}, {}}},
-				{Register::PRESENT_VOLTAGE      , {    {}, {}}},
-				{Register::PRESENT_TEMPERATURE  , {    {}, {}}},
-				{Register::REGISTERED           , {     0, {}}},
-				{Register::MOVING               , {     0, {}}},
-				{Register::HARDWARE_ERROR_STATUS, {     0, {}}},
-				{Register::PUNCH                , {    32, {}}},
-			}
-		}}
-	};
+	static auto data = []() {
+		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/1023.*300./360., 512);
+		auto convertSpeed       = meta::buildConverter("r/s", 0.111/60*2.*M_PI);
+		auto convertTemperature = meta::buildConverter("C", 1.);
+		auto convertVoltage     = meta::buildConverter("V", 16./160);
+		auto convertPID_P       = meta::buildConverter("", 1./8.);
+		auto convertPID_I       = meta::buildConverter("", 1000./2048.);
+		auto convertPID_D       = meta::buildConverter("", 4/1000.);
+		auto convertTorque      = meta::buildConverter("%", 100./1023., 0);
+
+		auto data = std::map<uint32_t, meta::Info<Register>> {
+			{350, {
+				350,
+				LayoutType::XL320,
+				"XL-320",
+				{"XL-320"},
+				meta::buildConverters(1024*360/300, 512, .111), {
+					{Register::MODEL_NUMBER         , {   350, {}}},
+					{Register::FIRMWARE_VERSION     , {    {}, {}}},
+					{Register::ID                   , {     1, {}}},
+					{Register::BAUD_RATE            , {     3, {}}},
+					{Register::RETURN_DELAY_TIME    , {   250, {}}},
+					{Register::CW_ANGLE_LIMIT       , {     0, convertPosition}},
+					{Register::CCW_ANGLE_LIMIT      , {0x03ff, convertPosition}},
+					{Register::CONTROL_MODE         , {     2, {}}},
+					{Register::TEMPERATURE_LIMIT    , {    65, convertTemperature}},
+					{Register::MIN_VOLTAGE_LIMIT    , {    60, convertVoltage}},
+					{Register::MAX_VOLTAGE_LIMIT    , {    90, convertVoltage}},
+					{Register::MAX_TORQUE           , {0x03ff, convertTorque}},
+					{Register::STATUS_RETURN_LEVEL  , {     2, {}}},
+					{Register::SHUTDOWN             , {     3, {}}},
+					{Register::TORQUE_ENABLE        , {     0, {}}},
+					{Register::LED                  , {     0, {}}},
+					{Register::D_GAIN               , {     0, convertPID_D}},
+					{Register::I_GAIN               , {     0, convertPID_I}},
+					{Register::P_GAIN               , {    32, convertPID_P}},
+					{Register::GOAL_POSITION        , {    {}, convertPosition}},
+					{Register::MOVING_SPEED         , {    {}, convertSpeed}},
+					{Register::TORQUE_LIMIT         , {    {}, convertTorque}},
+					{Register::PRESENT_POSITION     , {    {}, convertPosition}},
+					{Register::PRESENT_SPEED        , {    {}, convertSpeed}},
+					{Register::PRESENT_LOAD         , {    {}, {}}},
+					{Register::PRESENT_VOLTAGE      , {    {}, convertVoltage}},
+					{Register::PRESENT_TEMPERATURE  , {    {}, convertTemperature}},
+					{Register::REGISTERED           , {     0, {}}},
+					{Register::MOVING               , {     0, {}}},
+					{Register::HARDWARE_ERROR_STATUS, {     0, {}}},
+					{Register::PUNCH                , {    32, {}}},
+				}
+			}}
+		};
+		return data;
+	}();
 	return data;
 };
 
