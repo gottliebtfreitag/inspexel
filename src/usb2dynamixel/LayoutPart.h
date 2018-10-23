@@ -167,7 +167,7 @@ struct Info {
 inline auto buildConverter(std::string unit, double resolution, int centerVal=0) -> Convert {
 	return Convert{
 		unit,
-		[=](double val) { return std::round(val / resolution + centerVal); },
+		[=](double val) { return std::max(1., std::round(val / resolution + centerVal)); },
 		[=](int val)    { return (val - centerVal) * resolution; },
 	};
 }

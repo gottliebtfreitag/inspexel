@@ -51,7 +51,18 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
 	static auto data = []() {
 		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/4095, 2048);
-		auto convertSpeed       = meta::buildConverter("r/s", (116.62/60*2.*M_PI)/1023.);
+		auto convertSpeed       = [](std::string unit, double resolution) {
+									return meta::Convert {
+										unit,
+										[=](double val) { return std::max(1., std::round(val / resolution)); },
+										[=](int val)    {
+											if (val & (1<<10)) {
+												val = - (val & ((1<<10)-1));
+											}
+											return val * resolution;
+										},
+									};
+								}("r/s", (116.62/60*2.*M_PI)/1023.);
 		auto convertTemperature = meta::buildConverter("C", 1.);
 		auto convertVoltage     = meta::buildConverter("V", 16./160);
 		auto convertPID_P       = meta::buildConverter("", 1./8.);
@@ -131,8 +142,21 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 		}
 		{
 			auto& m = newMotor(360, "MX12", {"MX-12W"});
-			std::get<1>(m.defaultLayout[Register::MOVING_SPEED])  = meta::buildConverter("r/s", (937.1/60*2.*M_PI)/1023.);
-			std::get<1>(m.defaultLayout[Register::PRESENT_SPEED]) = meta::buildConverter("r/s", (937.1/60*2.*M_PI)/1023.);
+			auto convertSpeed       = [](std::string unit, double resolution) {
+											return meta::Convert {
+												unit,
+												[=](double val) { return std::max(1., std::round(val / resolution)); },
+												[=](int val)    {
+													if (val & (1<<10)) {
+														val = - (val & ((1<<10)-1));
+													}
+													return val * resolution;
+												},
+											};
+										}("r/s", (937.1/60*2.*M_PI)/1023.);
+
+			std::get<1>(m.defaultLayout[Register::MOVING_SPEED])  = convertSpeed;
+			std::get<1>(m.defaultLayout[Register::PRESENT_SPEED]) = convertSpeed;
 
 			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = 360;
 			std::get<0>(m.defaultLayout[Register::BAUD_RATE])    = 1;
