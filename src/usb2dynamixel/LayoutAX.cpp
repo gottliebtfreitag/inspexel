@@ -43,62 +43,66 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 
 
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
-	static auto data = std::map<uint32_t, meta::Info<Register>> {
-		{300, {
-			300,
-			LayoutType::AX,
-			"AX-12W",
-			{"AX-12W"},
-			meta::buildConverters(1024*360/300, 512, .111), {
-				{Register::MODEL_NUMBER         , {   300, {}}},
-				{Register::FIRMWARE_VERSION     , {    {}, {}}},
-				{Register::ID                   , {     1, {}}},
-				{Register::BAUD_RATE            , {     1, {}}},
-				{Register::RETURN_DELAY_TIME    , {   250, {}}},
-				{Register::CW_ANGLE_LIMIT       , {     0, {}}},
-				{Register::CCW_ANGLE_LIMIT      , {0x03ff, {}}},
-				{Register::TEMPERATURE_LIMIT    , {    70, {}}},
-				{Register::MIN_VOLTAGE_LIMIT    , {    60, {}}},
-				{Register::MIN_VOLTAGE_LIMIT    , {   140, {}}},
-				{Register::MAX_TORQUE           , {0x03ff, {}}},
-				{Register::STATUS_RETURN_LEVEL  , {     2, {}}},
-				{Register::ALARM_LED            , {    36, {}}},
-				{Register::SHUTDOWN             , {    36, {}}},
-				{Register::TORQUE_ENABLE        , {     0, {}}},
-				{Register::LED                  , {     0, {}}},
-				{Register::CW_COMPLIANCE_MARGIN , {     4, {}}},
-				{Register::CCW_COMPLIANCE_MARGIN, {     4, {}}},
-				{Register::CW_COMPLIANCE_SLOPE  , {    64, {}}},
-				{Register::CCW_COMPLIANCE_SLOPE , {    64, {}}},
-				{Register::GOAL_POSITION        , {    {}, {}}},
-				{Register::MOVING_SPEED         , {    {}, {}}},
-				{Register::TORQUE_LIMIT         , {    {}, {}}},
-				{Register::PRESENT_POSITION     , {    {}, {}}},
-				{Register::PRESENT_SPEED        , {    {}, {}}},
-				{Register::PRESENT_LOAD         , {    {}, {}}},
-				{Register::PRESENT_VOLTAGE      , {    {}, {}}},
-				{Register::PRESENT_TEMPERATURE  , {    {}, {}}},
-				{Register::REGISTERED           , {     0, {}}},
-				{Register::MOVING               , {     0, {}}},
-				{Register::LOCK                 , {     0, {}}},
-				{Register::PUNCH                , {    32, {}}},
-			}
-		}}
-	};
+	 static auto data = []() {
+		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/1023.*300./360., 512);
+		auto convertSpeed       = meta::buildConverter("r/s", 0.111/60*2.*M_PI);
+		auto convertTemperature = meta::buildConverter("C", 1.);
+		auto convertVoltage     = meta::buildConverter("V", 16./160);
+		auto convertTorque      = meta::buildConverter("%", 100./1023., 0);
 
-	auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
-		auto& m = data[number];
-		m = data.at(300);
-		m.modelNumber = number;
-		m.shortName = std::move(shortName);
-		m.motorNames = std::move(names);
-		std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
-		return m;
-	};
+		auto data = std::map<uint32_t, meta::Info<Register>> {
+			{300, {
+				300,
+				LayoutType::AX,
+				"AX-12W",
+				{"AX-12W"},
+				meta::buildConverters(1024*360/300, 512, .111), {
+					{Register::MODEL_NUMBER         , {   300, {}}},
+					{Register::FIRMWARE_VERSION     , {    {}, {}}},
+					{Register::ID                   , {     1, {}}},
+					{Register::BAUD_RATE            , {     1, {}}},
+					{Register::RETURN_DELAY_TIME    , {   250, {}}},
+					{Register::CW_ANGLE_LIMIT       , {     0, convertPosition}},
+					{Register::CCW_ANGLE_LIMIT      , {0x03ff, convertPosition}},
+					{Register::TEMPERATURE_LIMIT    , {    70, convertTemperature}},
+					{Register::MIN_VOLTAGE_LIMIT    , {    60, convertVoltage}},
+					{Register::MAX_VOLTAGE_LIMIT    , {   140, convertVoltage}},
+					{Register::MAX_TORQUE           , {0x03ff, convertTorque}},
+					{Register::STATUS_RETURN_LEVEL  , {     2, {}}},
+					{Register::ALARM_LED            , {    36, {}}},
+					{Register::SHUTDOWN             , {    36, {}}},
+					{Register::TORQUE_ENABLE        , {     0, {}}},
+					{Register::LED                  , {     0, {}}},
+					{Register::CW_COMPLIANCE_MARGIN , {     4, {}}},
+					{Register::CCW_COMPLIANCE_MARGIN, {     4, {}}},
+					{Register::CW_COMPLIANCE_SLOPE  , {    64, {}}},
+					{Register::CCW_COMPLIANCE_SLOPE , {    64, {}}},
+					{Register::GOAL_POSITION        , {    {}, convertPosition}},
+					{Register::MOVING_SPEED         , {    {}, convertSpeed}},
+					{Register::TORQUE_LIMIT         , {    {}, convertTorque}},
+					{Register::PRESENT_POSITION     , {    {}, convertPosition}},
+					{Register::PRESENT_SPEED        , {    {}, convertSpeed}},
+					{Register::PRESENT_LOAD         , {    {}, {}}},
+					{Register::PRESENT_VOLTAGE      , {    {}, convertVoltage}},
+					{Register::PRESENT_TEMPERATURE  , {    {}, convertTemperature}},
+					{Register::REGISTERED           , {     0, {}}},
+					{Register::MOVING               , {     0, {}}},
+					{Register::LOCK                 , {     0, {}}},
+					{Register::PUNCH                , {    32, {}}},
+				}
+			}}
+		};
 
-	static bool firstRun{true};
-	if (firstRun) {
-		firstRun = false;
+		auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
+			auto& m = data[number];
+			m = data.at(300);
+			m.modelNumber = number;
+			m.shortName = std::move(shortName);
+			m.motorNames = std::move(names);
+			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
+			return m;
+		};
+
 		{
 			auto& m = newMotor(12, "AX-12A", {"AX-12A"});
 			std::get<0>(m.defaultLayout[Register::CW_COMPLIANCE_MARGIN])  = 1;
@@ -116,7 +120,8 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 			std::get<0>(m.defaultLayout[Register::CW_COMPLIANCE_SLOPE])   = 32;
 			std::get<0>(m.defaultLayout[Register::CCW_COMPLIANCE_SLOPE])  = 32;
 		}
-	}
+		return data;
+	}();
 	return data;
 };
 
