@@ -58,84 +58,100 @@ auto MotorLayoutInfo::getInfos() -> meta::Layout<Register> const& {
 }
 
 auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> const& {
-	static auto data = std::map<uint32_t, meta::Info<Register>> {
-		{46'352, {
-			46'352,
-			LayoutType::Pro,
-			"M54-60-S250-R",
-			{"M54-60-S250-R"},
-			meta::buildConverters(251'417, 0, 0.00397746), {
-				{Register::MODEL_NUMBER           , {   46'352, {}}},
-				{Register::MODEL_INFORMATION      , {       {}, {}}},
-				{Register::FIRMWARE_VERSION       , {       {}, {}}},
-				{Register::ID                     , {        1, {}}},
-				{Register::BAUD_RATE              , {        1, {}}},
-				{Register::RETURN_DELAY_TIME      , {      250, {}}},
-				{Register::OPERATING_MODE         , {        3, {}}},
-				{Register::HOMING_OFFSET          , {        0, {}}},
-				{Register::MOVING_THRESHOLD       , {       50, {}}},
-				{Register::TEMPERATURE_LIMIT      , {       80, {}}},
-				{Register::MAX_VOLTAGE_LIMIT      , {      400, {}}},
-				{Register::MIN_VOLTAGE_LIMIT      , {      150, {}}},
-				{Register::ACCELERATION_LIMIT     , {       {}, {}}},
-				{Register::TORQUE_LIMIT           , {      180, {}}},
-				{Register::VELOCITY_LIMIT         , {    8'000, {}}},
-				{Register::MAX_POSITION_LIMIT     , {  125'708, {}}},
-				{Register::MIN_POSITION_LIMIT     , { -125'708, {}}},
-				{Register::EXTERNAL_PORT_MODE_1   , {        0, {}}},
-				{Register::EXTERNAL_PORT_MODE_2   , {        0, {}}},
-				{Register::EXTERNAL_PORT_MODE_3   , {        0, {}}},
-				{Register::EXTERNAL_PORT_MODE_4   , {        0, {}}},
-				{Register::SHUTDOWN               , {       58, {}}},
-				{Register::TORQUE_ENABLE          , {        0, {}}},
-				{Register::LED_RED                , {        0, {}}},
-				{Register::LED_GREEN              , {        0, {}}},
-				{Register::LED_BLUE               , {        0, {}}},
-				{Register::VELOCITY_I_GAIN        , {       16, {}}},
-				{Register::VELOCITY_P_GAIN        , {      256, {}}},
-				{Register::POSITION_P_GAIN        , {       32, {}}},
-				{Register::GOAL_POSITION          , {       {}, {}}},
-				{Register::GOAL_VELOCITY          , {        0, {}}},
-				{Register::GOAL_TORQUE            , {        0, {}}},
-				{Register::GOAL_ACCELERATION      , {        0, {}}},
-				{Register::MOVING                 , {       {}, {}}},
-				{Register::PRESENT_POSITION       , {       {}, {}}},
-				{Register::PRESENT_VELOCITY       , {       {}, {}}},
-				{Register::PRESENT_CURRENT        , {       {}, {}}},
-				{Register::PRESENT_INPUT_VOLTAGE  , {       {}, {}}},
-				{Register::PRESENT_TEMPERATURE    , {       {}, {}}},
-				{Register::EXTERNAL_PORT_DATA_1   , {        0, {}}},
-				{Register::EXTERNAL_PORT_DATA_2   , {        0, {}}},
-				{Register::EXTERNAL_PORT_DATA_3   , {        0, {}}},
-				{Register::EXTERNAL_PORT_DATA_4   , {        0, {}}},
-				{Register::REGISTERED_INSTRUCTION , {        0, {}}},
-				{Register::STATUS_RETURN_LEVEL    , {        2, {}}},
-				{Register::HARDWARE_ERROR_STATUS  , {        0, {}}},
-			}
-		}}
-	};
-	auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names) -> meta::Info<Register>& {
-		auto& m = data[number];
-		m = data.at(46'352);
-		m.modelNumber = number;
-		m.shortName = std::move(shortName);
-		m.motorNames = std::move(names);
-		std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
-		return m;
-	};
+	static auto data = []() {
+		auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/251'417., 0);
+		auto convertSpeed       = meta::buildConverter("r/s", (0.00199234/60*2.*M_PI));
+		auto convertTemperature = meta::buildConverter("C", 1.);
+		auto convertVoltage     = meta::buildConverter("V", 16./160);
+		auto convertPID_P       = meta::buildConverter("", 1./8.);
+		auto convertCurrent     = meta::buildConverter("A", 16.11328/1000., 0.);
 
-	static bool firstRun{true};
-	if (firstRun) {
-		firstRun = false;
+		auto data = std::map<uint32_t, meta::Info<Register>> {
+			{46'352, {
+				46'352,
+				LayoutType::Pro,
+				"M54-60-S250-R",
+				{"M54-60-S250-R"},
+				meta::buildConverters(251'417, 0, 0.00397746), {
+					{Register::MODEL_NUMBER           , {   46'352, {}}},
+					{Register::MODEL_INFORMATION      , {       {}, {}}},
+					{Register::FIRMWARE_VERSION       , {       {}, {}}},
+					{Register::ID                     , {        1, {}}},
+					{Register::BAUD_RATE              , {        1, {}}},
+					{Register::RETURN_DELAY_TIME      , {      250, {}}},
+					{Register::OPERATING_MODE         , {        3, {}}},
+					{Register::HOMING_OFFSET          , {        0, {}}},
+					{Register::MOVING_THRESHOLD       , {       50, {}}},
+					{Register::TEMPERATURE_LIMIT      , {       80, convertTemperature}},
+					{Register::MAX_VOLTAGE_LIMIT      , {      400, convertVoltage}},
+					{Register::MIN_VOLTAGE_LIMIT      , {      150, convertVoltage}},
+					{Register::ACCELERATION_LIMIT     , {       {}, {}}},
+					{Register::TORQUE_LIMIT           , {      180, convertCurrent}},
+					{Register::VELOCITY_LIMIT         , {    8'000, convertSpeed}},
+					{Register::MAX_POSITION_LIMIT     , {  125'708, convertPosition}},
+					{Register::MIN_POSITION_LIMIT     , { -125'708, convertPosition}},
+					{Register::EXTERNAL_PORT_MODE_1   , {        0, {}}},
+					{Register::EXTERNAL_PORT_MODE_2   , {        0, {}}},
+					{Register::EXTERNAL_PORT_MODE_3   , {        0, {}}},
+					{Register::EXTERNAL_PORT_MODE_4   , {        0, {}}},
+					{Register::SHUTDOWN               , {       58, {}}},
+					{Register::TORQUE_ENABLE          , {        0, {}}},
+					{Register::LED_RED                , {        0, {}}},
+					{Register::LED_GREEN              , {        0, {}}},
+					{Register::LED_BLUE               , {        0, {}}},
+					{Register::VELOCITY_I_GAIN        , {       16, {}}},
+					{Register::VELOCITY_P_GAIN        , {      256, {}}},
+					{Register::POSITION_P_GAIN        , {       32, convertPID_P}},
+					{Register::GOAL_POSITION          , {       {}, convertPosition}},
+					{Register::GOAL_VELOCITY          , {        0, convertSpeed}},
+					{Register::GOAL_TORQUE            , {        0, convertCurrent}},
+					{Register::GOAL_ACCELERATION      , {        0, {}}},
+					{Register::MOVING                 , {       {}, {}}},
+					{Register::PRESENT_POSITION       , {       {}, convertPosition}},
+					{Register::PRESENT_VELOCITY       , {       {}, convertSpeed}},
+					{Register::PRESENT_CURRENT        , {       {}, convertCurrent}},
+					{Register::PRESENT_INPUT_VOLTAGE  , {       {}, convertVoltage}},
+					{Register::PRESENT_TEMPERATURE    , {       {}, convertTemperature}},
+					{Register::EXTERNAL_PORT_DATA_1   , {        0, {}}},
+					{Register::EXTERNAL_PORT_DATA_2   , {        0, {}}},
+					{Register::EXTERNAL_PORT_DATA_3   , {        0, {}}},
+					{Register::EXTERNAL_PORT_DATA_4   , {        0, {}}},
+					{Register::REGISTERED_INSTRUCTION , {        0, {}}},
+					{Register::STATUS_RETURN_LEVEL    , {        2, {}}},
+					{Register::HARDWARE_ERROR_STATUS  , {        0, {}}},
+				}
+			}}
+		};
+		auto newMotor = [&](int number, std::string shortName, std::vector<std::string> names, double pos, double speed) -> meta::Info<Register>& {
+			auto& m = data[number];
+			m = data.at(46'352);
+			m.modelNumber = number;
+			m.shortName = std::move(shortName);
+			m.motorNames = std::move(names);
+			std::get<0>(m.defaultLayout[Register::MODEL_NUMBER]) = number;
+
+			auto convertPosition    = meta::buildConverter("r", (2.*M_PI)/pos, 0);
+			std::get<1>(m.defaultLayout[Register::MAX_POSITION_LIMIT])   = convertPosition;
+			std::get<1>(m.defaultLayout[Register::MIN_POSITION_LIMIT])   = convertPosition;
+			std::get<1>(m.defaultLayout[Register::GOAL_POSITION])        = convertPosition;
+			std::get<1>(m.defaultLayout[Register::PRESENT_POSITION])     = convertPosition;
+
+
+			auto convertSpeed = meta::buildConverter("r/s", (speed/60*2.*M_PI));
+			std::get<1>(m.defaultLayout[Register::VELOCITY_LIMIT])   = convertSpeed;
+			std::get<1>(m.defaultLayout[Register::GOAL_VELOCITY])    = convertSpeed;
+			std::get<1>(m.defaultLayout[Register::PRESENT_VELOCITY]) = convertSpeed;
+
+
+			return m;
+		};
 
 		{
-			auto& m = newMotor(46'096, "M54-40-S250-R", {"M54-40-S250-R"});
-			m.converterFunctions = meta::buildConverters(251'417, 0, 0.00397746);
-		std::get<0>(	m.defaultLayout[Register::TORQUE_LIMIT]) = 120;
+			auto& m = newMotor(46'096, "M54-40-S250-R", {"M54-40-S250-R"}, 251'417, 0.00397746);
+			std::get<0>(m.defaultLayout[Register::TORQUE_LIMIT]) = 120;
 		}
 		{
-			auto& m = newMotor(43'288, "M42-10-S260-R", {"M42-10-S260-R"}); 
-			m.converterFunctions = meta::buildConverters(263'187, 0, 0.00389076);
+			auto& m = newMotor(43'288, "M42-10-S260-R", {"M42-10-S260-R"}, 263'187, 0.00389076);
 			std::get<0>(m.defaultLayout[Register::TORQUE_LIMIT]) = 300;
 			std::get<0>(m.defaultLayout[Register::MAX_POSITION_LIMIT]) =  131'593;
 			std::get<0>(m.defaultLayout[Register::MIN_POSITION_LIMIT]) = -131'593;
@@ -144,8 +160,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 			std::get<0>(m.defaultLayout[Register::POSITION_P_GAIN]) =  32;
 		}
 		{
-			auto& m = newMotor(54'024, "H54-200-S500-R", {"H54-200-S500-R"});
-			m.converterFunctions = meta::buildConverters(501'923, 0, 0.00199234);
+			auto& m = newMotor(54'024, "H54-200-S500-R", {"H54-200-S500-R"}, 501'923, 0.00199234);
 			std::get<0>(m.defaultLayout[Register::TORQUE_LIMIT]) = 620;
 			std::get<0>(m.defaultLayout[Register::VELOCITY_LIMIT]) = 17'000;
 			std::get<0>(m.defaultLayout[Register::MAX_POSITION_LIMIT]) =  250'961;
@@ -156,8 +171,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 		}
 
 		{
-			auto& m = newMotor(53'768, "H54-100-S500-R", {"H54-100-S500-R"});
-			m.converterFunctions = meta::buildConverters(501'923, 0, 0.00199234);
+			auto& m = newMotor(53'768, "H54-100-S500-R", {"H54-100-S500-R"}, 501'923, 0.00199234);
 			std::get<0>(m.defaultLayout[Register::TORQUE_LIMIT]) = 310;
 			std::get<0>(m.defaultLayout[Register::VELOCITY_LIMIT]) = 17'000;
 			std::get<0>(m.defaultLayout[Register::MAX_POSITION_LIMIT]) =  250'961;
@@ -167,8 +181,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 			std::get<0>(m.defaultLayout[Register::POSITION_P_GAIN]) =  32;
 		}
 		{
-			auto& m = newMotor(51'200, "H42-20-S300-R", { "H42-20-S300-R"});
-			m.converterFunctions = meta::buildConverters(303'750, 0, 0.00329218);
+			auto& m = newMotor(51'200, "H42-20-S300-R", { "H42-20-S300-R"}, 303'750, 0.00329218);
 			std::get<0>(m.defaultLayout[Register::ACCELERATION_LIMIT]) =255;
 			std::get<0>(m.defaultLayout[Register::TORQUE_LIMIT]) = 465;
 			std::get<0>(m.defaultLayout[Register::VELOCITY_LIMIT]) = 10'300;
@@ -178,7 +191,8 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 			std::get<0>(m.defaultLayout[Register::VELOCITY_P_GAIN]) = 440;
 			std::get<0>(m.defaultLayout[Register::POSITION_P_GAIN]) =  32;
 		}
-	}
+		return data;
+	}();
 	return data;
 };
 
