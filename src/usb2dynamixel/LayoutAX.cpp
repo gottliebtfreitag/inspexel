@@ -55,8 +55,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 				300,
 				LayoutType::AX,
 				"AX-12W",
-				{"AX-12W"},
-				meta::buildConverters(1024*360/300, 512, .111), {
+				{"AX-12W"}, {
 					{Register::MODEL_NUMBER         , {   300, {}}},
 					{Register::FIRMWARE_VERSION     , {    {}, {}}},
 					{Register::ID                   , {     1, {}}},

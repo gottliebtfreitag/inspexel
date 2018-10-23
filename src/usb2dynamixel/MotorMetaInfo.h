@@ -32,8 +32,6 @@ struct MotorInfo {
 
 	std::string                     shortName;
 	std::vector<std::string>        motorNames;
-
-	ConverterFunctions              converterFunctions;
 };
 
 auto getMotorInfo(uint16_t _modelNumber) -> MotorInfo const*;

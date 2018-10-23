@@ -65,8 +65,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 				320,
 				LayoutType::MX_V1,
 				"MX106",
-				{"MX-106T", "MX-106R"},
-				meta::buildConverters(4096, 2048, .114), {
+				{"MX-106T", "MX-106R"}, {
 					{Register::MODEL_NUMBER        , {   320, {}}},
 					{Register::VERSION_FIRMWARE    , {    {}, {}}},
 					{Register::ID                  , {     1, {}}},

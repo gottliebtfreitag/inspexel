@@ -23,7 +23,6 @@ auto getMotorInfos() -> std::vector<MotorInfo> const& {
 				info.shortName   = d.shortName;
 				info.motorNames  = d.motorNames;
 
-				info.converterFunctions = d.converterFunctions;
 				data.push_back(info);
 			}
 		});

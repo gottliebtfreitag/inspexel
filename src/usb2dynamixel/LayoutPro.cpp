@@ -71,8 +71,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 				46'352,
 				LayoutType::Pro,
 				"M54-60-S250-R",
-				{"M54-60-S250-R"},
-				meta::buildConverters(251'417, 0, 0.00397746), {
+				{"M54-60-S250-R"}, {
 					{Register::MODEL_NUMBER           , {   46'352, {}}},
 					{Register::MODEL_INFORMATION      , {       {}, {}}},
 					{Register::FIRMWARE_VERSION       , {       {}, {}}},

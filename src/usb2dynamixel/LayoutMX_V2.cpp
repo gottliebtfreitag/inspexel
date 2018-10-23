@@ -81,8 +81,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 				1020,
 				LayoutType::MX_V2,
 				"XM430-W350",
-				{"XM430-W350-T", "XM430-W350-R"},
-				meta::buildConverters(4096, 2048, .229), {
+				{"XM430-W350-T", "XM430-W350-R"}, {
 					{Register::MODEL_NUMBER           , { 1020, {}}},
 					{Register::MODEL_INFORMATION      , {   {}, {}}},
 					{Register::VERSION_FIRMWARE       , {   {}, {}}},

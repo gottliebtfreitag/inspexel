@@ -56,8 +56,7 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 				350,
 				LayoutType::XL320,
 				"XL-320",
-				{"XL-320"},
-				meta::buildConverters(1024*360/300, 512, .111), {
+				{"XL-320"}, {
 					{Register::MODEL_NUMBER         , {   350, {}}},
 					{Register::FIRMWARE_VERSION     , {    {}, {}}},
 					{Register::ID                   , {     1, {}}},

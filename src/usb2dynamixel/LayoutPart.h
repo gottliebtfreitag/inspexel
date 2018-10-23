@@ -140,14 +140,6 @@ inline auto to_string(LayoutField::Access access) -> std::string {
 	throw std::runtime_error("unknown access value");
 }
 
-
-struct ConverterFunctions {
-	std::function<int(double)>      toMotorPosition;
-	std::function<double(int)>      fromMotorPosition;
-	std::function<int(double)>      toMotorSpeed;
-	std::function<double(int)>      fromMotorSpeed;
-};
-
 struct Convert {
 	std::string unit;
 	std::function<int(double)> toMotor;
@@ -169,22 +161,8 @@ struct Info {
 	std::string shortName;
 	std::vector<std::string> motorNames;
 
-	ConverterFunctions converterFunctions;
-
 	DefaultLayout<Register> defaultLayout;
 };
-
-
-
-inline auto buildConverters(double angularResolution, int centerVal, double speedResolution) -> ConverterFunctions {
-	return ConverterFunctions{
-		[=](double val) { return std::round(val / (2. * M_PI) * angularResolution + centerVal); },
-		[=](int val) { return (static_cast<double>(val) - centerVal) * 2. * M_PI / static_cast<double>(angularResolution); },
-
-		[=](double speed) { return std::round(speed / (2. * M_PI) * 60. / speedResolution); },
-		[=](int speed) { return static_cast<double>(speed) * (2. * M_PI) / 60. * speedResolution; }
-	};
-}
 
 inline auto buildConverter(std::string unit, double resolution, int centerVal=0) -> Convert {
 	return Convert{
