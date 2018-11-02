@@ -58,11 +58,14 @@ struct FuseFS::Pimpl {
 	std::filesystem::path mountPoint;
 	int fuseFD {0};
 
+
 	std::recursive_mutex mutex;
 	std::map<Node*, FuseFile*> files;
 	std::multimap<FuseFile*, Node*> filesInvMap;
 
 	Node root{"/"};
+
+	bool tearDownMountPoint {false};
 
 	Node* getNode(std::filesystem::path const& path) {
 		if (not path.is_absolute()) {
@@ -118,15 +121,17 @@ struct FuseFS::Pimpl {
 		}
 		destroyNode(node);
 	}
-
-	bool tearDownMountPoint = false;
 };
 
 FuseFS::FuseFS(std::filesystem::path const& mountPoint) :
 		pimpl { std::make_unique<Pimpl>() } {
 	pimpl->mountPoint = mountPoint;
-	// try to create the mountpoint
-	std::filesystem::create_directory(mountPoint);
+
+	if (not std::filesystem::is_directory(mountPoint)) {
+		// try to create the mountpoint
+		std::filesystem::create_directory(mountPoint);
+		pimpl->tearDownMountPoint = true;
+	}
 
 	std::vector<std::string> argStrings {"", "-oauto_unmount"};
 	char* args[] = {
