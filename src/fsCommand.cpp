@@ -171,9 +171,19 @@ void runFuse() {
 		return true;
 	};
 
-	auto pingFile = PingFile(detectAndHandleMotor);
+	auto detectSingleMotor = PingFile(detectAndHandleMotor);
+	auto detectAllMotors  = PingFile([=](int v) {
+		if (v != 1) {
+			return false;
+		}
+		for (int i{0}; i < 0xfe; ++i) {
+			detectAndHandleMotor(i);
+		}
+		return true;
+	});
 
-	fuseFS.registerFile("/detect_motor", pingFile);
+	fuseFS.registerFile("/detect_motor", detectSingleMotor);
+	fuseFS.registerFile("/detect_all_motors", detectAllMotors);
 	auto future = std::async(std::launch::async, [&]{
 		// ping all motors
 		for (auto motor : range) {
