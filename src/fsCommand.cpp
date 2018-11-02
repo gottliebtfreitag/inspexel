@@ -124,8 +124,11 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 	fuseFS.registerFile("/" + std::to_string(motorID) + "/motor_model", *motorModelFile);
 
 	using Info = meta::MotorLayoutInfo<LT>;
-	auto const& infos = Info::getInfos();
-	for (auto const& [reg, info] : infos) {
+	auto const& defaults = Info::getDefaults().at(modelNumber).defaultLayout;
+	auto const& infos    = Info::getInfos();
+	for (auto const& [reg, entry] : defaults) {
+		//!TODO should register convert function here
+		auto const& info = infos.at(reg);
 		auto& newFile = files.emplace_back(std::make_unique<RegisterFile>(motorID, int(reg), info, usb2dyn));
 		fuseFS.registerFile("/" + std::to_string(motorID) + "/by-register-name/" + info.name, *newFile);
 		fuseFS.registerFile("/" + std::to_string(motorID) + "/by-register-id/" + std::to_string(int(reg)), *newFile);
