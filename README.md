@@ -2,7 +2,7 @@
 The swiss army knife for dynamixel servo motors.
 
 # Introduction
-Inspexel (inspector dynamixel) is a command line too. It has a support for dynamixel motors (MX, MX(2), X, Pro, AX) and can use protocol version 1 and 2 for communication.
+Inspexel (inspector dynamixel) is a command line tool. It has a support for dynamixel motors (MX, MX(2), X, Pro, AX) and can use protocol version 1 and 2 for communication.
 
 This tools purpose is to have a command line tool to configure dynamixel motors. Dynamixel motors are being used in many robotic projects but it seems like some tooling for linux is missing.
 There exists the robotis tool RoboManager which only runs under Windows. There are also other projects like Mixcell (https://github.com/clebercoutof/mixcell 3) which brings some of the functionality to linux.
