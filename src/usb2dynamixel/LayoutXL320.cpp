@@ -46,9 +46,9 @@ auto MotorLayoutInfo::getDefaults() -> std::map<uint32_t, meta::Info<Register>> 
 		auto convertSpeed       = meta::buildConverter("r/s", 0.111/60*2.*M_PI);
 		auto convertTemperature = meta::buildConverter("C", 1.);
 		auto convertVoltage     = meta::buildConverter("V", 16./160);
-		auto convertPID_P       = meta::buildConverter("", 1./8.);
-		auto convertPID_I       = meta::buildConverter("", 1000./2048.);
-		auto convertPID_D       = meta::buildConverter("", 4/1000.);
+		auto convertPID_P       = meta::buildConverter("", 1./8., 0, 0, 254);
+		auto convertPID_I       = meta::buildConverter("", 1000./2048., 0, 0, 254);
+		auto convertPID_D       = meta::buildConverter("", 4/1000., 0, 0, 254);
 		auto convertTorque      = meta::buildConverter("%", 100./1023., 0);
 
 		auto data = std::map<uint32_t, meta::Info<Register>> {

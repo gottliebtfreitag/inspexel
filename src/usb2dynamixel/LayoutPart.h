@@ -164,10 +164,10 @@ struct Info {
 	DefaultLayout<Register> defaultLayout;
 };
 
-inline auto buildConverter(std::string unit, double resolution, int centerVal=0) -> Convert {
+inline auto buildConverter(std::string unit, double resolution, int centerVal=0, int minValue=std::numeric_limits<int>::min(), int maxValue = std::numeric_limits<int>::max()) -> Convert {
 	return Convert{
 		unit,
-		[=](double val) { return std::max(1., std::round(val / resolution + centerVal)); },
+		[=](double val) { return std::clamp(int(std::round(val / resolution + centerVal)), minValue, maxValue); },
 		[=](int val)    { return (val - centerVal) * resolution; },
 	};
 }
