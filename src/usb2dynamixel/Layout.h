@@ -5,3 +5,4 @@
 #include "LayoutPro.h"
 #include "LayoutXL320.h"
 #include "LayoutAX.h"
+#include "LayoutOpenCM.h"

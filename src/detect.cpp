@@ -140,7 +140,22 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 }
 
 void runDetect() {
-	baudrates.get().emplace(g_baudrate);
+	auto allBaudrates = std::set<std::optional<int>>{};
+	for (auto v : baudrates.get()) {
+		allBaudrates.emplace(v);
+	}
+	allBaudrates.emplace(g_baudrate);
+
+	auto hasOptionBaudrate = [&]() {
+		auto checkBaudrate = simplyfile::SerialPort(g_device.get(), 1);
+		return checkBaudrate.hasOptionBaudrate();
+	}();
+
+	if (not hasOptionBaudrate) {
+		allBaudrates.clear();
+		allBaudrates.emplace(std::nullopt);
+	}
+
 	auto timeout = std::chrono::microseconds{g_timeout};
 	auto protocols = std::vector<dynamixel::Protocol>{dynamixel::Protocol::V1, dynamixel::Protocol::V2};
 	if (g_protocolVersion.isSpecified()) {
@@ -148,9 +163,15 @@ void runDetect() {
 	}
 	for (auto protocolVersion : protocols) {
 		std::cout << "# trying protocol version " << int(protocolVersion) << "\n";
-		for (auto baudrate : baudrates.get()) {
-			std::cout << "## trying baudrate: " << baudrate << "\n";
-			auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, g_device.get(), protocolVersion);
+		for (auto const& baudrate : allBaudrates) {
+			auto usb2dyn = dynamixel::USB2Dynamixel(*baudrate, g_device.get(), protocolVersion);
+
+			if (baudrate) {
+				std::cout << "## trying baudrate: " << *baudrate << "\n";
+			} else {
+				std::cout << "## trying serial device with fixed baudrate\n";
+			}
+
 
 			// generate range to check
 			std::vector<int> range(0xFD);

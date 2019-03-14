@@ -33,7 +33,8 @@ struct termios2 {
 
 }
 
-SerialPort::SerialPort(std::string const& name, int baudrate)
+SerialPort::SerialPort(std::string const& name, std::optional<int> baudrate)
+	: mHasOptionBaudrate {baudrate}
 {
 	FileDescriptor iFace{::open(name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY)};
 
@@ -45,15 +46,18 @@ SerialPort::SerialPort(std::string const& name, int baudrate)
 	if (0 > fcntl(iFace, F_SETFL, FNDELAY)) {
 		throw std::runtime_error("F_SETFL " +std::string(strerror(errno)));
 	}
-	struct serial_struct serial;
-	bzero(&serial, sizeof(serial));
-	if (0 > ioctl(iFace, TIOCGSERIAL, &serial)) {
-		throw std::runtime_error("TIOCGSERIAL " +std::string(strerror(errno)));
-	}
 
-	serial.flags |= ASYNC_LOW_LATENCY;  /* enable low latency  */
-	if (0 > ioctl(iFace, TIOCSSERIAL, &serial)) {
-		std::cout << "cannot do TIOCSSERIAL on " << name << " "  << strerror(errno) << std::endl;
+	if (baudrate) {
+		struct serial_struct serial;
+		bzero(&serial, sizeof(serial));
+		if (0 > ioctl(iFace, TIOCGSERIAL, &serial)) {
+			throw std::runtime_error("TIOCGSERIAL " +std::string(strerror(errno)));
+		}
+
+		serial.flags |= ASYNC_LOW_LATENCY;  /* enable low latency  */
+		if (0 > ioctl(iFace, TIOCSSERIAL, &serial)) {
+			mHasOptionBaudrate = false;
+		}
 	}
 
 	struct termios2 options;
@@ -72,10 +76,12 @@ SerialPort::SerialPort(std::string const& name, int baudrate)
 	options.c_cflag |= CS8;
 
 	// set baudrate
-	options.c_ospeed = baudrate;
-	options.c_ispeed = baudrate;
-	options.c_cflag  &= ~CBAUD;
-	options.c_cflag  |= BOTHER;
+	if (mHasOptionBaudrate) {
+		options.c_ospeed = *baudrate;
+		options.c_ispeed = *baudrate;
+		options.c_cflag  &= ~CBAUD;
+		options.c_cflag  |= BOTHER;
+	}
 
 	// disable hardware flow control
 	options.c_cflag &= ~CRTSCTS;
@@ -101,21 +107,13 @@ SerialPort::SerialPort(SerialPort&& other)
 
 SerialPort& SerialPort::operator=(SerialPort&& other) {
 	FileDescriptor::operator=(std::move(other));
+	mHasOptionBaudrate = other.mHasOptionBaudrate;
 	return *this;
 }
 
-void SerialPort::setBaudrate(int baudrate) {
-	struct termios2 options;
-	bzero(&options, sizeof(options));
-	ioctl(*this, TCGETS2, &options);
-
-	options.c_cflag &= ~CBAUD;
-	options.c_cflag |= BOTHER;
-
-	// set baudrate
-	options.c_ospeed = baudrate;
-	options.c_ispeed = baudrate;
-	ioctl(*this, TCSETS2, &options);
+bool SerialPort::hasOptionBaudrate() const {
+	return mHasOptionBaudrate;
 }
+
 
 }

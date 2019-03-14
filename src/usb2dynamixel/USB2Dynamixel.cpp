@@ -13,7 +13,7 @@
 
 namespace dynamixel {
 
-USB2Dynamixel::USB2Dynamixel(int baudrate, std::string const& device, Protocol protocol)
+USB2Dynamixel::USB2Dynamixel(std::optional<int> baudrate, std::string const& device, Protocol protocol)
 	: mPort(device, baudrate)
 {
 	simplyfile::flushRead(mPort);
@@ -124,6 +124,11 @@ void USB2Dynamixel::reset(MotorID motor) const {
 void USB2Dynamixel::reboot(MotorID motor) const {
 	auto g = std::lock_guard(mMutex);
 	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::REBOOT, {}));
+}
+
+bool USB2Dynamixel::hasOptionBaudrate() const {
+	auto g = std::lock_guard(mMutex);
+	return mPort.hasOptionBaudrate();
 }
 
 }

@@ -106,15 +106,16 @@ void visit(CB cb, Layout<Register, L>& o) {
 	o.visit(cb);
 }
 
-enum class LayoutType { None, MX_V1, MX_V2, Pro, XL320, AX };
+enum class LayoutType { None, MX_V1, MX_V2, Pro, XL320, AX, OpenCM};
 
 inline auto to_string(LayoutType layout) -> std::string {
 	switch(layout) {
-	case LayoutType::MX_V1:    return "MX_V1";
-	case LayoutType::MX_V2:    return "MX_V2";
-	case LayoutType::Pro:   return "Pro";
-	case LayoutType::XL320: return "XL320";
-	case LayoutType::AX:    return "AX";
+	case LayoutType::MX_V1:  return "MX_V1";
+	case LayoutType::MX_V2:  return "MX_V2";
+	case LayoutType::Pro:    return "Pro";
+	case LayoutType::XL320:  return "XL320";
+	case LayoutType::AX:     return "AX";
+	case LayoutType::OpenCM: return "OpenCM";
 	default:
 		throw std::runtime_error("unknown layout");
 	}

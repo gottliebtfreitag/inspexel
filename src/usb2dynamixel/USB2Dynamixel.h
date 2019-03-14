@@ -27,7 +27,7 @@ enum class Protocol : int {
 struct USB2Dynamixel {
 	using Timeout = std::chrono::microseconds;
 
-	USB2Dynamixel(int baudrate, std::string const& device, Protocol protocol = Protocol::V1);
+	USB2Dynamixel(std::optional<int> baudrate, std::string const& device, Protocol protocol = Protocol::V1);
 	~USB2Dynamixel();
 
 	[[nodiscard]] bool ping(MotorID motor, Timeout timeout) const;
@@ -104,6 +104,8 @@ struct USB2Dynamixel {
 		}
 		sync_write(motorParams, int(baseRegister));
 	}
+
+	bool hasOptionBaudrate() const;
 
 private:
 	std::unique_ptr<ProtocolBase> mProtocol;

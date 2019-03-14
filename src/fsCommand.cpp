@@ -139,6 +139,9 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 void runFuse() {
 	auto timeout = std::chrono::microseconds{g_timeout};
 	auto usb2dyn = USB2Dynamixel(g_baudrate, g_device.get(), Protocol{g_protocolVersion.get()});
+	if (not usb2dyn.hasOptionBaudrate() and g_baudrate.isSpecified()) {
+		std::cout << "Device baudrate not applied\n";
+	}
 
 	std::vector<int> range;
 	if (g_id.isSpecified()) {
