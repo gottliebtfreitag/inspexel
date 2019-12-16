@@ -12,11 +12,11 @@ ParameterBase::ParameterBase(std::string const& argName, DescribeFunc const& des
 	, _hintFunc(hintFunc)
 	, _command(command)
 {
-	_command.registerParameter(_argName, this);
+	_command.registerParameter(_argName, *this);
 }
 
 ParameterBase::~ParameterBase() {
-	_command.deregisterParameter(_argName, this);
+	_command.deregisterParameter(_argName, *this);
 }
 
 Command& getDefaultCommand() {
