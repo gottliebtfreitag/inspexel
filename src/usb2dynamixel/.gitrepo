@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:gottliebtfreitag/usb2dynamixel
 	branch = master
-	commit = 4ba27786d426e92b5dcabcda4ce23f036d80055d
-	parent = bbc9498879b065ea9dfe9a9f8828720667d34e55
+	commit = db348e3ea3c757c1d01e4449d32051fb8e3347c9
+	parent = 780b57a7d674a14d0c15b0976744a5f1618707cf
 	cmdver = 0.3.1
