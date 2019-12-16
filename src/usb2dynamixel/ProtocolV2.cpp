@@ -1,4 +1,5 @@
 #include "ProtocolV2.h"
+#include "file_io.h"
 
 #include <cstring>
 #include <stdexcept>
@@ -119,7 +120,6 @@ bool validatePacket(Parameter const& rxBuf) {
 	success &= std::equal(checksum.begin(), checksum.end(), std::next(rxBuf.begin(), rxBuf.size()-2));
 	return success;
 }
-
 }
 
 auto ProtocolV2::createPacket(MotorID motorID, Instruction instr, Parameter data) const -> Parameter {
@@ -151,6 +151,7 @@ Parameter ProtocolV2::synchronizeOnHeader(Timeout timeout, MotorID expectedMotor
 	};
 	std::array<std::byte, 4> syncMarker = {std::byte{0xff}, std::byte{0xff}, std::byte{0xfd}, std::byte{0x00}};
 	auto startTime = std::chrono::high_resolution_clock::now();
+
 	while (not ((timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout))) {
 		// figure out how many bytes have to be read
 		int indexOfSyncMarker = 0;
@@ -161,7 +162,7 @@ Parameter ProtocolV2::synchronizeOnHeader(Timeout timeout, MotorID expectedMotor
 		}
 		preambleBuffer.erase(preambleBuffer.begin(), preambleBuffer.begin()+indexOfSyncMarker);
 		int bytesToRead = std::max(1, static_cast<int>(sizeof(Header)+2) - static_cast<int>(preambleBuffer.size()));
-		auto buffer = read(port, bytesToRead);
+		auto buffer = file_io::read(port, bytesToRead);
 		preambleBuffer.insert(preambleBuffer.end(), buffer.begin(), buffer.end());
 		if (preambleBuffer.size() >= sizeof(Header)) {
 			// test if this preamble contains the header of the packet we were looking for
@@ -197,7 +198,7 @@ auto ProtocolV2::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_
 		// this is the size of the entire packet [header + payload + checksum]
 		std::size_t incomingLength = static_cast<int>(rxBuf[5]) + (static_cast<int>(rxBuf[6]) << 8) + 7;
 		while (rxBuf.size() < incomingLength and not timeoutFlag) { // read the rest
-			auto buffer = read(port, incomingLength - rxBuf.size());
+			auto buffer = file_io::read(port, incomingLength - rxBuf.size());
 			rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
 			timeoutFlag = (timeout.count() != 0) and (std::chrono::high_resolution_clock::now() - startTime >= timeout);
 		};
@@ -211,7 +212,7 @@ auto ProtocolV2::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_
 		}
 		return std::make_tuple(false, motorID, errorCode, payload);
 	}
-	flushRead(port);
+	file_io::flushRead(port);
 	return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 }
 

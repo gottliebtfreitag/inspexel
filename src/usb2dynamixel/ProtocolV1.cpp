@@ -1,4 +1,5 @@
 #include "ProtocolV1.h"
+#include "file_io.h"
 
 #include <cstring>
 #include <stdexcept>
@@ -76,7 +77,7 @@ Parameter ProtocolV1::synchronizeOnHeader(Timeout timeout, MotorID expectedMotor
 		}
 		preambleBuffer.erase(preambleBuffer.begin(), preambleBuffer.begin()+indexOfSyncMarker);
 		int bytesToRead = std::max(1, static_cast<int>(sizeof(Header)+1) - static_cast<int>(preambleBuffer.size()));
-		auto buffer = read(port, bytesToRead);
+		auto buffer = file_io::read(port, bytesToRead);
 		preambleBuffer.insert(preambleBuffer.end(), buffer.begin(), buffer.end());
 		if (preambleBuffer.size() >= sizeof(Header)) {
 			// test if this preamble contains the header of the packet we were looking for
@@ -113,7 +114,7 @@ auto ProtocolV1::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_
 		}
 		std::size_t incomingLength = numParameters + 6;
 		while (rxBuf.size() < incomingLength and not timeoutFlag) {
-			auto buffer = read(port, incomingLength - rxBuf.size());
+			auto buffer = file_io::read(port, incomingLength - rxBuf.size());
 			rxBuf.insert(rxBuf.end(), buffer.begin(), buffer.end());
 			timeoutFlag = testTimeout();
 		};
@@ -126,7 +127,7 @@ auto ProtocolV1::readPacket(Timeout timeout, MotorID expectedMotorID, std::size_
 		}
 		return std::make_tuple(false, motorID, errorCode, payload);
 	}
-	flushRead(port);
+	file_io::flushRead(port);
 	return std::make_tuple(true, MotorIDInvalid, ErrorCode{}, Parameter{});
 }
 

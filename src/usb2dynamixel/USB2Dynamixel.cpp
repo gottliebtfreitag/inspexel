@@ -10,13 +10,14 @@
 #include <simplyfile/SerialPort.h>
 #include "ProtocolV1.h"
 #include "ProtocolV2.h"
+#include "file_io.h"
 
 namespace dynamixel {
 
 USB2Dynamixel::USB2Dynamixel(int baudrate, std::string const& device, Protocol protocol)
 	: mPort(device, baudrate)
 {
-	simplyfile::flushRead(mPort);
+	file_io::flushRead(mPort);
 	if (protocol == Protocol::V1) {
 		mProtocol = std::make_unique<ProtocolV1>();
 	} else {
@@ -29,7 +30,7 @@ USB2Dynamixel::~USB2Dynamixel() {
 
 bool USB2Dynamixel::ping(MotorID motor, Timeout timeout) const {
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::PING, {}));
+	file_io::write(mPort, mProtocol->createPacket(motor, Instruction::PING, {}));
 	auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, motor, 0, mPort);
 	return motorID != MotorIDInvalid;
 }
@@ -44,7 +45,7 @@ auto USB2Dynamixel::read(MotorID motor, int baseRegister, size_t length, Timeout
 	}
 
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::READ, txBuf));
+	file_io::write(mPort, mProtocol->createPacket(motor, Instruction::READ, txBuf));
 	return mProtocol->readPacket(timeout, motor, length, mPort);
 }
 
@@ -56,7 +57,7 @@ auto USB2Dynamixel::bulk_read(std::vector<std::tuple<MotorID, int, size_t>> cons
 	auto txBuf = mProtocol->buildBulkReadPackage(motors);
 
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(BroadcastID, Instruction::BULK_READ, txBuf));
+	file_io::write(mPort, mProtocol->createPacket(BroadcastID, Instruction::BULK_READ, txBuf));
 
 	for (auto const& [id, baseRegister, length] : motors) {
 		auto [timeoutFlag, motorID, errorCode, rxBuf] = mProtocol->readPacket(timeout, id, length, mPort);
@@ -75,7 +76,7 @@ void USB2Dynamixel::write(MotorID motor, int baseRegister, Parameter const& txBu
 	}
 	parameters.insert(parameters.end(), txBuf.begin(), txBuf.end());
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::WRITE, parameters));
+	file_io::write(mPort, mProtocol->createPacket(motor, Instruction::WRITE, parameters));
 }
 auto USB2Dynamixel::writeRead(MotorID motor, int baseRegister, Parameter const& txBuf, Timeout timeout) const -> std::tuple<bool, MotorID, ErrorCode, Parameter> {
 	write(motor, baseRegister, txBuf);
@@ -112,18 +113,18 @@ void USB2Dynamixel::sync_write(std::map<MotorID, Parameter> const& motorParams, 
 		txBuf.insert(txBuf.end(), params.begin(), params.end());
 	}
 
-	simplyfile::write(mPort, mProtocol->createPacket(BroadcastID, Instruction::SYNC_WRITE, txBuf));
+	file_io::write(mPort, mProtocol->createPacket(BroadcastID, Instruction::SYNC_WRITE, txBuf));
 }
 
 void USB2Dynamixel::reset(MotorID motor) const {
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::RESET, {}));
+	file_io::write(mPort, mProtocol->createPacket(motor, Instruction::RESET, {}));
 
 }
 
 void USB2Dynamixel::reboot(MotorID motor) const {
 	auto g = std::lock_guard(mMutex);
-	simplyfile::write(mPort, mProtocol->createPacket(motor, Instruction::REBOOT, {}));
+	file_io::write(mPort, mProtocol->createPacket(motor, Instruction::REBOOT, {}));
 }
 
 }
