@@ -102,8 +102,8 @@ void printDetailInfoTable(meta::MotorInfo const& data) {
 
 
 void runMeta() {
-	if (optMotorName.isSpecified()) {
-		auto name = optMotorName.get();
+	if (optMotorName) {
+		auto name = *optMotorName;
 		std::transform(begin(name), end(name), begin(name), ::toupper);
 		auto info = meta::getMotorInfo(name);
 		if (not info) {

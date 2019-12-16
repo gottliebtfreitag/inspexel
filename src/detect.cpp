@@ -140,26 +140,26 @@ auto readDetailedInfos(dynamixel::USB2Dynamixel& usb2dyn, std::vector<std::tuple
 }
 
 void runDetect() {
-	baudrates.get().emplace(g_baudrate);
-	auto timeout = std::chrono::microseconds{g_timeout};
+	baudrates->emplace(*g_baudrate);
+	auto timeout = std::chrono::microseconds{*g_timeout};
 	auto protocols = std::vector<dynamixel::Protocol>{dynamixel::Protocol::V1, dynamixel::Protocol::V2};
-	if (g_protocolVersion.isSpecified()) {
-		protocols = {dynamixel::Protocol{int(g_protocolVersion)}};
+	if (g_protocolVersion) {
+		protocols = {dynamixel::Protocol{*g_protocolVersion}};
 	}
 	for (auto protocolVersion : protocols) {
 		std::cout << "# trying protocol version " << int(protocolVersion) << "\n";
-		for (auto baudrate : baudrates.get()) {
+		for (auto baudrate : *baudrates) {
 			std::cout << "## trying baudrate: " << baudrate << "\n";
-			auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, g_device.get(), protocolVersion);
+			auto usb2dyn = dynamixel::USB2Dynamixel(baudrate, *g_device, protocolVersion);
 
 			// generate range to check
 			std::vector<int> range(0xFD);
 			std::iota(begin(range), end(range), 0);
-			if (g_id.isSpecified()) {
-				range = {MotorID(g_id)};
-			} else  if (ids.isSpecified()) {
+			if (g_id) {
+				range = {*g_id};
+			} else  if (ids) {
 				range.clear();
-				for (auto x : ids.get()) {
+				for (auto x : *ids) {
 					range.push_back(x);
 				}
 			}

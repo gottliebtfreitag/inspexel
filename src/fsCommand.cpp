@@ -137,22 +137,20 @@ std::vector<std::unique_ptr<simplyfuse::FuseFile>> registerMotor(MotorID motorID
 }
 
 void runFuse() {
-	auto timeout = std::chrono::microseconds{g_timeout};
-	auto usb2dyn = USB2Dynamixel(g_baudrate, g_device.get(), Protocol{g_protocolVersion.get()});
+	auto timeout = std::chrono::microseconds{*g_timeout};
+	auto usb2dyn = USB2Dynamixel(*g_baudrate, *g_device, *g_protocolVersion);
 
 	std::vector<int> range;
-	if (g_id.isSpecified()) {
-		range = {MotorID(g_id)};
-	} else if (ids.isSpecified()) {
-		for (auto x : ids.get()) {
-			range.push_back(x);
-		}
+	if (g_id) {
+		range = {MotorID(*g_id)};
+	} else if (ids) {
+        std::copy(begin(*ids), end(*ids), std::back_inserter(range));
 	} else {
 		range.resize(0xfe);
 		std::iota(begin(range), end(range), 0);
 	}
 
-	simplyfuse::FuseFS fuseFS{mountPoint.get()};
+	simplyfuse::FuseFS fuseFS{*mountPoint};
 	std::map<MotorID, std::vector<std::unique_ptr<simplyfuse::FuseFile>>> files;
 
 	auto detectAndHandleMotor = [&](MotorID motor) {

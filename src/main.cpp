@@ -37,9 +37,9 @@ int main(int argc, char** argv)
 		// pass everything except the name of the application
 		sargp::parseArguments(argc-1, argv+1);
 
-		if (printHelp.isSpecified()) {
+		if (printHelp) {
 			std::cout << "inspexel version " << VERSION << " - " << DATE << "\n";
-			std::cout << sargp::generateHelpString(std::regex{".*" + printHelp.get().value_or("") + ".*"});
+			std::cout << sargp::generateHelpString(std::regex{".*" + printHelp->value_or("") + ".*"});
 			return 0;
 		}
 		sargp::callCommands();
