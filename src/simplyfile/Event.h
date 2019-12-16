@@ -8,9 +8,12 @@ namespace simplyfile
 {
 
 struct Event : FileDescriptor {
-	Event(int flags=0, int initval=0)
+	Event(int flags=0, int initval=0) noexcept 
 		: FileDescriptor(eventfd(initval, flags))
 	{}
+
+    Event(Event&&) noexcept = default;
+    Event& operator=(Event&&) noexcept = default;
 
 	uint64_t get() {
 		uint64_t val {0};

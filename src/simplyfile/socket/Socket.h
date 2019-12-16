@@ -10,8 +10,12 @@ struct ClientSocket : FileDescriptor {
 	using FileDescriptor::FileDescriptor;
 
 	ClientSocket(Host const& host);
+
 	// this constructor is used by ServerSocket::accept() to pass peer information to the socket
 	ClientSocket(int fd, Host const& host);
+
+    ClientSocket(ClientSocket&&) noexcept = default;
+    ClientSocket& operator=(ClientSocket&&) noexcept = default;
 
 	void connect();
 	Host const& getHost() const {

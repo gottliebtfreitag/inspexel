@@ -14,17 +14,17 @@ struct FileDescriptor {
 
 	FileDescriptor(int _fd=-1) : fd(_fd) {}
 
-	FileDescriptor(FileDescriptor&& other) {
+	FileDescriptor(FileDescriptor&& other) noexcept {
 		fd = other.fd;
 		other.fd = -1;
 	}
-	FileDescriptor& operator=(FileDescriptor&& other) {
+	FileDescriptor& operator=(FileDescriptor&& other) noexcept {
 		close();
 		std::swap(fd, other.fd);
 		return *this;
 	}
 
-	FileDescriptor& operator=(int _fd) {
+	FileDescriptor& operator=(int _fd) noexcept {
 		close();
 		fd = _fd;
 		return *this;
@@ -34,40 +34,33 @@ struct FileDescriptor {
 		close();
 	}
 
-	bool valid() const {
+	bool valid() const noexcept {
 		return fd >= 0;
 	}
 
-	operator int() const {
+	operator int() const noexcept {
 		return fd;
 	}
 
-	void close() {
+	void close() noexcept {
 		if (valid()) {
 			::close(*this);
 			fd = -1;
 		}
 	}
 
-	void setFlags(int flags) {
+	void setFlags(int flags) noexcept {
 		fcntl(*this, F_SETFL, flags | getFlags());
 	}
-	void clearFlags(int flags) {
+	void clearFlags(int flags) noexcept {
 		fcntl(*this, F_SETFL, ~flags & getFlags());
 	}
-	int getFlags() {
+	int getFlags() noexcept {
 		return ::fcntl(*this, F_GETFL, 0);
 	}
 
 private:
 	int fd;
 };
-
-void write(FileDescriptor const& _fd, std::vector<std::byte> const& txBuf);
-[[nodiscard]] auto read(FileDescriptor const& _fd, size_t maxReadBytes, bool singleRead=false) -> std::vector<std::byte>;
-[[nodiscard]] auto read(FileDescriptor const& _fd) -> std::vector<std::byte>;
-[[nodiscard]] auto getAvailableBytes(FileDescriptor const& _fd) -> size_t;
-size_t flushRead(FileDescriptor const& _fd);
-
 
 }

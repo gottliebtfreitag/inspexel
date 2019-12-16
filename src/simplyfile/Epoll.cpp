@@ -17,6 +17,7 @@
 #include <cxxabi.h>
 #include <iostream>
 
+
 namespace
 {
 
@@ -54,12 +55,8 @@ struct Finally final {
 private:
 	Func _f;
 };
-
 template<typename Func>
-Finally<Func> makeFinally(Func && f) { return Finally<Func>(std::move(f)); }
-
-
-
+Finally(Func) -> Finally<Func>;
 
 }
 
@@ -77,7 +74,8 @@ struct CallbackInfo {
 	std::condition_variable cv {};
 
 	std::string name;
-	std::atomic<Epoll::RuntimeInfo> accumulatedRuntime;
+	std::mutex runtimeMutex;
+	Epoll::RuntimeInfo accumulatedRuntime;
 
 	CallbackInfo(std::string const& _name) : name{_name} {}
 
@@ -129,12 +127,12 @@ Epoll::Epoll()
 	}, EPOLLIN|EPOLLONESHOT, "self_wakeup");
 }
 
-Epoll::Epoll(Epoll &&other)
+Epoll::Epoll(Epoll &&other) noexcept
 	: FileDescriptor(std::move(other)) {
 	std::swap(pimpl, other.pimpl);
 }
 
-Epoll& Epoll::operator=(Epoll &&rhs) {
+Epoll& Epoll::operator=(Epoll &&rhs) noexcept {
 	FileDescriptor::operator =(std::move(rhs));
 	std::swap(pimpl, rhs.pimpl);
 	return *this;
@@ -142,7 +140,7 @@ Epoll& Epoll::operator=(Epoll &&rhs) {
 
 Epoll::~Epoll() {}
 
-void Epoll::addFD(int _fd, Callback const& callback, int epollFlags, std::string const& name) {
+void Epoll::addFD(int _fd, Callback callback, int epollFlags, std::string const& name) {
 	std::shared_ptr<CallbackInfo> info;
 	std::string _name = name;
 	if (_name == "") {
@@ -151,7 +149,7 @@ void Epoll::addFD(int _fd, Callback const& callback, int epollFlags, std::string
 	{
 		std::lock_guard lock{pimpl->infosMutex};
 		info = pimpl->infos[_fd] = std::make_shared<CallbackInfo>(_name); // this and the next line could be a beautiful one liner if...gcc5.4 would not be used
-		info->cb = callback;
+		info->cb = std::move(callback);
 	}
 	struct epoll_event event {};
 	event.events = epollFlags;
@@ -195,13 +193,12 @@ void Epoll::rmFD(int _fd, bool blocking) {
 }
 
 std::vector<struct epoll_event> Epoll::wait(int maxEvents, int timeout_ms) {
-	std::vector<struct epoll_event> events(maxEvents);
+	std::vector<epoll_event> events(maxEvents, epoll_event{});
 	int num = epoll_wait(*this, events.data(), events.size(), timeout_ms);
 	if (num >= 0) {
 		events.resize(num);
 	} else {
 		events.resize(0);
-//		throw std::runtime_error("epoll wait returned -1 " + std::string(std::strerror(errno)));
 	}
 	return events;
 }
@@ -228,13 +225,15 @@ void Epoll::dispatch(std::vector<struct epoll_event> const& events) {
 		if (wrapper.info->startExecution()) {
 			try {
 				auto start = std::chrono::high_resolution_clock::now();
-				auto finally = makeFinally([=] {
+				Finally finally{[=] {
 					auto end = std::chrono::high_resolution_clock::now();
-					Epoll::RuntimeInfo expected = wrapper.info->accumulatedRuntime.load(std::memory_order_relaxed);
-					Epoll::RuntimeInfo delta{end - start, 1};
-					while (not wrapper.info->accumulatedRuntime.compare_exchange_weak(expected, expected + delta));
+					{
+						std::lock_guard lock{wrapper.info->runtimeMutex};
+						Epoll::RuntimeInfo delta{end - start, 1};
+						wrapper.info->accumulatedRuntime += delta;
+					}
 					wrapper.info->stopExecution();
-				});
+				}};
 				wrapper.info->cb(wrapper.event.events);
 			} catch (...) {
 				std::throw_with_nested(std::runtime_error(removeAnonNamespace(demangle(wrapper.info->cb.target_type())) + " threw an exception:"));
@@ -243,15 +242,16 @@ void Epoll::dispatch(std::vector<struct epoll_event> const& events) {
 	}
 }
 
-void Epoll::wakeup(uint64_t count) {
+void Epoll::wakeup(uint64_t count) noexcept {
 	pimpl->eventFD.put(count);
 }
 
-auto Epoll::getRuntimes() const -> std::map<std::string, RuntimeInfo>{
+auto Epoll::getRuntimes() const -> std::map<std::string, RuntimeInfo> {
 	std::map<std::string, RuntimeInfo> runtimes;
 	std::shared_lock lock{pimpl->infosMutex};
 	for (auto const& info : pimpl->infos) {
-		runtimes[info.second->name] += info.second->accumulatedRuntime.load(std::memory_order_relaxed);
+		std::lock_guard lock{info.second->runtimeMutex};
+		runtimes[info.second->name] += info.second->accumulatedRuntime;
 	}
 	return runtimes;
 }

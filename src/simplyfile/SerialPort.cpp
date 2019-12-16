@@ -94,16 +94,6 @@ SerialPort::SerialPort(std::string const& name, int baudrate)
 	FileDescriptor::operator=(std::move(iFace));
 }
 
-
-SerialPort::SerialPort(SerialPort&& other)
-	: FileDescriptor(std::move(other))
-{}
-
-SerialPort& SerialPort::operator=(SerialPort&& other) {
-	FileDescriptor::operator=(std::move(other));
-	return *this;
-}
-
 void SerialPort::setBaudrate(int baudrate) {
 	struct termios2 options;
 	bzero(&options, sizeof(options));
