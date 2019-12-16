@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:gottliebtfreitag/simplyfuse
 	branch = master
-	commit = 252cd62bebf49a9725c7941a9966b95d02b3056c
-	parent = c0a393a5a46a3af645915b2e0c9ad32222ce9c22
+	commit = bdd181e576eb2046bbf41f487add4cb2cc87b5b2
+	parent = 82b4c98439351e081fe3523b460221221aa05242
 	cmdver = 0.3.1
