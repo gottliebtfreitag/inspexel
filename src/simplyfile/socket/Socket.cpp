@@ -1,9 +1,11 @@
-#include <sys/ioctl.h>
-#include <cstring>
-#include <errno.h>
 #include "Socket.h"
-#include <unistd.h>
+
+#include <cstring>
+#include <cerrno>
+#include <stdexcept>
+#include <sys/ioctl.h>
 #include <sys/un.h>
+#include <unistd.h>
 
 namespace simplyfile
 {

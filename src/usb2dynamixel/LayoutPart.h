@@ -5,8 +5,9 @@
 #include <cstring>
 #include <functional>
 #include <map>
-#include <vector>
+#include <optional>
 #include <stdexcept>
+#include <vector>
 
 namespace dynamixel {
 

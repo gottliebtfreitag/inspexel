@@ -3,12 +3,13 @@
 #include "FileDescriptor.h"
 
 #include <sys/eventfd.h>
+#include <stdexcept>
 
 namespace simplyfile
 {
 
 struct Event : FileDescriptor {
-	Event(int flags=0, int initval=0) noexcept 
+	Event(int flags=0, int initval=0) noexcept
 		: FileDescriptor(eventfd(initval, flags))
 	{}
 

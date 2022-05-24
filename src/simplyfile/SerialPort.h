@@ -2,6 +2,8 @@
 
 #include "FileDescriptor.h"
 
+#include <string>
+
 namespace simplyfile
 {
 

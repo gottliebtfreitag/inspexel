@@ -2,9 +2,10 @@
 
 #include "FileDescriptor.h"
 
-#include <memory>
-#include <sys/epoll.h>
 #include <chrono>
+#include <memory>
+#include <string>
+#include <sys/epoll.h>
 
 namespace simplyfile
 {

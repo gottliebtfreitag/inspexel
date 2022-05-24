@@ -38,7 +38,7 @@ auto readDetailedInfosFromUnknown(dynamixel::USB2Dynamixel& usb2dyn, std::vector
 	int successfullTransactions = 0;
 
 	std::vector<std::tuple<MotorID, int, size_t>> request;
-	for (auto const [g_id, modelNumber] : motors) {
+	for (auto const& [g_id, modelNumber] : motors) {
 		request.push_back(std::make_tuple(g_id, int(mx_v1::Register::MODEL_NUMBER), 74));
 	}
 	auto response = usb2dyn.bulk_read(request, timeout);

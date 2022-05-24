@@ -1,8 +1,11 @@
 #include "file_io.h"
 
-#include <cerrno>
-#include <cstring>
 #include <array>
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <stdexcept>
+#include <string>
 
 #include <sys/types.h>
 #include <unistd.h>

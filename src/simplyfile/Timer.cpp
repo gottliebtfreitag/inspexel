@@ -1,7 +1,9 @@
 #include "Timer.h"
 
 #include <cstring>
-#include <time.h>
+#include <ctime>
+#include <stdexcept>
+#include <string>
 
 
 namespace simplyfile {
