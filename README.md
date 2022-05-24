@@ -141,34 +141,6 @@ $ man inspexel
 ```
 
 # How to install
-## Ubuntu 16.04
-```
-# install Fuse deps
-$ sudo apt-get install libfuse-dev
-# install gcc-8
-$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-$ sudo apt-get update
-$ sudo apt-get install g++-8 gcc-8
-# build inspexel
-$ git clone https://github.com/gottliebtfreitag/inspexel.git
-$ cd inspexel
-$ make && sudo make install
-```
-
-## Ubuntu 18.04
-```
-# install gcc-8
-$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-$ sudo apt-get update
-$ sudo apt-get install g++-8 gcc-8
-# install Fuse deps
-$ sudo apt-get install libfuse-dev
-# build inspexel
-$ git clone https://github.com/gottliebtfreitag/inspexel.git
-$ cd inspexel
-$ make CXX=/usr/bin/g++-8 && sudo make install
-```
-
 ## Ubuntu 20.04
 
 ```
