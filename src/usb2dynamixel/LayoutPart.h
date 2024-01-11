@@ -2,8 +2,10 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <functional>
+#include <map>
 #include <map>
 #include <optional>
 #include <stdexcept>
